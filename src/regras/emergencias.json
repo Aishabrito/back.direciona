@@ -1,0 +1,37 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "emergencia_inconsciencia",
+      "quando": ["nao responde", "inconsciente", "inconsciência"]
+    },
+    {
+      "id": "emergencia_respiracao",
+      "quando": ["dificuldade intensa para respirar", "nao consegue falar frases", "labios roxos", "falta de ar intensa"]
+    },
+    {
+      "id": "emergencia_peito",
+      "quando": ["dor_toracica_com_sinais_associados"]
+    },
+    {
+      "id": "emergencia_neuro",
+      "quando": ["confusão súbita", "alteração da consciência", "sinais_neurologicos_subitos", "convulsao"]
+    },
+    {
+      "id": "emergencia_sangramento",
+      "quando": ["sangramento intenso", "hemorragia"]
+    },
+    {
+      "id": "emergencia_trauma",
+      "quando": ["trauma grave", "atropelamento", "queda de altura"]
+    },
+    {
+      "id": "emergencia_queimadura",
+      "quando": ["queimadura extensa"]
+    },
+    {
+      "id": "emergencia_intoxicacao_grave",
+      "quando": ["intoxicacao grave"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "peito_falta_ar",
+    "entrada": "Estou com dor no peito, falta de ar e suor frio.",
+    "categoria": "emergencia"
+  },
+  {
+    "id": "queda_mae",
+    "entrada": "Minha mãe caiu, bateu a cabeça e agora está meio confusa.",
+    "categoria": "emergencia"
+  },
+  {
+    "id": "febre_prostracao",
+    "entrada": "Estou com febre há quatro dias, muito fraca e não consigo beber muita água.",
+    "categoria": "urgencia"
+  },
+  {
+    "id": "vacina",
+    "entrada": "Preciso de vacinação.",
+    "categoria": "baixa_gravidade"
+  }
+]

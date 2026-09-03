@@ -1,0 +1,18 @@
+{
+  "peito_falta_ar": {
+    "resposta_id": "emergencia_001",
+    "destino": "SAMU_192_PRONTO_SOCORRO"
+  },
+  "queda_mae": {
+    "resposta_id": "emergencia_001",
+    "destino": "SAMU_192_PRONTO_SOCORRO"
+  },
+  "febre_prostracao": {
+    "resposta_id": "upa_001",
+    "destino": "UPA_24H"
+  },
+  "vacina": {
+    "resposta_id": "ubs_001",
+    "destino": "UBS_CLINICA_DA_FAMILIA"
+  }
+}

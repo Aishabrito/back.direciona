@@ -1,0 +1,17 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "baixa_respiratorio_leve",
+      "quando": ["sintomas leves ou rotina", "coriza", "tosse leve", "resfriado"]
+    },
+    {
+      "id": "baixa_rotina",
+      "quando": ["vacinação", "vacina", "consulta de rotina", "pré-natal", "acompanhamento"]
+    },
+    {
+      "id": "baixa_ferida_leve",
+      "quando": ["ferida", "queimadura superficial"]
+    }
+  ]
+}

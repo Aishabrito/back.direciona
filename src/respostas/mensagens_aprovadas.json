@@ -1,0 +1,65 @@
+{
+  "versao": "1.1.0",
+  "mensagens": [
+    {
+      "id": "emergencia_001",
+      "destino": ["SAMU 192", "Pronto-Socorro"],
+      "texto": "Entendo que isso é preocupante. Os sinais descritos precisam de atendimento imediato. Acione o SAMU pelo 192 agora; se a pessoa puder ser transportada com segurança, procure imediatamente o Pronto-Socorro mais próximo. Não dirija se estiver passando mal."
+    },
+    {
+      "id": "pediatria_emergencia_001",
+      "destino": ["SAMU 192", "Pronto-Socorro"],
+      "texto": "Entendo sua preocupação. A criança apresenta sinais que precisam de avaliação imediata. Acione o SAMU 192 ou procure imediatamente um Pronto-Socorro, especialmente se houver dificuldade intensa para respirar, alteração da consciência ou piora rápida."
+    },
+    {
+      "id": "obstetricia_001",
+      "destino": ["Maternidade / Pronto-Socorro Obstétrico"],
+      "texto": "Por se tratar de uma situação durante a gestação ou após o parto, procure imediatamente a Maternidade ou o Pronto-Socorro Obstétrico de referência. Se houver risco imediato ou dificuldade para chegar com segurança, acione o SAMU 192."
+    },
+    {
+      "id": "mental_emergencia_001",
+      "destino": ["SAMU 192", "Pronto-Socorro"],
+      "texto": "Sinto muito que você esteja passando por isso. Existe uma situação de risco imediato. Acione o SAMU 192 agora ou procure o Pronto-Socorro mais próximo. Se for seguro, não deixe a pessoa sozinha e peça ajuda a alguém de confiança."
+    },
+    {
+      "id": "mental_caps_001",
+      "destino": ["CAPS / serviço de saúde mental", "UBS ou Clínica da Família"],
+      "texto": "Entendo que isso pode ser muito angustiante. Procure uma UBS, UPA ou CAPS da sua região para acolhimento e avaliação profissional. Se surgir risco de autoagressão, violência, desmaio ou dificuldade para respirar, acione o SAMU 192. Você também pode ligar para o CVV 188 para apoio emocional complementar."
+    },
+    {
+      "id": "upa_001",
+      "destino": ["UPA 24h"],
+      "texto": "Os sintomas descritos precisam de avaliação profissional ainda hoje. Procure uma UPA 24h. Se surgirem falta de ar intensa, desmaio, confusão, sangramento importante ou piora rápida, acione o SAMU 192."
+    },
+    {
+      "id": "ubs_001",
+      "destino": ["UBS ou Clínica da Família"],
+      "texto": "Pelos sintomas relatados, não identifiquei sinais claros de emergência. Procure a UBS ou Clínica da Família para avaliação e acompanhamento. Se houver piora, falta de ar, dor forte, desmaio, confusão ou outro sinal de alerta, procure uma UPA ou acione o SAMU 192."
+    },
+    {
+  "id": "recusa_diagnostico",
+  "destino": ["Rede de Saúde"],
+  "texto": "Não posso informar diagnóstico nem confirmar a causa dos sintomas. O Direciona SUS oferece apenas orientação inicial sobre onde buscar atendimento e não substitui a avaliação de um profissional."
+},
+{
+  "id": "recusa_medicamento",
+  "destino": ["Rede de Saúde"],
+  "texto": "Não posso indicar medicamentos ou tratamentos. Procure um profissional de saúde para avaliação adequada."
+},
+{
+  "id": "terceiro_acolhimento",
+  "destino": ["Rede de Saúde"],
+  "texto": "Entendo sua preocupação. Vou considerar os sintomas da pessoa que você descreveu. Se ela estiver inconsciente, com dificuldade intensa para respirar, confusa, com sangramento importante ou em risco de se machucar, acione o SAMU 192 imediatamente."
+},
+    {
+      "id": "fora_escopo_001",
+      "destino": ["Direciona SUS"],
+      "texto": "Sou um assistente virtual exclusivo do Direciona SUS. Minha função é oferecer orientação inicial sobre sintomas e indicar onde buscar atendimento. Como posso ajudar com a sua saúde hoje?"
+    },
+    {
+      "id": "fallback_001",
+      "destino": ["UBS ou Clínica da Família"],
+      "texto": "Não consegui avaliar com segurança a gravidade pelos dados informados. Procure a UBS mais próxima para avaliação profissional. Se houver falta de ar, dor no peito, desmaio, confusão, sangramento importante ou piora rápida, acione o SAMU 192."
+    }
+  ]
+}

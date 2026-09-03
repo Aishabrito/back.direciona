@@ -1,0 +1,19 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "obstetricia_urgente",
+      "quando": [
+        "sangramento",
+        "dor forte",
+        "perda de liquido",
+        "contracoes",
+        "reducao dos movimentos",
+        "desmaio",
+        "falta de ar",
+        "dor de cabeca intensa",
+        "pressao alta"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "urgencia_febre_prostracao",
+      "quando": ["fraqueza", "prostracao", "dificuldade para manter líquidos"]
+    },
+    {
+      "id": "urgencia_vomitos",
+      "quando": ["vômitos", "vomitos repetidos"]
+    },
+    {
+      "id": "urgencia_abdomen",
+      "quando": ["dor abdominal"]
+    },
+    {
+      "id": "urgencia_ferida_fratura",
+      "quando": ["ferida profunda", "suspeita de fratura", "queimadura", "picada de animal peçonhento"]
+    },
+    {
+      "id": "urgencia_urinario_febre",
+      "quando": ["sintomas urinários"]
+    },
+    {
+      "id": "urgencia_falta_ar_leve",
+      "quando": ["falta de ar"]
+    }
+  ]
+}

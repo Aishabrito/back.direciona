@@ -1,0 +1,229 @@
+{
+  "versao": "1.1.0",
+  "duvidas": [
+    {
+      "id": "faq_diferenca_ubs_upa",
+      "gatilhos": [
+        "diferenca entre ubs e upa",
+        "diferenca de ubs e upa",
+        "diferenca ubs upa",
+        "diferenca de ubs",
+        "quando ir na upa ou ubs",
+        "quando ir na upa",
+        "quando ir na ubs",
+        "upa ou ubs"
+      ],
+      "resposta": "A *UBS (Unidade Básica de Saúde / Clínica da Família)* é a porta de entrada para acompanhamento contínuo, rotina, vacinas, pré-natal e queixas leves e comuns.\n\nA *UPA 24h* é voltada para urgências intermediárias, como dores agudas repentinas, febre persistente, cortes com necessidade de sutura ou exames rápidos no mesmo dia.\n\nSe tiver alguma queixa agora, me conte o que está sentindo que te ajudo a decidir!"
+    },
+    {
+      "id": "faq_o_que_e_caps",
+      "gatilhos": [
+        "o que e caps",
+        "o que e o caps",
+        "para que serve o caps",
+        "quando ir no caps",
+        "como funciona o caps"
+      ],
+      "resposta": "O *CAPS (Centro de Atenção Psicossocial)* é o serviço do SUS especializado em saúde mental para sofrimento psíquico intenso ou uso prejudicial de substâncias, com atendimento multiprofissional aberto à comunidade."
+    },
+    {
+      "id": "faq_quando_chamar_samu",
+      "gatilhos": [
+        "quando chamar o samu",
+        "quando ligar 192",
+        "o que o samu atende",
+        "quando acionar o samu"
+      ],
+      "resposta": "O *SAMU 192* deve ser acionado em casos de risco imediato à vida, como dor intensa no peito com suor frio, falta de ar severa, convulsões ativas, desmaios sem retorno rápido, acidentes graves ou alterações neurológicas súbitas (rosto torto, fraqueza em um lado do corpo)."
+    },
+    {
+      "id": "faq_quando_ir_pronto_socorro",
+      "gatilhos": [
+        "quando ir ao pronto socorro",
+        "hora de ir ao hospital",
+        "pronto socorro ou upa"
+      ],
+      "resposta": "O *Pronto-Socorro Hospitalar* é indicado para emergências com risco imediato à vida, como dor no peito com sinais de alarme, alterações neurológicas graves, acidentes de grande impacto, sangramentos abundantes ou traumas severos."
+    },
+    {
+      "id": "faq_diferenca_upa_pronto_socorro",
+      "gatilhos": [
+        "diferenca entre upa e pronto socorro",
+        "upa ou pronto socorro",
+        "quando ir na upa e quando ir no hospital"
+      ],
+      "resposta": "A *UPA* atende urgências de gravidade intermediária 24h (dores fortes agudas, febre persistente, cortes e fraturas simples). O *Pronto-Socorro* fica dentro de hospitais e recebe casos críticos que podem demandar cirurgia imediata, internação em UTI ou suporte intensivo."
+    },
+    {
+      "id": "faq_o_que_fazer_em_crise_de_ansiedade",
+      "gatilhos": [
+        "crise de ansiedade o que fazer",
+        "ansiedade forte quando procurar ajuda",
+        "crise de panico sus"
+      ],
+      "resposta": "Se houver falta de ar intensa, dor no peito, desmaio ou risco iminente de se machucar, procure imediatamente a UPA/Pronto-Socorro ou ligue para o SAMU 192. Para apoio emocional e sofrimento psíquico contínuo sem risco à vida, procure o CAPS ou ligue para o CVV 188 (24h, gratuito e sigiloso)."
+    },
+    {
+      "id": "faq_quando_ir_ubs_febre",
+      "gatilhos": [
+        "febre quando ir na ubs",
+        "febre alta quando ir na upa",
+        "febre que nao baixa o que fazer"
+      ],
+      "resposta": "Febre isolada de início recente e sem sinais de alarme pode ser acolhida na UBS. Caso a febre persista por dias seguidos, seja muito elevada ou venha acompanhada de extrema prostração, dificuldade respiratória ou manchas na pele, procure uma UPA."
+    },
+    {
+      "id": "faq_precisa_encaminhamento_caps",
+      "gatilhos": [
+        "precisa de encaminhamento para o caps",
+        "como entrar no caps",
+        "caps precisa de medico"
+      ],
+      "resposta": "Não é obrigatório ter encaminhamento: o *CAPS* é de porta aberta e acolhe a comunidade diretamente. Também é possível ser direcionado via UBS, UPA ou SAMU."
+    },
+    {
+      "id": "faq_tipos_de_caps",
+      "gatilhos": [
+        "tipos de caps",
+        "caps i ii iii diferenca",
+        "caps ij caps ad o que e"
+      ],
+      "resposta": "A rede conta com CAPS gerais (I, II e III, com funcionamento ampliado), CAPS Infantojuvenil (CAPS ij) voltado a crianças e adolescentes, e CAPS Álcool e Drogas (CAPS AD), divididos pelo perfil e complexidade do acompanhamento."
+    },
+    {
+      "id": "faq_centro_valorizacao_vida_188",
+      "gatilhos": [
+        "ligar 188 quando",
+        "o que e o 188",
+        "cvv 188 funciona pra que"
+      ],
+      "resposta": "O *CVV 188* presta apoio emocional gratuito e sigiloso 24h por dia para desabafo e momentos de vulnerabilidade. Em situações com risco físico ou de agressão imediata, acione sempre o SAMU 192 ou vá a um Pronto-Socorro."
+    },
+    {
+      "id": "faq_o_que_levar_ubs_upa",
+      "gatilhos": [
+        "o que levar na ubs",
+        "documentos para upa",
+        "preciso de carteirinha do sus"
+      ],
+      "resposta": "Apresente documento oficial com foto, comprovante de residência e o Cartão Nacional de Saúde (se tiver). Ter em mãos anotações sobre exames anteriores ou orientações de saúde prévias também auxilia a equipe."
+    },
+    {
+      "id": "faq_como_marcar_consulta_ubs",
+      "gatilhos": [
+        "como marcar consulta na ubs",
+        "agendar consulta posto de saude",
+        "marcacao de consulta sus"
+      ],
+      "resposta": "O agendamento é feito presencialmente na sua UBS/Clínica da Família de referência ou pelos canais digitais/aplicativos da prefeitura do seu município."
+    },
+    {
+      "id": "faq_o_que_fazer_se_nao_tem_vaga",
+      "gatilhos": [
+        "nao tem vaga na ubs o que fazer",
+        "ubs lotada como conseguir consulta",
+        "demora consulta sus"
+      ],
+      "resposta": "Solicite acolhimento à equipe de enfermagem da unidade para avaliação de demanda espontânea. Se houver surgimento de sinais agudos ou piora importante do quadro, dirija-se a uma UPA."
+    },
+    {
+      "id": "faq_como_funciona_classificacao_risco",
+      "gatilhos": [
+        "como funciona a triagem na upa",
+        "classificacao de risco manchester sus",
+        "por que atendem antes na emergencia"
+      ],
+      "resposta": "Em serviços de urgência e emergência, o acolhimento com classificação de risco prioriza o atendimento pelo grau de urgência clínica dos sinais vitais, e não pela ordem de chegada."
+    },
+    {
+      "id": "faq_como_conseguir_medicamento_gratis",
+      "gatilhos": [
+        "como pegar remedio gratis no sus",
+        "farmacia popular como funciona",
+        "receita sus medicamento",
+        "retirada de itens farmacia"
+      ],
+      "resposta": "Itens da assistência farmacêutica pública podem ser retirados nas farmácias das UBS ou em redes credenciadas do programa Farmácia Popular, mediante apresentação de prescrição emitida por profissional de saúde, documento de identidade e CPF."
+    },
+    {
+      "id": "faq_quando_fazer_exames_pelo_sus",
+      "gatilhos": [
+        "como pedir exames no sus",
+        "exames de sangue pela ubs",
+        "raio x na upa"
+      ],
+      "resposta": "Exames de rotina e acompanhamento são requisitados e agendados a partir das consultas na UBS. Exames complementares urgentes (como raio-X ou exames laboratoriais rápidos) são realizados na UPA ou hospital mediante indicação no momento do atendimento emergencial."
+    },
+    {
+      "id": "faq_cuidados_basicos_resfriado_gripe",
+      "gatilhos": [
+        "resfriado o que fazer em casa",
+        "gripe quando ir ao medico",
+        "sintomas alarmantes gripe"
+      ],
+      "resposta": "Para queixas respiratórias comuns sem gravidade, recomenda-se repouso e manter boa ingestão de líquidos. Procure a UBS se o quadro persistir por vários dias; se houver falta de ar, dor no peito ou fraqueza severa, dirija-se à UPA."
+    },
+    {
+      "id": "faq_saude_mental_crianca_adolescente",
+      "gatilhos": [
+        "crianca ansiedade sus",
+        "adolescente depressao onde ir",
+        "caps ij o que e"
+      ],
+      "resposta": "O *CAPS Infantojuvenil (CAPS ij)* acolhe crianças e adolescentes em sofrimento psíquico expressivo. O serviço pode ser buscado diretamente pela família ou via direcionamento da UBS, escola ou conselho tutelar."
+    },
+    {
+      "id": "faq_dependencia_alcool_drogas_sus",
+      "gatilhos": [
+        "alcoolismo onde procurar ajuda",
+        "drogas tratamento sus",
+        "caps ad serve pra que"
+      ],
+      "resposta": "O *CAPS AD (Álcool e Outras Drogas)* presta cuidado especializado e multiprofissional com foco na atenção integral e redução de danos. Não requer agendamento ou guia prévia para o primeiro acolhimento."
+    },
+    {
+      "id": "faq_gestante_quando_ir_ubs_upa",
+      "gatilhos": [
+        "gestante dor barriga quando ir",
+        "sangramento na gravidez o que fazer",
+        "pre natal ubs ou upa"
+      ],
+      "resposta": "Consultas de rotina do pré-natal devem ocorrer na UBS. Sangramentos, perda súbita de líquido, dor abdominal intensa ou parada na percepção dos movimentos do bebê exigem ida imediata à Maternidade ou Pronto-Socorro Obstétrico."
+    },
+    {
+      "id": "faq_idoso_queda_trauma_leve",
+      "gatilhos": [
+        "idoso caiu e bateu a cabeca o que fazer",
+        "queda de idoso quando ir ao hospital"
+      ],
+      "resposta": "Idosos que sofreram queda com impacto na cabeça, presença de confusão mental, sonolência excessiva, vômitos ou dor aguda limitante devem ser conduzidos diretamente para avaliação na UPA ou Pronto-Socorro."
+    },
+    {
+      "id": "faq_picada_animal_peçonhento",
+      "gatilhos": [
+        "picada de cobra o que fazer",
+        "aranha escorpiao quando ir ao hospital",
+        "acidente com animal venenoso sus"
+      ],
+      "resposta": "Acidentes com animais peçonhentos (escorpião, aranha, cobra) exigem avaliação médica urgente. Mantenha a região limpa com água, em repouso, e procure a UPA ou Pronto-Socorro de referência mais próximo imediatamente."
+    },
+    {
+      "id": "faq_como_o_app_me_ajuda_a_escolher",
+      "gatilhos": [
+        "como funciona o direciona saude",
+        "o app substitui medico",
+        "o app da diagnostico"
+      ],
+      "resposta": "O *Direciona Saúde* é uma ferramenta de triagem inicial para orientar a porta correta de atendimento no SUS (UBS, UPA, Maternidade, CAPS ou SAMU). O app não fornece diagnóstico, não prescreve terapias e não substitui a avaliação presencial de um profissional."
+    },
+    {
+      "id": "faq_o_que_fazer_se_os_sintomas_piorarem",
+      "gatilhos": [
+        "piorou depois de ir na ubs",
+        "sintoma agravou o que fazer",
+        "quando voltar ao pronto socorro"
+      ],
+      "resposta": "Havendo piora abrupta do quadro geral, dificuldade para respirar, alteração do estado de consciência ou nova dor intensa, procure uma UPA/Pronto-Socorro ou ligue 192 (SAMU)."
+    }
+  ]
+}

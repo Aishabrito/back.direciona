@@ -1,0 +1,9 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "vulneravel_sinal_grave",
+      "quando": ["falta de ar", "desmaio", "confusão", "convulsao", "nao consegue beber"]
+    }
+  ]
+}

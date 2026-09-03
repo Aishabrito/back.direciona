@@ -1,0 +1,13 @@
+{
+  "versao": "1.0.0",
+  "regras": [
+    {
+      "id": "mental_iminente",
+      "quando": ["risco_iminente_autoagressao", "tentativa de suicidio", "violencia grave"]
+    },
+    {
+      "id": "mental_sem_risco_imediato",
+      "quando": ["sofrimento psíquico", "ansiedade", "caps"]
+    }
+  ]
+}
