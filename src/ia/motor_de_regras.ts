@@ -44,7 +44,6 @@ function corpus(relato: RelatoEstruturado, textoOriginal: string = ''): string {
 }
 
 function verificarEmergenciaObstetrica(relato: RelatoEstruturado, texto: string): DecisaoRegras | null {
-  // Só entra se for gestante E houver sinais obstétricos específicos
   if (relato.gestante !== 'sim') return null;
 
   const sinais = relato.sinais_obstetricos || [];
@@ -167,33 +166,33 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   }
 
   // ==========================================================
-  // 2. DOR AGUDA GENÉRICA → UPA (ANTES da obstetrícia)
+  // 2. QUEIXA AGUDA GENÉRICA → UPA (ANTES da obstetrícia)
   // ==========================================================
-  // Qualquer dor (localizada ou não) com sinais de agudização
-  // Impede que "dor no braço" caia em pré-natal
-  const temDor = relato.sintomas.some((s) => /dor/.test(s) || s.includes('dor'));
-  const dorAguda =
-    temDor &&
+  // Qualquer sintoma agudo (dor, queimadura, febre, queda, etc.) que não seja emergência
+  const temQueixaAguda = relato.sintomas.some(s =>
+    /dor|queimadura|ferida|corte|queda|picada|enjoo|vomito|febre|tosse|falta de ar|queixa inespecífica/.test(s)
+  );
+
+  const queixaAguda =
+    temQueixaAguda &&
     (relato.intensidade === 'intensa' ||
       relato.piora === 'sim' ||
       relato.duracao !== 'nao_informado' ||
       relato.inicio !== 'nao_informado' ||
-      // Se for "dor", "dor no braço", "dor na perna" etc., assume aguda
-      relato.sintomas.some((s) => /dor no|dor na|dor nos|dor nas/.test(s)) ||
-      (relato.sintomas.length === 1 && relato.sintomas[0] === 'dor'));
+      relato.sintomas.length === 1); // qualquer sintoma isolado é considerado agudo
 
-  if (dorAguda) {
+  if (queixaAguda) {
     return {
       categoria_interna: 'urgencia',
       destino: 'UPA_24H',
       resposta_id: 'upa_001',
-      regra_acionada: 'urgencia_dor_aguda_generica',
+      regra_acionada: 'urgencia_queixa_aguda_generica',
       versao_regras: VERSAO_REGRAS,
     };
   }
 
   // ==========================================================
-  // 3. OBSTETRÍCIA (só após descartar dor aguda comum)
+  // 3. OBSTETRÍCIA (só após descartar queixa aguda comum)
   // ==========================================================
   const obst = verificarEmergenciaObstetrica(relato, texto);
   if (obst) return obst;

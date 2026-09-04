@@ -50,7 +50,7 @@ function precisaPerguntar(relato: RelatoEstruturado): boolean {
     const temQueixaIntermediaria =
       relato.febre === true ||
       relato.vomitos === true ||
-      relato.sintomas.some((s) => /dor|febre|tosse|resfriado|enjoo/i.test(s));
+      relato.sintomas.some((s) => /dor|febre|tosse|resfriado|enjoo|queimadura|queda|ferida/i.test(s));
 
     if (semDuracao || temQueixaIntermediaria) {
       return true;
@@ -83,7 +83,7 @@ export async function processarTurno(
     };
   }
 
-  // 2. Pedidos expressos de medicamento ou posologia (Regra 14)
+  // 2. Pedidos expressos de medicamento ou posologia
   if (ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -102,7 +102,7 @@ export async function processarTurno(
     };
   }
 
-  // 3. Pedidos expressos de diagnóstico médico (Regra 14)
+  // 3. Pedidos expressos de diagnóstico médico
   if (ehPedidoDiagnostico(textoUsuario)) {
     const msg = mensagemPorId('recusa_diagnostico');
     return {
@@ -128,16 +128,13 @@ export async function processarTurno(
 
   const extraido = await interpretarRelato(textoUsuario);
 
-  // 5. Verificação de assunto totalmente fora de saúde/sintomas (Regra 15)
+  // 5. Verificação de assunto totalmente fora de saúde/sintomas (confiando na IA/fallback)
+  // Agora usamos informacao_insuficiente como indicador primário
   const semSintomasOuSinais =
-  extraido.sintomas.length === 0 &&
-  extraido.sinais_alerta.length === 0 &&
-  extraido.risco_mental === 'nao_mencionado' &&
-  extraido.febre !== true &&
-  extraido.dor_no_peito !== true &&
-  extraido.falta_de_ar !== true &&
-  extraido.desmaio !== true &&
-  !contemAlgum(textoUsuario, ['dor', 'febre', 'tosse', 'cansaço', 'enjoo', 'vomito']);
+    extraido.informacao_insuficiente === true &&
+    extraido.sintomas.length === 0 &&
+    extraido.sinais_alerta.length === 0 &&
+    extraido.risco_mental === 'nao_mencionado';
 
   if (semSintomasOuSinais && estado.relatos.length === 0) {
     const msgForaEscopo = mensagemPorId('fora_escopo_001');
@@ -160,7 +157,7 @@ export async function processarTurno(
   const relatos = [...estado.relatos, extraido];
   const atual = consolidar({ ...estado, relatos, texto_original_acumulado: textoAcumulado });
 
-  // 6. Linha vermelha: emergência imediata (Regras 3, 5 e 10)
+  // 6. Linha vermelha: emergência imediata
   const emergenciaImediata =
     atual.risco_mental === 'iminente' ||
     (atual.idade_grupo === 'bebe' && atual.febre === true) ||
@@ -171,7 +168,7 @@ export async function processarTurno(
     (atual.sinais_obstetricos && atual.sinais_obstetricos.length > 0) ||
     (atual.sinais_trauma && atual.sinais_trauma.length > 0);
 
-  // 7. Rodada única de refinamento clínico se não for emergência (Regras 4 e 8)
+  // 7. Rodada única de refinamento clínico se não for emergência
   if (!emergenciaImediata && estado.rodadasPerguntas < 1 && precisaPerguntar(atual)) {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas,

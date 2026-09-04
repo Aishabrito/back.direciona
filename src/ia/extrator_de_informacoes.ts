@@ -26,7 +26,6 @@ function marcar(flag: boolean, lista: string[], rotulo: string) {
   if (flag) lista.push(rotulo);
 }
 
-// ---- FUNÇÕES DE EXTRAÇÃO ESPECIALIZADA ----
 function extrairSinaisObstetricos(n: string): string[] {
   const sinais: string[] = [];
   if (/(contra[cç][oõ]es?|contraindo|dor de parto|contração)/i.test(n))
@@ -55,190 +54,107 @@ function extrairSinaisTrauma(n: string): string[] {
   return sinais;
 }
 
-// ---- FALLBACK DETERMINÍSTICO COM REGEX ----
+// ---- FALLBACK DETERMINÍSTICO (agora GENÉRICO) ----
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
   const sintomas: string[] = [];
   const sinais: string[] = [];
 
-  // ========== NEGAÇÕES EXPLÍCITAS (sobrescrevem qualquer coisa) ==========
+  // ========== NEGAÇÕES EXPLÍCITAS ==========
   let forcarGestante: 'sim' | 'nao' | 'nao_informado' = 'nao_informado';
   if (contemAlgum(n, ['nao estou gravida', 'não estou grávida', 'nao estou grávida', 'nao gravida', 'nao estou gestante'])) {
     forcarGestante = 'nao';
   }
   let forcarFebre: boolean | 'nao_informado' = 'nao_informado';
-  if (contemAlgum(n, ['nao estou com febre', 'não estou com febre', 'sem febre', 'sem febre'])) {
+  if (contemAlgum(n, ['nao estou com febre', 'não estou com febre', 'sem febre'])) {
     forcarFebre = false;
   }
   let forcarDor: boolean = false;
   if (contemAlgum(n, ['sem dor', 'dor passou', 'nao estou com dor', 'não estou com dor'])) {
-    forcarDor = true; // indicará que devemos remover sintomas de dor
+    forcarDor = true;
   }
 
-  // ========== DETECÇÃO GENÉRICA DE DOR (qualquer parte do corpo) ==========
-  const dorGenerica = contemAlgum(n, [
-    'dor no', 'dor na', 'dor nos', 'dor nas', 
-    'doendo', 'dolor', 'dor forte', 'dor leve'
-  ]);
-  let localDor = 'nao_informado';
-  const matchLocal = n.match(/dor no (s?[a-záéíóúâêôãõç]+)|dor na (s?[a-záéíóúâêôãõç]+)|dor nos (s?[a-záéíóúâêôãõç]+)|dor nas (s?[a-záéíóúâêôãõç]+)/);
-  if (matchLocal) {
-    localDor = matchLocal[1] || matchLocal[2] || matchLocal[3] || matchLocal[4] || 'local_nao_identificado';
+  // ---- EXTRAÇÃO GENÉRICA DE SINAIS E SINTOMAS ----
+  // Detecta se há alguma palavra que indique saúde/queixa, sem listar todas
+  const temPalavraClinica = /dor|febre|tosse|queimadura|queimei|queimou|queda|ca[ií]|vomito|enjoo|sangramento|falta de ar|respirar|desmaio|apagou|confusão|desorientad|ferida|corte|laceração|picada|escorpião|aranha|cobra|intoxicação|ansiedade|pânico|depressão|caps|pressão|hipertensão|convulsão|infarto|avc|trauma|batida|alergia|coceira|mancha|vermelhidão|inflamação|dor no|dor na|dor nos|dor nas|doendo|dolor/i.test(n);
+
+  // Se for apenas saudação, não considerar como queixa
+  const palavras = n.split(/\s+/).filter(p => p.length > 2);
+  const ehSaudacao = palavras.length <= 3 && /oi|ola|bom dia|boa tarde|boa noite|tudo bem|obrigado|valeu|blz|show|legal|sim|nao|não|ok|nada|nenhum/i.test(n);
+
+  if (ehSaudacao && !temPalavraClinica) {
+    return {
+      ...RELATO_VAZIO,
+      informacao_insuficiente: true,
+    };
   }
 
-  // ========== SINTOMAS ESPECÍFICOS EXISTENTES ==========
-  const faltaDeAr = contemAlgum(n, [
-    'falta de ar',
-    'falta dar',
-    'ofegante',
-    'nao consigo respirar',
-    'dificuldade para respirar',
-    'labios roxos',
-    'lábios arroxeados',
-    'nao consegue falar frases',
-  ]);
-  const dorPeito = contemAlgum(n, ['dor no peito', 'aperto no peito', 'pressao no peito', 'dor toracica']);
-  const desmaio = contemAlgum(n, ['desmaio', 'desmaiou', 'desmaiei', 'apagou', 'nao responde', 'inconsciente', 'caida', 'caido']);
-  const confusao = contemAlgum(n, ['confusa', 'confuso', 'desorientad', 'alteracao da consciencia', 'nao reconhece']);
-  const sangramento = contemAlgum(n, ['sangramento', 'sangrando', 'sangue', 'hemorragia']);
-  const febre = contemAlgum(n, ['febre', 'febril', 'quentura', 'corpo quente']);
-  const vomitos = contemAlgum(n, ['vomito', 'vomitando', 'enjoo forte', 'nausea']);
-  const trauma = contemAlgum(n, [
-    'caiu', 'queda', 'bateu a cabeca', 'atropel', 'acidente',
-    'queda de altura', 'trauma', 'colisao', 'capotamento', 'caida', 'caido',
-  ]);
-  const intoxicacao = contemAlgum(n, ['intoxic', 'envenen', 'tomou produto', 'ingestao de']);
-  const convulsao = contemAlgum(n, ['convulsao', 'ataque convulsivo']);
-  const avcSinais = contemAlgum(n, [
-    'fala enrolada',
-    'nao consegue falar',
-    'boca torta',
-    'rosto torto',
-    'fraqueza de um lado',
-    'perda de visao subita',
-  ]);
-  const suorFrio = contemAlgum(n, ['suor frio', 'suando frio', 'palidez']);
-  const dorAbdomen = contemAlgum(n, ['dor na barriga', 'dor abdominal', 'dor no abdomen']);
-  const fratura = contemAlgum(n, ['fratura', 'osso quebrado', 'osso estalou']);
-  const queimadura = contemAlgum(n, ['queimadura', 'queimou']);
-  const picada = contemAlgum(n, ['picada de', 'cobra', 'escorpiao', 'aranha']);
-  const ferida = contemAlgum(n, ['ferida', 'corte', 'laceracao']);
-  const urinarios = contemAlgum(n, ['ardor para urinar', 'dor para urinar', 'infeccao urinaria']);
-  const dorCostas = contemAlgum(n, ['dor nas costas', 'dor lombar']);
-  const desidratacao = contemAlgum(n, [
-    'nao consigo beber',
-    'nao consegue beber',
-    'sem beber agua',
-    'boca seca',
-    'muito fraco',
-    'muito fraca',
-    'prostrad',
-  ]);
-  
-  const sintomasLeves = contemAlgum(n, [
-    'gripe',
-    'gripado',
-    'gripada',
-    'tosse',
-    'tossindo',
-    'coriza',
-    'espirro',
-    'tosse leve',
-    'dor de garganta',
-    'garganta arranhando',
-    'resfriado',
-    'resfriada',
-    'vacina',
-    'vacinacao',
-    'consulta de rotina',
-    'pre natal',
-    'prenatal',
-    'acompanhamento',
-  ]);
-  const saudeMentalSofrimento = contemAlgum(n, [
-    'ansiedade',
-    'panico',
-    'depressao',
-    'nao quero mais viver',
-    'crise de choro',
-    'insonia',
-    'caps',
-  ]);
-  const riscoIminente = contemAlgum(n, [
-    'quero me matar',
-    'vou me matar',
-    'tentativa de suicidio',
-    'tentou suicidio',
-    'risco de se machucar agora',
-    'vai se machucar agora',
-  ]);
-
-  // ---- POPULA SINTOMAS ----
-  if (faltaDeAr) sintomas.push('falta de ar');
-  if (dorPeito) sintomas.push('dor no peito');
-  if (desmaio) sintomas.push('desmaio');
-  if (confusao) sintomas.push('confusão');
-  if (sangramento) sintomas.push('sangramento');
-  if (febre) sintomas.push('febre');
-  if (vomitos) sintomas.push('vômitos');
-  if (contemAlgum(n, ['gripe', 'gripado', 'gripada'])) sintomas.push('gripe');
-  if (contemAlgum(n, ['tosse', 'tossindo'])) sintomas.push('tosse');
-  if (contemAlgum(n, ['dor de cabeca', 'enxaqueca', 'cefaleia'])) sintomas.push('dor de cabeça');
-  if (contemAlgum(n, ['dor de garganta', 'garganta'])) sintomas.push('dor de garganta');
-
-  if (trauma) {
-    if (contemAlgum(n, ['atropel', 'acidente', 'colisao', 'capotamento'])) {
-      sintomas.push('trauma por acidente');
-    } else if (contemAlgum(n, ['queda de altura', 'caiu de', 'precipitação'])) {
-      sintomas.push('trauma por queda de altura');
-    } else if (contemAlgum(n, ['cabeça', 'cabeca', 'concussão'])) {
-      sintomas.push('trauma na cabeça');
-    } else {
-      sintomas.push('trauma');
-    }
+  // Se não há palavra clínica, mas o texto tem mais de 3 palavras, assume que pode ser uma queixa vaga
+  if (!temPalavraClinica && palavras.length > 3) {
+    sintomas.push('queixa inespecífica');
   }
-  if (intoxicacao) sintomas.push('intoxicação');
-  if (convulsao) sintomas.push('convulsão');
-  if (dorAbdomen) sintomas.push('dor abdominal');
-  if (fratura) sintomas.push('suspeita de fratura');
-  if (queimadura) sintomas.push('queimadura');
-  if (picada) sintomas.push('picada de animal peçonhento');
-  if (ferida) sintomas.push('ferida');
-  if (urinarios) sintomas.push('sintomas urinários');
-  if (desidratacao) sintomas.push('fraqueza', 'dificuldade para manter líquidos');
-  if (dorCostas) sintomas.push('dor nas costas');
-  if (contemAlgum(n, ['dor no corpo', 'dor pelo corpo'])) sintomas.push('dor no corpo');
-  if (saudeMentalSofrimento) sintomas.push('sofrimento psíquico');
 
-  // ---- DOR GENÉRICA (se não for negada) ----
-  if (dorGenerica && !forcarDor) {
-    if (!sintomas.includes('dor')) sintomas.push('dor');
-    if (localDor !== 'nao_informado' && !sintomas.includes(`dor no ${localDor}`)) {
-      sintomas.push(`dor no ${localDor}`);
-    }
-    // se não conseguiu extrair local, coloca apenas 'dor'
-    if (localDor === 'nao_informado' && !sintomas.includes('dor')) {
+  // ========== DETECÇÃO DE SINTOMAS COMUNS (regex simples) ==========
+  // Não listamos todas as partes do corpo – o regex captura "dor no/na/nos/nas" seguido de qualquer palavra
+  if (!forcarDor) {
+    // Dor localizada
+    const matchDor = n.match(/dor no (s?[a-záéíóúâêôãõç]+)|dor na (s?[a-záéíóúâêôãõç]+)|dor nos (s?[a-záéíóúâêôãõç]+)|dor nas (s?[a-záéíóúâêôãõç]+)/);
+    if (matchDor) {
+      const local = matchDor[1] || matchDor[2] || matchDor[3] || matchDor[4] || 'parte do corpo';
+      sintomas.push(`dor no ${local}`);
+    } else if (/dor/.test(n)) {
       sintomas.push('dor');
     }
   }
 
-  // ---- CASO "sintomas leves" sem outros sintomas ----
-  if (
-    (sintomasLeves || contemAlgum(n, ['ubs', 'agendar consulta', 'clinica da familia'])) &&
-    sintomas.length === 0
-  ) {
-    sintomas.push('sintomas leves ou rotina');
+  // Outros sintomas comuns (apenas palavras-chave amplas)
+  const sintomasMap: [RegExp, string][] = [
+    [/febre/, 'febre'],
+    [/tosse/, 'tosse'],
+    [/queimadura|queimei|queimou|queimar/, 'queimadura'],
+    [/queda|ca[ií]|caiu/, 'queda'],
+    [/vomito|vomitando|enjoo/, 'vômitos'],
+    [/sangramento|sangrando/, 'sangramento'],
+    [/falta de ar|respirar/, 'falta de ar'],
+    [/desmaio|apagou/, 'desmaio'],
+    [/confus[aã]o|desorientad/, 'confusão'],
+    [/ferida|corte|laceração/, 'ferida'],
+    [/picada|escorpião|aranha|cobra/, 'picada de animal peçonhento'],
+    [/intoxicaç[aã]o|envenenamento/, 'intoxicação'],
+    [/ansiedade|pânico|depressão|caps/, 'sofrimento psíquico'],
+    [/press[aã]o alta|hipertensão/, 'pressão alta'],
+    [/convuls[aã]o/, 'convulsão'],
+    [/alergia|coceira|mancha/, 'alergia/coceira'],
+  ];
+
+  for (const [regex, label] of sintomasMap) {
+    if (regex.test(n) && !sintomas.includes(label)) {
+      sintomas.push(label);
+    }
   }
 
-  // ---- SINAIS DE ALERTA ----
-  marcar(trauma, sinais, 'trauma');
-  marcar(confusao, sinais, 'alteração da consciência');
-  marcar(faltaDeAr, sinais, 'falta_de_ar');
-  marcar(dorPeito && (faltaDeAr || desmaio || suorFrio || confusao), sinais, 'dor_toracica_com_sinais_associados');
-  marcar(avcSinais, sinais, 'sinais_neurologicos_subitos');
-  marcar(riscoIminente, sinais, 'risco_iminente_autoagressao');
-  marcar(convulsao, sinais, 'convulsao');
+  // Se ainda não há sintomas e o texto não é saudação, assume queixa inespecífica
+  if (sintomas.length === 0 && palavras.length > 2 && !ehSaudacao) {
+    sintomas.push('queixa inespecífica');
+  }
 
+  // ---- SINAIS DE ALERTA (emergência) ----
+  if (/falta de ar|respirar|labios roxos/.test(n)) sinais.push('falta_de_ar');
+  if (/desmaio|apagou|inconsciente/.test(n)) sinais.push('alteração da consciência');
+  if (/confus[aã]o|desorientad/.test(n)) sinais.push('alteração da consciência');
+  if (/trauma|acidente|batida|queda de altura|atropel/.test(n)) sinais.push('trauma');
+  if (/convuls[aã]o/.test(n)) sinais.push('convulsao');
+  if (/dor no peito|aperto no peito|pressão no peito/.test(n)) {
+    const faltaDeAr = /falta de ar|respirar/.test(n);
+    const desmaio = /desmaio|apagou/.test(n);
+    const confusao = /confus[aã]o/.test(n);
+    const suorFrio = /suor frio/.test(n);
+    if (faltaDeAr || desmaio || confusao || suorFrio) {
+      sinais.push('dor_toracica_com_sinais_associados');
+    }
+  }
+
+  // Sinais obstétricos e trauma (usando funções existentes)
   const sinaisObstetricos = extrairSinaisObstetricos(n);
   const sinaisTrauma = extrairSinaisTrauma(n);
   if (sinaisObstetricos.length) sinais.push(...sinaisObstetricos);
@@ -254,7 +170,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
       break;
     }
   }
-
   if (contemAlgum(n, ['pessoa', 'alguem', 'homem', 'mulher', 'senhor', 'senhora', 'crianca'])) {
     terceiro = true;
     pessoa = 'terceiro';
@@ -269,10 +184,10 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   else if (contemAlgum(n, ['adulto'])) idade = 'adulto';
 
   // ---- DURAÇÃO ----
-  const duracaoMatch = n.match(/ha\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete)\s+(dia|dias|hora|horas|semana|semanas)/);
+  const duracaoMatch = n.match(/ha\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(dia|dias|hora|horas|semana|semanas|mes|meses)/);
   const duracao = duracaoMatch ? duracaoMatch[0].replace('ha ', '') : 'nao_informado';
 
-  // ---- GESTANTE (com override de negação) ----
+  // ---- GESTANTE (com negação) ----
   let gestante: 'sim' | 'nao' | 'nao_informado' = 'nao_informado';
   if (forcarGestante === 'nao') {
     gestante = 'nao';
@@ -280,35 +195,25 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     gestante = 'sim';
   }
 
-  const posParto = contemAlgum(n, ['pos parto', 'depois do parto', 'tive bebe recentemente', 'puerperio'])
-    ? 'sim'
-    : 'nao_informado';
+  const posParto = contemAlgum(n, ['pos parto', 'depois do parto', 'tive bebe recentemente', 'puerperio']) ? 'sim' : 'nao_informado';
 
   // ---- RISCO MENTAL ----
   let riscoMental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
-  if (riscoIminente) riscoMental = 'iminente';
-  else if (saudeMentalSofrimento) riscoMental = 'sem_risco_imediato';
-
-  // ---- CONTEÚDO CLÍNICO ----
-  const temConteudoClinico =
-    sintomas.length > 0 ||
-    faltaDeAr ||
-    dorPeito ||
-    desmaio ||
-    confusao ||
-    febre ||
-    trauma ||
-    riscoIminente ||
-    sinaisObstetricos.length > 0 ||
-    sinaisTrauma.length > 0;
-
-  // ---- INTENSIDADE ----
-  let intensidade: string = 'nao_informado';
-  if (contemAlgum(n, ['dor forte', 'dor intensa', 'muito forte', 'intensa'])) {
-    intensidade = 'intensa';
-  } else if (contemAlgum(n, ['leve', 'moderada'])) {
-    intensidade = 'leve';
+  if (/quero me matar|vou me matar|tentativa de suicidio|risco de se machucar agora/.test(n)) {
+    riscoMental = 'iminente';
+  } else if (contemAlgum(n, ['ansiedade', 'panico', 'depressao', 'crise de choro', 'insonia', 'caps'])) {
+    riscoMental = 'sem_risco_imediato';
   }
+
+  // ---- PIORA, INTENSIDADE ----
+  const piora = contemAlgum(n, ['piorando', 'piorou', 'cada vez pior']) ? 'sim' : 'nao_informado';
+  let intensidade = 'nao_informado';
+  if (contemAlgum(n, ['forte', 'intensa', 'muito forte', 'insuportável'])) intensidade = 'intensa';
+  else if (contemAlgum(n, ['leve', 'moderada'])) intensidade = 'leve';
+
+  // ---- INFORMAÇÃO INSUFICIENTE ----
+  const temConteudoClinico = sintomas.length > 0 || sinais.length > 0 || temPalavraClinica;
+  const informacaoInsuficiente = !temConteudoClinico || (sintomas.length === 1 && sintomas[0] === 'queixa inespecífica' && palavras.length < 4);
 
   // ---- MONTAGEM FINAL ----
   const bruto: RelatoEstruturado = {
@@ -320,21 +225,21 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     sinais_alerta: unicos(sinais),
     inicio: duracao !== 'nao_informado' ? duracao : 'nao_informado',
     duracao,
-    piora: contemAlgum(n, ['piorando', 'piorou', 'cada vez pior']) ? 'sim' : 'nao_informado',
+    piora,
     intensidade,
-    falta_de_ar: faltaDeAr ? true : 'nao_informado',
-    dor_no_peito: dorPeito ? true : 'nao_informado',
-    desmaio: desmaio ? true : 'nao_informado',
-    confusao: confusao ? true : 'nao_informado',
-    sangramento: sangramento ? true : 'nao_informado',
-    febre: forcarFebre !== 'nao_informado' ? forcarFebre : (febre ? true : 'nao_informado'),
-    vomitos: vomitos ? true : 'nao_informado',
-    trauma: trauma ? true : 'nao_informado',
-    exposicao_intoxicacao: intoxicacao ? true : 'nao_informado',
+    falta_de_ar: /falta de ar|respirar/.test(n) ? true : 'nao_informado',
+    dor_no_peito: /dor no peito|aperto no peito|pressão no peito/.test(n) ? true : 'nao_informado',
+    desmaio: /desmaio|apagou|inconsciente/.test(n) ? true : 'nao_informado',
+    confusao: /confus[aã]o|desorientad/.test(n) ? true : 'nao_informado',
+    sangramento: /sangramento|sangrando/.test(n) ? true : 'nao_informado',
+    febre: forcarFebre !== 'nao_informado' ? forcarFebre : (/febre/.test(n) ? true : 'nao_informado'),
+    vomitos: /vomito|vomitando|enjoo/.test(n) ? true : 'nao_informado',
+    trauma: /trauma|acidente|batida|queda|atropel/.test(n) ? true : 'nao_informado',
+    exposicao_intoxicacao: /intoxicaç[aã]o|envenenamento/.test(n) ? true : 'nao_informado',
     gestante,
     pos_parto: posParto,
     risco_mental: riscoMental,
-    informacao_insuficiente: !temConteudoClinico,
+    informacao_insuficiente: informacaoInsuficiente,
     informacoes_contraditorias: [],
     sinais_obstetricos: unicos(sinaisObstetricos),
     sinais_trauma: unicos(sinaisTrauma),
@@ -362,43 +267,20 @@ export async function interpretarRelato(texto: string): Promise<RelatoEstruturad
         responseMimeType: 'application/json',
         systemInstruction: `Você é um médico regulador e triador do SUS (SAMU 192, UBS, UPA).
 Sua missão é interpretar a gravidade e o contexto por trás de mensagens com gírias, erros ortográficos ou relatos sobre terceiros.
+Extraia apenas o que está explícito, não invente informações.
 
-DIRETRIZES DE INTERPRETAÇÃO CLÍNICA:
-1. Situações de rua e emergências:
-   - "Pessoa caída na rua/chão", "homem no chão", "senhor desmaiado":
-     * trauma: true
-     * desmaio: true
-     * sinais_alerta: ["alteração da consciência", "trauma"]
-     * relato_sobre_terceiro: true
-     * pessoa: "terceiro"
-   - "Não responde", "apagou", "desmaiou":
-     * desmaio: true
-     * sinais_alerta: ["alteração da consciência"]
-   - "Falta de ar", "peito chiando", "sufocado", "não consigo respirar":
-     * falta_de_ar: true
-     * sinais_alerta: ["falta_de_ar"]
-   - "Dor no peito", "aperto no peito", "coração doendo":
-     * dor_no_peito: true
-2. Identificação de terceiros:
-   - Se o relato for sobre mãe, pai, bebê, filho, avó ou pessoa desconhecida na rua, marque 'relato_sobre_terceiro: true' e preencha 'pessoa'.
-3. Informação Insuficiente ('informacao_insuficiente'):
-   - Marque como FALSE sempre que houver qualquer sintoma, acidente, dor, febre, sangramento, queda, pedido de socorro ou dúvida sobre serviços de saúde.
-   - Marque como TRUE SOMENTE se a mensagem for apenas um cumprimento vazio ("olá", "bom dia") ou algo sem nenhum contexto de saúde.`,
+DIRETRIZES:
+- Identifique sintomas (ex: dor, febre, tosse, queimadura, queda).
+- Sinalize emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave.
+- Marque se o relato é sobre terceiro (pessoa) e identifique a pessoa (mãe, pai, filho, etc.).
+- Não diagnostique doenças.`,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            sintomas: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: "Lista de sintomas ou queixas (ex: 'queda', 'tosse', 'dor de cabeça', 'febre', 'dor no peito')",
-            },
-            sinais_alerta: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: "Sinais de gravidade: 'alteração da consciência', 'trauma', 'falta_de_ar', 'dor_toracica_com_sinais_associados', 'convulsao'",
-            },
+            sintomas: { type: Type.ARRAY, items: { type: Type.STRING } },
+            sinais_alerta: { type: Type.ARRAY, items: { type: Type.STRING } },
             relato_sobre_terceiro: { type: Type.BOOLEAN },
-            pessoa: { type: Type.STRING, description: "Quem precisa de ajuda (ex: 'desconhecido', 'mãe', 'filho', 'paciente')" },
+            pessoa: { type: Type.STRING },
             desmaio: { type: Type.BOOLEAN },
             trauma: { type: Type.BOOLEAN },
             falta_de_ar: { type: Type.BOOLEAN },
