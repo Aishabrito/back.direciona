@@ -18,6 +18,7 @@ import {
   type TurnoResultado,
 } from './tipos.js';
 import { mesclarRelatos } from './validador_de_saida.js';
+import { contemAlgum } from './normalizar.js';
 
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
@@ -129,15 +130,14 @@ export async function processarTurno(
 
   // 5. Verificação de assunto totalmente fora de saúde/sintomas (Regra 15)
   const semSintomasOuSinais =
-    extraido.sintomas.length === 0 &&
-    extraido.sinais_alerta.length === 0 &&
-    (!extraido.sinais_obstetricos || extraido.sinais_obstetricos.length === 0) &&
-    (!extraido.sinais_trauma || extraido.sinais_trauma.length === 0) &&
-    extraido.risco_mental === 'nao_mencionado' &&
-    extraido.febre !== true &&
-    extraido.dor_no_peito !== true &&
-    extraido.falta_de_ar !== true &&
-    extraido.desmaio !== true;
+  extraido.sintomas.length === 0 &&
+  extraido.sinais_alerta.length === 0 &&
+  extraido.risco_mental === 'nao_mencionado' &&
+  extraido.febre !== true &&
+  extraido.dor_no_peito !== true &&
+  extraido.falta_de_ar !== true &&
+  extraido.desmaio !== true &&
+  !contemAlgum(textoUsuario, ['dor', 'febre', 'tosse', 'cansaço', 'enjoo', 'vomito']);
 
   if (semSintomasOuSinais && estado.relatos.length === 0) {
     const msgForaEscopo = mensagemPorId('fora_escopo_001');

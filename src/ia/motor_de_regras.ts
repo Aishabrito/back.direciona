@@ -44,23 +44,25 @@ function corpus(relato: RelatoEstruturado, textoOriginal: string = ''): string {
 }
 
 function verificarEmergenciaObstetrica(relato: RelatoEstruturado, texto: string): DecisaoRegras | null {
+  // Só entra se for gestante E houver sinais obstétricos específicos
+  if (relato.gestante !== 'sim') return null;
+
   const sinais = relato.sinais_obstetricos || [];
-  if (relato.gestante === 'sim' || relato.sinais_alerta.includes('gestante')) {
-    if (
-      sinais.includes('pre_eclampsia') ||
-      sinais.includes('perda_liquido_amniotico') ||
-      sinais.includes('contracoes') ||
-      sinais.includes('sangramento_obstetrico') ||
-      (sinais.includes('pressao_alta') && contemAlgum(texto, ['dor de cabeca intensa', 'enxaqueca', 'visao turva']))
-    ) {
-      return {
-        categoria_interna: 'emergencia',
-        destino: 'SAMU_192_PRONTO_SOCORRO',
-        resposta_id: 'obstetricia_001',
-        regra_acionada: 'obstetricia_emergencia',
-        versao_regras: VERSAO_REGRAS,
-      };
-    }
+  const temSinalObstetrico =
+    sinais.includes('pre_eclampsia') ||
+    sinais.includes('perda_liquido_amniotico') ||
+    sinais.includes('contracoes') ||
+    sinais.includes('sangramento_obstetrico') ||
+    (sinais.includes('pressao_alta') && contemAlgum(texto, ['dor de cabeca intensa', 'enxaqueca', 'visao turva']));
+
+  if (temSinalObstetrico) {
+    return {
+      categoria_interna: 'emergencia',
+      destino: 'SAMU_192_PRONTO_SOCORRO',
+      resposta_id: 'obstetricia_001',
+      regra_acionada: 'obstetricia_emergencia',
+      versao_regras: VERSAO_REGRAS,
+    };
   }
   return null;
 }
@@ -106,15 +108,15 @@ function verificarTraumaGrave(relato: RelatoEstruturado, texto: string): Decisao
 export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string): DecisaoRegras {
   const texto = corpus(relato, textoOriginal || '');
 
-  // 1. Emergências obstétricas
-  const obst = verificarEmergenciaObstetrica(relato, texto);
-  if (obst) return obst;
+  // ==========================================================
+  // 1. EMERGÊNCIAS GRAVES (vida em risco)
+  // ==========================================================
 
-  // 2. Trauma grave e intoxicação
+  // Trauma grave
   const trauma = verificarTraumaGrave(relato, texto);
   if (trauma) return trauma;
 
-  // 3. Hipertensão associada a sinais de alarme neurológico/cardíaco
+  // Hipertensão com sinais de alarme neurológico/cardíaco
   const temPressao = contemAlgum(texto, ['pressao alta', 'pressao subiu', 'pressao elevada', 'hipertensao']);
   if (
     temPressao &&
@@ -129,7 +131,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 4. Regras gerais de emergência (SAMU / PS)
+  // Regras gerais de emergência (JSON)
   const regrasEmergencia = (emergencias as RegrasContainer).regras;
   const emerg = casaRegra(texto, regrasEmergencia);
   if (emerg) {
@@ -142,7 +144,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 5. Bebê com febre (prioridade pediátrica hospitalar)
+  // Bebê com febre (prioridade pediátrica)
   if (relato.idade_grupo === 'bebe' && flagTriStateToBoolean(relato.febre)) {
     return {
       categoria_interna: 'emergencia',
@@ -153,7 +155,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 6. Saúde mental com risco iminente
+  // Saúde mental com risco iminente
   if (relato.risco_mental === 'iminente') {
     return {
       categoria_interna: 'emergencia',
@@ -164,30 +166,21 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 7. Saúde mental sem risco imediato (CAPS)
-  const regrasSaudeMental = (saudeMental as RegrasContainer).regras;
-  if (relato.risco_mental === 'sem_risco_imediato' || casaRegra(texto, regrasSaudeMental)) {
-    return {
-      categoria_interna: 'saude_mental_sem_risco_imediato',
-      destino: 'CAPS_OU_SERVICO_DE_SAUDE_MENTAL',
-      resposta_id: 'mental_caps_001',
-      regra_acionada: 'mental_sem_risco_imediato',
-      versao_regras: VERSAO_REGRAS,
-    };
-  }
-
-  // ======== NOVA REGRA: DOR AGUDA (UPA) ========
-  // Se o relato contém "dor" (genérico) e não é uma emergência,
-  // e tem intensidade intensa, ou piora, ou duração recente, encaminha para UPA
-  const temDor = relato.sintomas.some(s => /dor/.test(s) || s.includes('dor'));
+  // ==========================================================
+  // 2. DOR AGUDA GENÉRICA → UPA (ANTES da obstetrícia)
+  // ==========================================================
+  // Qualquer dor (localizada ou não) com sinais de agudização
+  // Impede que "dor no braço" caia em pré-natal
+  const temDor = relato.sintomas.some((s) => /dor/.test(s) || s.includes('dor'));
   const dorAguda =
     temDor &&
     (relato.intensidade === 'intensa' ||
-     relato.piora === 'sim' ||
-     relato.duracao !== 'nao_informado' ||
-     relato.inicio !== 'nao_informado' ||
-     // se não tem intensidade/duração mas é uma queixa de dor nova, assume aguda
-     (relato.sintomas.length === 1 && relato.sintomas[0].includes('dor')));
+      relato.piora === 'sim' ||
+      relato.duracao !== 'nao_informado' ||
+      relato.inicio !== 'nao_informado' ||
+      // Se for "dor", "dor no braço", "dor na perna" etc., assume aguda
+      relato.sintomas.some((s) => /dor no|dor na|dor nos|dor nas/.test(s)) ||
+      (relato.sintomas.length === 1 && relato.sintomas[0] === 'dor'));
 
   if (dorAguda) {
     return {
@@ -199,7 +192,31 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 8. Picada de animal peçonhento (UPA)
+  // ==========================================================
+  // 3. OBSTETRÍCIA (só após descartar dor aguda comum)
+  // ==========================================================
+  const obst = verificarEmergenciaObstetrica(relato, texto);
+  if (obst) return obst;
+
+  // ==========================================================
+  // 4. SAÚDE MENTAL SEM RISCO IMEDIATO
+  // ==========================================================
+  const regrasSaudeMental = (saudeMental as RegrasContainer).regras;
+  if (relato.risco_mental === 'sem_risco_imediato' || casaRegra(texto, regrasSaudeMental)) {
+    return {
+      categoria_interna: 'saude_mental_sem_risco_imediato',
+      destino: 'CAPS_OU_SERVICO_DE_SAUDE_MENTAL',
+      resposta_id: 'mental_caps_001',
+      regra_acionada: 'mental_sem_risco_imediato',
+      versao_regras: VERSAO_REGRAS,
+    };
+  }
+
+  // ==========================================================
+  // 5. URGÊNCIAS (UPA)
+  // ==========================================================
+
+  // Picada de animal peçonhento
   if (contemAlgum(texto, ['escorpiao', 'aranha', 'cobra', 'peconhento', 'jararaca', 'cascavel', 'coral'])) {
     return {
       categoria_interna: 'urgencia',
@@ -210,7 +227,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 9. Sintoma urinário com febre ou dor lombar (UPA)
+  // Sintoma urinário com febre ou dor lombar/costas
   const temUrinario = contemAlgum(texto, ['urinar', 'xixi', 'ardor ao urinar', 'dor ao urinar', 'queimacao ao urinar', 'infeccao urinaria']);
   if (
     temUrinario &&
@@ -225,7 +242,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 10. Febre com prostração ou persistente (UPA)
+  // Febre com prostração ou persistente
   if (
     flagTriStateToBoolean(relato.febre) &&
     (contemAlgum(texto, ['fraqueza', 'prostracao', 'liquidos']) ||
@@ -240,7 +257,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 11. Urgências gerais (UPA)
+  // Urgências gerais (JSON)
   const regrasUrgencias = (urgencias as RegrasContainer).regras;
   const urgencia = casaRegra(texto, regrasUrgencias);
   if (urgencia) {
@@ -253,7 +270,11 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 12. Grupos vulneráveis / rotina estável (UBS)
+  // ==========================================================
+  // 6. BAIXA GRAVIDADE (UBS)
+  // ==========================================================
+
+  // Grupos vulneráveis / rotina estável
   const regrasVulneraveis = (vulneraveis as RegrasContainer).regras;
   const vulneravel = casaRegra(texto, regrasVulneraveis);
   if (vulneravel) {
@@ -266,7 +287,6 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 13. Baixa gravidade (UBS)
   const regrasBaixa = (baixaGravidade as RegrasContainer).regras;
   const baixa = casaRegra(texto, regrasBaixa);
   if (baixa || (!relato.informacao_insuficiente && relato.sintomas.length > 0)) {
@@ -279,7 +299,9 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 14. Fallback seguro
+  // ==========================================================
+  // 7. FALLBACK SEGURO
+  // ==========================================================
   return {
     categoria_interna: 'informacao_insuficiente',
     destino: 'FALLBACK',
