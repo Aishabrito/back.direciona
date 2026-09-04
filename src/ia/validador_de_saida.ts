@@ -105,7 +105,6 @@ export function validarRelato(entrada: unknown): { ok: true; relato: RelatoEstru
     risco_mental: risco,
     informacao_insuficiente: Boolean(bruto.informacao_insuficiente),
     informacoes_contraditorias: asLista(bruto.informacoes_contraditorias),
-    // NOVOS CAMPOS (opcionais)
     sinais_obstetricos: asLista(bruto.sinais_obstetricos),
     sinais_trauma: asLista(bruto.sinais_trauma),
     texto_original_acumulado: asString(bruto.texto_original_acumulado, ''),
@@ -119,10 +118,39 @@ export function validarRelato(entrada: unknown): { ok: true; relato: RelatoEstru
   return { ok: formatoOk, relato };
 }
 
-export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado): RelatoEstruturado {
-  const preferir = <T>(atual: T, novo: T, vazio: T) => (novo !== vazio ? novo : atual);
+// ========== NOVA LÓGICA DE MESCLAGEM COM NEGAÇÃO ==========
 
-  // Função auxiliar para unir arrays sem duplicatas
+/**
+ * Prefere o novo valor, exceto quando o atual é a negação.
+ * Neste caso, a negação prevalece sobre tudo.
+ */
+function preferirComNegacao<T extends string>(
+  atual: T,
+  novo: T,
+  vazio: T,
+  negacao: T
+): T {
+  // Se o novo valor for a negação, prevalece SEMPRE
+  if (novo === negacao) return novo;
+  // Se o novo não for vazio, use-o
+  if (novo !== vazio) return novo;
+  // Caso contrário, mantenha o atual
+  return atual;
+}
+
+/**
+ * Para flags booleanas: `false` (negação) prevalece sobre `true` e sobre `'nao_informado'`
+ */
+function preferirFlagComNegacao(atual: FlagTriState, novo: FlagTriState): FlagTriState {
+  // Se o novo for false (negação), prevalece
+  if (novo === false) return false;
+  // Se o novo for true, use-o
+  if (novo === true) return true;
+  // Se o novo for 'nao_informado', mantenha o atual
+  return atual;
+}
+
+export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado): RelatoEstruturado {
   const unirArrays = (a: string[] = [], b: string[] = []) => [...new Set([...a, ...b])];
 
   return {
@@ -131,31 +159,36 @@ export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado
     idade_grupo: extra.idade_grupo !== 'nao_informado' ? extra.idade_grupo : base.idade_grupo,
     sintomas: unirArrays(base.sintomas, extra.sintomas),
     sinais_alerta: unirArrays(base.sinais_alerta, extra.sinais_alerta),
-    // NOVOS CAMPOS: mescla os arrays
     sinais_obstetricos: unirArrays(base.sinais_obstetricos, extra.sinais_obstetricos),
     sinais_trauma: unirArrays(base.sinais_trauma, extra.sinais_trauma),
-    // texto original: prefere o mais recente (extra) ou mantém base
     texto_original_acumulado: extra.texto_original_acumulado || base.texto_original_acumulado || '',
-    inicio: preferir(base.inicio, extra.inicio, 'nao_informado'),
-    duracao: preferir(base.duracao, extra.duracao, 'nao_informado'),
+    inicio: extra.inicio !== 'nao_informado' ? extra.inicio : base.inicio,
+    duracao: extra.duracao !== 'nao_informado' ? extra.duracao : base.duracao,
     piora: extra.piora !== 'nao_informado' ? extra.piora : base.piora,
-    intensidade: preferir(base.intensidade, extra.intensidade, 'nao_informado'),
-    falta_de_ar: extra.falta_de_ar !== 'nao_informado' ? extra.falta_de_ar : base.falta_de_ar,
-    dor_no_peito: extra.dor_no_peito !== 'nao_informado' ? extra.dor_no_peito : base.dor_no_peito,
-    desmaio: extra.desmaio !== 'nao_informado' ? extra.desmaio : base.desmaio,
-    confusao: extra.confusao !== 'nao_informado' ? extra.confusao : base.confusao,
-    sangramento: extra.sangramento !== 'nao_informado' ? extra.sangramento : base.sangramento,
-    febre: extra.febre !== 'nao_informado' ? extra.febre : base.febre,
-    vomitos: extra.vomitos !== 'nao_informado' ? extra.vomitos : base.vomitos,
-    trauma: extra.trauma !== 'nao_informado' ? extra.trauma : base.trauma,
-    exposicao_intoxicacao:
-      extra.exposicao_intoxicacao !== 'nao_informado'
-        ? extra.exposicao_intoxicacao
-        : base.exposicao_intoxicacao,
-    gestante: extra.gestante !== 'nao_informado' ? extra.gestante : base.gestante,
-    pos_parto: extra.pos_parto !== 'nao_informado' ? extra.pos_parto : base.pos_parto,
+    intensidade: extra.intensidade !== 'nao_informado' ? extra.intensidade : base.intensidade,
+    
+    // ====== CAMPOS COM NEGAÇÃO PRIORITÁRIA ======
+    // "nao" prevalece sobre "sim" e sobre "nao_informado"
+    gestante: preferirComNegacao(base.gestante, extra.gestante, 'nao_informado', 'nao'),
+    pos_parto: preferirComNegacao(base.pos_parto, extra.pos_parto, 'nao_informado', 'nao'),
+    
+    // ====== FLAGS BOOLEANAS: false prevalece ======
+    falta_de_ar: preferirFlagComNegacao(base.falta_de_ar, extra.falta_de_ar),
+    dor_no_peito: preferirFlagComNegacao(base.dor_no_peito, extra.dor_no_peito),
+    desmaio: preferirFlagComNegacao(base.desmaio, extra.desmaio),
+    confusao: preferirFlagComNegacao(base.confusao, extra.confusao),
+    sangramento: preferirFlagComNegacao(base.sangramento, extra.sangramento),
+    febre: preferirFlagComNegacao(base.febre, extra.febre),
+    vomitos: preferirFlagComNegacao(base.vomitos, extra.vomitos),
+    trauma: preferirFlagComNegacao(base.trauma, extra.trauma),
+    exposicao_intoxicacao: preferirFlagComNegacao(base.exposicao_intoxicacao, extra.exposicao_intoxicacao),
+    
+    // ====== RISCO MENTAL: "nao_mencionado" é o menos prioritário ======
     risco_mental: extra.risco_mental !== 'nao_mencionado' ? extra.risco_mental : base.risco_mental,
+    
+    // ====== INFORMAÇÃO INSUFICIENTE: só é verdade se ambos forem ======
     informacao_insuficiente: extra.informacao_insuficiente && base.informacao_insuficiente,
+    
     informacoes_contraditorias: unirArrays(base.informacoes_contraditorias, extra.informacoes_contraditorias),
   };
 }

@@ -1,4 +1,3 @@
-
 import { registrarDecisao } from './auditoria.js';
 import { contemAlgum, normalizarTexto } from './normalizar.js';
 import { VERSAO_REGRAS, type DecisaoRegras, type RelatoEstruturado } from './tipos.js';
@@ -115,7 +114,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   const trauma = verificarTraumaGrave(relato, texto);
   if (trauma) return trauma;
 
-  // 3. Hipertensão associada a sinais de alarme neurológico/cardíaco (Regra 8)
+  // 3. Hipertensão associada a sinais de alarme neurológico/cardíaco
   const temPressao = contemAlgum(texto, ['pressao alta', 'pressao subiu', 'pressao elevada', 'hipertensao']);
   if (
     temPressao &&
@@ -143,7 +142,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 5. Regra 10: Bebê com febre (prioridade pediátrica hospitalar)
+  // 5. Bebê com febre (prioridade pediátrica hospitalar)
   if (relato.idade_grupo === 'bebe' && flagTriStateToBoolean(relato.febre)) {
     return {
       categoria_interna: 'emergencia',
@@ -154,7 +153,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 6. Regra 12.1: Saúde mental com risco iminente
+  // 6. Saúde mental com risco iminente
   if (relato.risco_mental === 'iminente') {
     return {
       categoria_interna: 'emergencia',
@@ -165,7 +164,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 7. Regra 12.2: Saúde mental sem risco imediato (CAPS)
+  // 7. Saúde mental sem risco imediato (CAPS)
   const regrasSaudeMental = (saudeMental as RegrasContainer).regras;
   if (relato.risco_mental === 'sem_risco_imediato' || casaRegra(texto, regrasSaudeMental)) {
     return {
@@ -177,7 +176,30 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 8. Picada de animal peçonhento (Regra 8: UPA 24h imediata)
+  // ======== NOVA REGRA: DOR AGUDA (UPA) ========
+  // Se o relato contém "dor" (genérico) e não é uma emergência,
+  // e tem intensidade intensa, ou piora, ou duração recente, encaminha para UPA
+  const temDor = relato.sintomas.some(s => /dor/.test(s) || s.includes('dor'));
+  const dorAguda =
+    temDor &&
+    (relato.intensidade === 'intensa' ||
+     relato.piora === 'sim' ||
+     relato.duracao !== 'nao_informado' ||
+     relato.inicio !== 'nao_informado' ||
+     // se não tem intensidade/duração mas é uma queixa de dor nova, assume aguda
+     (relato.sintomas.length === 1 && relato.sintomas[0].includes('dor')));
+
+  if (dorAguda) {
+    return {
+      categoria_interna: 'urgencia',
+      destino: 'UPA_24H',
+      resposta_id: 'upa_001',
+      regra_acionada: 'urgencia_dor_aguda_generica',
+      versao_regras: VERSAO_REGRAS,
+    };
+  }
+
+  // 8. Picada de animal peçonhento (UPA)
   if (contemAlgum(texto, ['escorpiao', 'aranha', 'cobra', 'peconhento', 'jararaca', 'cascavel', 'coral'])) {
     return {
       categoria_interna: 'urgencia',
@@ -188,7 +210,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 9. Sintoma urinário com febre ou dor lombar/costas (Regra 8: UPA 24h)
+  // 9. Sintoma urinário com febre ou dor lombar (UPA)
   const temUrinario = contemAlgum(texto, ['urinar', 'xixi', 'ardor ao urinar', 'dor ao urinar', 'queimacao ao urinar', 'infeccao urinaria']);
   if (
     temUrinario &&
@@ -203,7 +225,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 10. Febre com prostração ou persistente (UPA 24h)
+  // 10. Febre com prostração ou persistente (UPA)
   if (
     flagTriStateToBoolean(relato.febre) &&
     (contemAlgum(texto, ['fraqueza', 'prostracao', 'liquidos']) ||
@@ -218,7 +240,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // 11. Urgências gerais (UPA 24h)
+  // 11. Urgências gerais (UPA)
   const regrasUrgencias = (urgencias as RegrasContainer).regras;
   const urgencia = casaRegra(texto, regrasUrgencias);
   if (urgencia) {
