@@ -1,4 +1,7 @@
-// ia/extrator_de_informacoes.ts
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { GoogleGenAI, Type } from '@google/genai';
 import { contemAlgum, normalizarTexto, unicos } from './normalizar';
 import { RELATO_VAZIO, type RelatoEstruturado } from './tipos';
 import { validarRelato } from './validador_de_saida';
@@ -23,7 +26,7 @@ function marcar(flag: boolean, lista: string[], rotulo: string) {
   if (flag) lista.push(rotulo);
 }
 
-// ---- NOVAS FUNÇÕES DE EXTRAÇÃO ESPECIALIZADA ----
+// ---- FUNÇÕES DE EXTRAÇÃO ESPECIALIZADA ----
 function extrairSinaisObstetricos(n: string): string[] {
   const sinais: string[] = [];
   if (/(contra[cç][oõ]es?|contraindo|dor de parto|contração)/i.test(n))
@@ -51,8 +54,8 @@ function extrairSinaisTrauma(n: string): string[] {
     sinais.push('trauma_craniano');
   return sinais;
 }
-// -------------------------------------------------
 
+// ---- FALLBACK DETERMINÍSTICO COM REGEX ----
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
   const sintomas: string[] = [];
@@ -72,15 +75,14 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   const desmaio = contemAlgum(n, ['desmaio', 'desmaiou', 'desmaiei', 'apagou', 'nao responde', 'inconsciente']);
   const confusao = contemAlgum(n, ['confusa', 'confuso', 'desorientad', 'alteracao da consciencia', 'nao reconhece']);
   const sangramento = contemAlgum(n, ['sangramento', 'sangrando', 'sangue', 'hemorragia']);
-  const febre = contemAlgum(n, ['febre', 'febril', 'quentura']);
-  const vomitos = contemAlgum(n, ['vomito', 'vomitando', 'enjoo forte']);
-  // TRAUMA – agora capturamos mais mecanismos
+  const febre = contemAlgum(n, ['febre', 'febril', 'quentura', 'corpo quente']);
+  const vomitos = contemAlgum(n, ['vomito', 'vomitando', 'enjoo forte', 'nausea']);
   const trauma = contemAlgum(n, [
     'caiu', 'queda', 'bateu a cabeca', 'atropel', 'acidente',
     'queda de altura', 'trauma', 'colisao', 'capotamento',
   ]);
   const intoxicacao = contemAlgum(n, ['intoxic', 'envenen', 'tomou produto', 'ingestao de']);
-  const convulsao = contemAlgum(n, ['convulsao', 'convulsao', 'ataque convulsivo']);
+  const convulsao = contemAlgum(n, ['convulsao', 'ataque convulsivo']);
   const avcSinais = contemAlgum(n, [
     'fala enrolada',
     'nao consegue falar',
@@ -106,12 +108,20 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     'muito fraca',
     'prostrad',
   ]);
+  
   const sintomasLeves = contemAlgum(n, [
+    'gripe',
+    'gripado',
+    'gripada',
+    'tosse',
+    'tossindo',
     'coriza',
     'espirro',
     'tosse leve',
     'dor de garganta',
+    'garganta arranhando',
     'resfriado',
+    'resfriada',
     'vacina',
     'vacinacao',
     'consulta de rotina',
@@ -137,7 +147,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     'vai se machucar agora',
   ]);
 
-  // Sintomas
   if (faltaDeAr) sintomas.push('falta de ar');
   if (dorPeito) sintomas.push('dor no peito');
   if (desmaio) sintomas.push('desmaio');
@@ -145,8 +154,11 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   if (sangramento) sintomas.push('sangramento');
   if (febre) sintomas.push('febre');
   if (vomitos) sintomas.push('vômitos');
+  if (contemAlgum(n, ['gripe', 'gripado', 'gripada'])) sintomas.push('gripe');
+  if (contemAlgum(n, ['tosse', 'tossindo'])) sintomas.push('tosse');
+  if (contemAlgum(n, ['dor de cabeca', 'enxaqueca', 'cefaleia'])) sintomas.push('dor de cabeça');
+  if (contemAlgum(n, ['dor de garganta', 'garganta'])) sintomas.push('dor de garganta');
 
-  // CORREÇÃO: trauma agora guarda o mecanismo, não apenas "queda"
   if (trauma) {
     if (contemAlgum(n, ['atropel', 'acidente', 'colisao', 'capotamento'])) {
       sintomas.push('trauma por acidente');
@@ -176,7 +188,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   if (saudeMentalSofrimento) sintomas.push('sofrimento psíquico');
   if (contemAlgum(n, ['dor no corpo', 'dor pelo corpo'])) sintomas.push('dor no corpo');
 
-  // Sinais de alerta
   marcar(trauma, sinais, 'trauma');
   marcar(confusao, sinais, 'alteração da consciência');
   marcar(faltaDeAr, sinais, 'falta_de_ar');
@@ -185,18 +196,11 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   marcar(riscoIminente, sinais, 'risco_iminente_autoagressao');
   marcar(convulsao, sinais, 'convulsao');
 
-  // --- NOVA EXTRAÇÃO DE SINAIS OBSTÉTRICOS E TRAUMA ---
   const sinaisObstetricos = extrairSinaisObstetricos(n);
   const sinaisTrauma = extrairSinaisTrauma(n);
-  // Adicionamos também ao array de sinais_alerta para consistência
-  if (sinaisObstetricos.length) {
-    sinais.push(...sinaisObstetricos);
-  }
-  if (sinaisTrauma.length) {
-    sinais.push(...sinaisTrauma);
-  }
+  if (sinaisObstetricos.length) sinais.push(...sinaisObstetricos);
+  if (sinaisTrauma.length) sinais.push(...sinaisTrauma);
 
-  // Identificação de pessoa
   let pessoa = 'nao_informado';
   let terceiro = false;
   for (const [chave, rotulo] of Object.entries(TERCEIROS)) {
@@ -271,7 +275,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     risco_mental: riscoMental,
     informacao_insuficiente: !temConteudoClinico,
     informacoes_contraditorias: [],
-    // NOVOS CAMPOS
     sinais_obstetricos: unicos(sinaisObstetricos),
     sinais_trauma: unicos(sinaisTrauma),
   };
@@ -279,13 +282,85 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   return validarRelato(bruto).relato;
 }
 
+// ---- INTERPRETAÇÃO INTELIGENTE VIA GEMINI COM FALLBACK DETERMINÍSTICO ----
 export async function interpretarRelato(texto: string): Promise<RelatoEstruturado> {
-  // Extração determinística, mas mantemos a estrutura para compatibilidade
-  const primeira = extrairInformacoes(texto);
-  const validado = validarRelato(primeira);
-  if (validado.ok) return validado.relato;
-  // Se falhar, reextrai (mesmo resultado, mas mantido)
-  const segunda = extrairInformacoes(texto);
-  const revalidado = validarRelato(segunda);
-  return revalidado.relato;
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    console.warn("⚠️ GEMINI_API_KEY não encontrada no .env. Usando extrator local.");
+    return extrairInformacoes(texto);
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Extraia as informações clínicas deste relato informal: "${texto}"`,
+      config: {
+        responseMimeType: 'application/json',
+        systemInstruction: `Você é um triador do SUS. Identifique sintomas, sinônimos e gírias do usuário.
+Retorne um JSON clínico estruturado. Se o usuário falar sobre qualquer mal-estar físico, psicológico ou dúvidas sobre UBS/UPA, marque 'informacao_insuficiente' como false.`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            sintomas: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Termos normalizados (ex: 'gripe', 'tosse', 'dor de garganta', 'febre', 'dor de cabeça')",
+            },
+            sinais_alerta: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Sinais de gravidade: 'falta_de_ar', 'dor_toracica', 'convulsao', 'desmaio', etc.",
+            },
+            febre: { type: Type.BOOLEAN },
+            falta_de_ar: { type: Type.BOOLEAN },
+            dor_no_peito: { type: Type.BOOLEAN },
+            desmaio: { type: Type.BOOLEAN },
+            confusao: { type: Type.BOOLEAN },
+            sangramento: { type: Type.BOOLEAN },
+            vomitos: { type: Type.BOOLEAN },
+            trauma: { type: Type.BOOLEAN },
+            gestante: { type: Type.STRING, enum: ['sim', 'nao', 'nao_informado'] },
+            idade_grupo: { type: Type.STRING, enum: ['bebe', 'crianca', 'adolescente', 'adulto', 'idoso', 'nao_informado'] },
+            intensidade: { type: Type.STRING, enum: ['leve', 'moderada', 'intensa', 'nao_informado'] },
+            informacao_insuficiente: { type: Type.BOOLEAN },
+          },
+          required: ['sintomas', 'sinais_alerta', 'informacao_insuficiente'],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+
+    const sinaisObstetricos = extrairSinaisObstetricos(normalizarTexto(texto));
+    const sinaisTrauma = extrairSinaisTrauma(normalizarTexto(texto));
+
+    const dadosEstruturados: RelatoEstruturado = {
+      ...RELATO_VAZIO,
+      sintomas: unicos(parsed.sintomas || []),
+      sinais_alerta: unicos([...(parsed.sinais_alerta || []), ...sinaisObstetricos, ...sinaisTrauma]),
+      falta_de_ar: parsed.falta_de_ar ? true : 'nao_informado',
+      dor_no_peito: parsed.dor_no_peito ? true : 'nao_informado',
+      febre: parsed.febre ? true : 'nao_informado',
+      desmaio: parsed.desmaio ? true : 'nao_informado',
+      confusao: parsed.confusao ? true : 'nao_informado',
+      sangramento: parsed.sangramento ? true : 'nao_informado',
+      vomitos: parsed.vomitos ? true : 'nao_informado',
+      trauma: parsed.trauma ? true : 'nao_informado',
+      gestante: parsed.gestante || 'nao_informado',
+      idade_grupo: parsed.idade_grupo || 'nao_informado',
+      intensidade: parsed.intensidade || 'nao_informado',
+      informacao_insuficiente: parsed.informacao_insuficiente ?? false,
+      sinais_obstetricos: unicos(sinaisObstetricos),
+      sinais_trauma: unicos(sinaisTrauma),
+    };
+
+    const validado = validarRelato(dadosEstruturados);
+    return validado.relato;
+  } catch (error) {
+    console.error('Falha ao processar com o Gemini, acionando fallback determinístico:', error);
+    return extrairInformacoes(texto);
+  }
 }
