@@ -95,7 +95,7 @@ export async function startWhatsAppBot() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }) as any),
     },
-    printQRInTerminal: true, // 🔥 GARANTE QUE O QR APAREÇA
+    printQRInTerminal: true,
     logger: pino({ level: "silent" }) as any,
     browser: ["Direciona SUS", "Chrome", "1.0.0"],
   });
@@ -103,13 +103,24 @@ export async function startWhatsAppBot() {
   sock.ev.on("creds.update", saveCreds);
 
   // ============================================================
-  // CONEXÃO
+  // CONEXÃO (COM GERADOR DE LINK PARA IMAGEM DO QR)
   // ============================================================
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log("\n📲 Escaneie o QR Code abaixo com o WhatsApp:\n");
+      // 🔥 GERANDO LINK DIRETO PARA A IMAGEM DO QR CODE
+      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+
+      console.log("\n📲 *ESCANEIE ESTE QR CODE:*");
+      console.log("👉 Copie e cole o LINK abaixo no navegador para ver a imagem do QR:\n");
+      console.log(qrLink);
+      console.log("\n🔹 Abra o link no navegador, a imagem do QR vai aparecer.");
+      console.log("🔹 Escaneie a imagem com o WhatsApp do celular (WhatsApp Web).");
+      console.log("⚠️ O QR expira em 30 segundos! Seja rápido.\n");
+      console.log("(Caso prefira, QR ASCII abaixo, mas use o link acima!)\n");
+
+      // Mantém o ASCII como fallback
       QRCode.generate(qr, { small: true });
     }
 
