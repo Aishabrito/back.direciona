@@ -9,6 +9,13 @@ import QRCode from "qrcode-terminal";
 import pino from "pino";
 import dotenv from "dotenv";
 import fs from "fs";
+import http from "http";const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("Bot do WhatsApp rodando 24/7!");
+}).listen(PORT, () => {
+  console.log(`🌐 Servidor de monitoramento escutando na porta ${PORT}`);
+});
 import path from "path";
 
 // Garante o carregamento do .env a partir da raiz do projeto
