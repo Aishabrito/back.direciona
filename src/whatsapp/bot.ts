@@ -12,20 +12,27 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 
-// ===== SERVIDOR DE MONITORAMENTO (para Render) =====
-const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Bot do WhatsApp rodando 24/7!");
-}).listen(PORT, () => {
-  console.log(`🌐 Servidor de monitoramento escutando na porta ${PORT}`);
-});
-
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
-import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador";
-import type { EstadoConversa } from "../ia/tipos";
-import { buscarUnidadesProximas, type UnidadeSaude } from "../servicos/geolocalizacao";
+import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador.js";
+import type { EstadoConversa } from "../ia/tipos.js";
+import {
+  buscarUnidadesProximas,
+  type UnidadeSaude,
+} from "../servicos/geolocalizacao.js";
+
+// ============================================================
+// SERVIDOR DE MONITORAMENTO (para Render)
+// ============================================================
+const PORT = process.env.PORT || 3000;
+http
+  .createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Bot do WhatsApp rodando 24/7!");
+  })
+  .listen(PORT, () => {
+    console.log(`🌐 Servidor de monitoramento escutando na porta ${PORT}`);
+  });
 
 // ============================================================
 // SESSÕES EM MEMÓRIA
@@ -65,25 +72,27 @@ const MENSAGEM_BOAS_VINDAS =
 // COMANDOS DE RESET
 // ============================================================
 const comandosReset = [
-  "/reset", "reset", "reiniciar",
-  "comecar de novo", "começar de novo", "comecar dnv",
-  "vamos comecar dnv", "vamos começar de novo",
-  "voltar pro inicio", "voltar para o inicio", "voltar ao inicio",
-  "inicio", "início", "menu", "cancelar"
+  "/reset",
+  "reset",
+  "reiniciar",
+  "comecar de novo",
+  "começar de novo",
+  "comecar dnv",
+  "vamos comecar dnv",
+  "vamos começar de novo",
+  "voltar pro inicio",
+  "voltar para o inicio",
+  "voltar ao inicio",
+  "inicio",
+  "início",
+  "menu",
+  "cancelar",
 ];
 
 // ============================================================
 // FUNÇÃO PRINCIPAL DO BOT
 // ============================================================
 export async function startWhatsAppBot() {
-  // 🔥 FORÇA LIMPEZA se não houver credenciais
-  if (!process.env.WHATSAPP_CREDS) {
-    if (fs.existsSync(AUTH_DIR)) {
-      console.log("🧹 Nenhuma credencial fornecida. Removendo pasta de autenticação antiga...");
-      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-    }
-  }
-
   restaurarSessaoSeNecessario();
 
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -93,7 +102,10 @@ export async function startWhatsAppBot() {
     version,
     auth: {
       creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }) as any),
+      keys: makeCacheableSignalKeyStore(
+        state.keys,
+        pino({ level: "silent" }) as any,
+      ),
     },
     printQRInTerminal: true,
     logger: pino({ level: "silent" }) as any,
@@ -103,39 +115,48 @@ export async function startWhatsAppBot() {
   sock.ev.on("creds.update", saveCreds);
 
   // ============================================================
-  // CONEXÃO (COM GERADOR DE LINK PARA IMAGEM DO QR)
+  // CONEXÃO
   // ============================================================
+  let qrExibido = false;
+
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
-      // 🔥 GERANDO LINK DIRETO PARA A IMAGEM DO QR CODE
-      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qr)}`;
+    if (qr && !qrExibido) {
+      qrExibido = true;
+      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
+        qr,
+      )}`;
 
       console.log("\n📲 *ESCANEIE ESTE QR CODE:*");
       console.log("👉 Copie e cole o LINK abaixo no navegador para ver a imagem do QR:\n");
       console.log(qrLink);
       console.log("\n🔹 Abra o link no navegador, a imagem do QR vai aparecer.");
-      console.log("🔹 Escaneie a imagem com o WhatsApp do celular (WhatsApp Web).");
-      console.log("⚠️ O QR expira em 30 segundos! Seja rápido.\n");
-      console.log("(Caso prefira, QR ASCII abaixo, mas use o link acima!)\n");
-
-      // Mantém o ASCII como fallback
+      console.log("🔹 Escaneie a imagem com o WhatsApp do celular.");
+      console.log("⏳ O QR NÃO VAI EXPIRAR AGORA – eu parei as reinicializações.\n");
       QRCode.generate(qr, { small: true });
     }
 
     if (connection === "close") {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-      if (statusCode !== DisconnectReason.loggedOut) {
+      if (
+        statusCode !== DisconnectReason.loggedOut &&
+        statusCode !== 401 &&
+        statusCode !== 403
+      ) {
         console.log("🔄 Reconectando...");
         startWhatsAppBot();
       } else {
-        console.log("❌ Desconectado permanentemente. Delete a pasta 'auth_info_baileys' e reinicie.");
+        console.log(
+          "❌ Desconectado permanentemente. Delete a pasta 'auth_info_baileys' e reinicie.",
+        );
+        qrExibido = false;
       }
     }
 
     if (connection === "open") {
       console.log("✅ Bot do WhatsApp conectado com sucesso!");
+      qrExibido = false;
     }
   });
 
@@ -149,7 +170,8 @@ export async function startWhatsAppBot() {
     if (!msg.message || msg.key.fromMe) return;
 
     const sender = msg.key.remoteJid;
-    if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast") return;
+    if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast")
+      return;
 
     // ---- TEXTO DA MENSAGEM ----
     const text =
@@ -167,18 +189,23 @@ export async function startWhatsAppBot() {
       const lat = location.degreesLatitude;
       const lng = location.degreesLongitude;
 
-      // 🔧 CORREÇÃO 1: valida se lat/lng são números
-      if (lat === undefined || lng === undefined || lat === null || lng === null) {
+      if (
+        lat === undefined ||
+        lng === undefined ||
+        lat === null ||
+        lng === null
+      ) {
         await sock.sendMessage(sender, {
-          text: "📍 Localização inválida. Tente compartilhar novamente usando o botão de anexo do WhatsApp."
+          text: "📍 Localização inválida. Tente compartilhar novamente usando o botão de anexo do WhatsApp.",
         });
         await sock.sendPresenceUpdate("paused", sender);
         return;
       }
 
       const nomeLocal = location.name || "Localização compartilhada";
-
-      console.log(`📍 Localização recebida de [${sender}]: ${lat}, ${lng} - Nome: ${nomeLocal}`);
+      console.log(
+        `📍 Localização recebida de [${sender}]: ${lat}, ${lng} - Nome: ${nomeLocal}`,
+      );
 
       const estadoAtual = sessions.get(sender);
 
@@ -194,12 +221,19 @@ export async function startWhatsAppBot() {
             resposta =
               `📍 Não encontrei unidades de saúde públicas próximas a você.\n\n` +
               `Tente buscar manualmente no Google Maps:\n` +
-              `https://www.google.com/maps/search/${tipo === "HOSPITAL" ? "hospital+publico" : tipo === "UPA" ? "upa" : "ubs"}/@${lat},${lng},15z`;
+              `https://www.google.com/maps/search/${
+                tipo === "HOSPITAL"
+                  ? "hospital+publico"
+                  : tipo === "UPA"
+                    ? "upa"
+                    : "ubs"
+              }/@${lat},${lng},15z`;
           } else {
-            const tipoNome = tipo === "HOSPITAL" ? "HOSPITAL" : tipo === "UPA" ? "UPA" : "UBS";
+            const tipoNome =
+              tipo === "HOSPITAL" ? "HOSPITAL" : tipo === "UPA" ? "UPA" : "UBS";
             resposta = `📍 *Unidades de saúde pública (${tipoNome}) mais próximas:*\n\n`;
 
-            unidades.forEach((unidade, index) => {
+            unidades.forEach((unidade: UnidadeSaude, index: number) => {
               const distanciaKm = (unidade.distancia / 1000).toFixed(1);
               resposta +=
                 `${index + 1}. 🏥 *${unidade.nome}*\n` +
@@ -213,7 +247,6 @@ export async function startWhatsAppBot() {
               `_Lembre-se: em emergências, acione o SAMU 192._`;
           }
 
-          // Limpa o estado de localização
           estadoAtual.aguardandoLocalizacao = undefined;
           sessions.set(sender, estadoAtual);
 
@@ -223,13 +256,12 @@ export async function startWhatsAppBot() {
         } catch (error) {
           console.error("❌ Erro ao buscar unidades:", error);
           await sock.sendMessage(sender, {
-            text: "❌ Ocorreu um erro ao buscar unidades próximas. Tente novamente mais tarde."
+            text: "❌ Ocorreu um erro ao buscar unidades próximas. Tente novamente mais tarde.",
           });
           await sock.sendPresenceUpdate("paused", sender);
           return;
         }
       } else {
-        // Não estava aguardando localização
         await sock.sendMessage(sender, {
           text:
             `📍 Localização recebida!\n\n` +
@@ -237,7 +269,7 @@ export async function startWhatsAppBot() {
             `- "Quero a UPA mais próxima"\n` +
             `- "Quero o hospital mais próximo"\n` +
             `- "Quero a UBS mais próxima"\n\n` +
-            `Ou continue descrevendo seus sintomas para orientação médica.`
+            `Ou continue descrevendo seus sintomas para orientação médica.`,
         });
         await sock.sendPresenceUpdate("paused", sender);
         return;
@@ -278,32 +310,49 @@ export async function startWhatsAppBot() {
     // ============================================================
     const estadoAtual = sessions.get(sender);
     if (estadoAtual?.aguardandoLocalizacao?.ativo) {
-      const textoSim = ["sim", "quero", "sim quero", "quero sim", "ok", "pode ser", "gostaria", "por favor", "manda"];
-      const textoNao = ["não", "nao", "dispensa", "não quero", "nao quero", "depois", "agora não"];
+      const textoSim = [
+        "sim",
+        "quero",
+        "sim quero",
+        "quero sim",
+        "ok",
+        "pode ser",
+        "gostaria",
+        "por favor",
+        "manda",
+      ];
+      const textoNao = [
+        "não",
+        "nao",
+        "dispensa",
+        "não quero",
+        "nao quero",
+        "depois",
+        "agora não",
+      ];
 
-      const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const textoLimpo = cleanText
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
-      if (textoSim.some(s => textoLimpo.includes(s))) {
-        // Usuário disse sim → pede a localização
+      if (textoSim.some((s) => textoLimpo.includes(s))) {
         await sock.sendMessage(sender, {
           text:
             `📍 Ótimo! Por favor, compartilhe sua localização atual usando o botão de anexo do WhatsApp (📎 → Localização).\n\n` +
-            `Isso me ajudará a encontrar a unidade mais próxima para você.`
+            `Isso me ajudará a encontrar a unidade mais próxima para você.`,
         });
-        // Mantém o estado ativo (aguardando a localização)
         await sock.sendPresenceUpdate("paused", sender);
         return;
-      } else if (textoNao.some(s => textoLimpo.includes(s))) {
-        // Usuário disse não → cancela
+      } else if (textoNao.some((s) => textoLimpo.includes(s))) {
         estadoAtual.aguardandoLocalizacao = undefined;
         sessions.set(sender, estadoAtual);
         await sock.sendMessage(sender, {
-          text: "Tudo bem! Foco nos sintomas então. Posso ajudar com mais algo?"
+          text: "Tudo bem! Foco nos sintomas então. Posso ajudar com mais algo?",
         });
         await sock.sendPresenceUpdate("paused", sender);
         return;
       }
-      // Se não for sim nem não, continua o fluxo normal (pode ser outra queixa)
     }
 
     // ============================================================
@@ -313,8 +362,12 @@ export async function startWhatsAppBot() {
       await sock.sendPresenceUpdate("composing", sender);
 
       if (!sessions.has(sender)) {
-        console.log(`🆕 Criando nova sessão para [${sender}] e enviando boas-vindas.`);
-        const novoEstado = JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa;
+        console.log(
+          `🆕 Criando nova sessão para [${sender}] e enviando boas-vindas.`,
+        );
+        const novoEstado = JSON.parse(
+          JSON.stringify(ESTADO_INICIAL),
+        ) as EstadoConversa;
         sessions.set(sender, novoEstado);
         await sock.sendMessage(sender, { text: MENSAGEM_BOAS_VINDAS });
         return;
@@ -322,10 +375,16 @@ export async function startWhatsAppBot() {
 
       console.log("⏳ Enviando dados para o orquestrador...");
       const estadoAtualProcesso = sessions.get(sender)!;
-      const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
+      const { resultado, estado: novoEstado } = await processarTurno(
+        cleanText,
+        estadoAtualProcesso,
+      );
       sessions.set(sender, novoEstado);
 
-      console.log("📤 Resposta gerada pela IA/Regras:", JSON.stringify(resultado, null, 2));
+      console.log(
+        "📤 Resposta gerada pela IA/Regras:",
+        JSON.stringify(resultado, null, 2),
+      );
 
       // ============================================================
       // 6. MONTAGEM DA RESPOSTA (com pergunta de localização)
@@ -335,21 +394,30 @@ export async function startWhatsAppBot() {
       if (resultado.tipo === "orientacao") {
         const respostaId = resultado.decisao?.resposta_id;
 
-        // Decide qual tipo de unidade perguntar
         let tipoLocalizacao: "UPA" | "HOSPITAL" | "UBS" | null = null;
 
         if (respostaId === "upa_001") tipoLocalizacao = "UPA";
-        else if (respostaId === "emergencia_001" || respostaId === "obstetricia_001" || respostaId === "pediatria_emergencia_001" || respostaId === "mental_emergencia_001") {
+        else if (
+          respostaId === "emergencia_001" ||
+          respostaId === "obstetricia_001" ||
+          respostaId === "pediatria_emergencia_001" ||
+          respostaId === "mental_emergencia_001"
+        ) {
           tipoLocalizacao = "HOSPITAL";
         } else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
 
         if (tipoLocalizacao) {
-          const nomeUnidade = tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
+          const nomeUnidade =
+            tipoLocalizacao === "UPA"
+              ? "UPA"
+              : tipoLocalizacao === "HOSPITAL"
+                ? "hospital"
+                : "UBS";
+
           mensagemFinal +=
             `\n\n📍 *Gostaria de saber a ${nomeUnidade} mais próxima de você?* 🙋\n` +
             `Compartilhe sua localização (botão de anexo → Localização) ou digite *"sim"* para eu te pedir a localização.`;
 
-          // Marca no estado que está aguardando localização
           const estadoAtualApos = sessions.get(sender)!;
           estadoAtualApos.aguardandoLocalizacao = {
             ativo: true,

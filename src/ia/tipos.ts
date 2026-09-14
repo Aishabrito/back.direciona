@@ -27,7 +27,7 @@ export const CATEGORIAS_INTERNAS = [
   'informacao_insuficiente',
   'fora_do_escopo',
 ] as const;
-
+ 
 export const DESTINOS = [
   'SAMU_192',
   'PRONTO_SOCORRO',
@@ -45,6 +45,7 @@ export type RiscoMental = (typeof RISCOS_MENTAIS)[number];
 export type CategoriaInterna = (typeof CATEGORIAS_INTERNAS)[number];
 export type Destino = (typeof DESTINOS)[number];
 export type FlagTriState = boolean | 'nao_informado';
+
 
 export type RelatoEstruturado = {
   relato_sobre_terceiro: boolean;
@@ -103,13 +104,6 @@ export type TurnoResultado =
       tema: string;
     };
 
-export type EstadoConversa = {
-  relatos: RelatoEstruturado[];
-  rodadasPerguntas: number;
-  temaPergunta?: string;
-  texto_original_acumulado: string;
-};
-
 export const RELATO_VAZIO: RelatoEstruturado = {
   relato_sobre_terceiro: false,
   pessoa: 'nao_informado',
@@ -137,4 +131,16 @@ export const RELATO_VAZIO: RelatoEstruturado = {
   sinais_obstetricos: [],
   sinais_trauma: [],
   texto_original_acumulado: '',
+};
+export type EstadoConversa = {
+  relatos: RelatoEstruturado[];
+  rodadasPerguntas: number;
+  temaPergunta?: string;
+  texto_original_acumulado: string;
+  // NOVO
+  aguardandoLocalizacao?: {
+    ativo: boolean;
+    tipo: 'UPA' | 'HOSPITAL' | 'UBS' | 'TODOS';
+    mensagemOriginal: string; // para lembrar o que foi perguntado
+  };
 };
