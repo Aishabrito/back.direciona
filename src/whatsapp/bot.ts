@@ -5,14 +5,10 @@ import makeWASocket, {
   makeCacheableSignalKeyStore,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
-import QRCode from "qrcode-terminal";
 import pino from "pino";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-// ❌ NÃO importar http — não é mais usado
-
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import type { EstadoConversa } from "../ia/tipos.js";
@@ -20,12 +16,16 @@ import {
   buscarUnidadesProximas,
   type UnidadeSaude,
 } from "../servicos/geolocalizacao.js";
+import { setQrCode } from "../index.js";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 // ============================================================
 // SESSÕES EM MEMÓRIA
 // ============================================================
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
+
 // ============================================================
 // RESTAURAÇÃO DE CREDENCIAIS (para Render)
 // ============================================================
@@ -46,7 +46,7 @@ function restaurarSessaoSeNecessario() {
 }
 
 // ============================================================
-// MENSAGEM DE BOAS‑VINDAS
+// MENSAGEM DE BOAS-VINDAS
 // ============================================================
 const MENSAGEM_BOAS_VINDAS =
   "Olá! Sou o assistente virtual do *Direciona SUS* 🏥\n\n" +
@@ -58,21 +58,11 @@ const MENSAGEM_BOAS_VINDAS =
 // COMANDOS DE RESET
 // ============================================================
 const comandosReset = [
-  "/reset",
-  "reset",
-  "reiniciar",
-  "comecar de novo",
-  "começar de novo",
-  "comecar dnv",
-  "vamos comecar dnv",
-  "vamos começar de novo",
-  "voltar pro inicio",
-  "voltar para o inicio",
-  "voltar ao inicio",
-  "inicio",
-  "início",
-  "menu",
-  "cancelar",
+  "/reset", "reset", "reiniciar",
+  "comecar de novo", "começar de novo", "comecar dnv",
+  "vamos comecar dnv", "vamos começar de novo",
+  "voltar pro inicio", "voltar para o inicio", "voltar ao inicio",
+  "inicio", "início", "menu", "cancelar",
 ];
 
 // ============================================================
@@ -93,7 +83,6 @@ export async function startWhatsAppBot() {
         pino({ level: "silent" }) as any,
       ),
     },
-    printQRInTerminal: true,
     logger: pino({ level: "silent" }) as any,
     browser: ["Direciona SUS", "Chrome", "1.0.0"],
   });
@@ -103,24 +92,14 @@ export async function startWhatsAppBot() {
   // ============================================================
   // CONEXÃO
   // ============================================================
-  let qrExibido = false;
-
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr && !qrExibido) {
-      qrExibido = true;
-      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-        qr,
-      )}`;
-
-      console.log("\n📲 *ESCANEIE ESTE QR CODE:*");
-      console.log("👉 Copie e cole o LINK abaixo no navegador para ver a imagem do QR:\n");
-      console.log(qrLink);
-      console.log("\n🔹 Abra o link no navegador, a imagem do QR vai aparecer.");
-      console.log("🔹 Escaneie a imagem com o WhatsApp do celular.");
-      console.log("⏳ O QR NÃO VAI EXPIRAR AGORA – eu parei as reinicializações.\n");
-      QRCode.generate(qr, { small: true });
+    if (qr) {
+      setQrCode(qr);
+      console.log("\n📲 *NOVO QR CODE GERADO!*");
+      console.log("👉 Abra no navegador: https://SEU-BACKEND.onrender.com/qr");
+      console.log("⏳ Escaneie em até 20 segundos!\n");
     }
 
     if (connection === "close") {
@@ -136,13 +115,12 @@ export async function startWhatsAppBot() {
         console.log(
           "❌ Desconectado permanentemente. Delete a pasta 'auth_info_baileys' e reinicie.",
         );
-        qrExibido = false;
       }
     }
 
     if (connection === "open") {
+      setQrCode(null);
       console.log("✅ Bot do WhatsApp conectado com sucesso!");
-      qrExibido = false;
     }
   });
 
@@ -159,7 +137,6 @@ export async function startWhatsAppBot() {
     if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast")
       return;
 
-    // ---- TEXTO DA MENSAGEM ----
     const text =
       msg.message.conversation ||
       msg.message.extendedTextMessage?.text ||
@@ -167,190 +144,112 @@ export async function startWhatsAppBot() {
       "";
     const cleanText = text.trim();
 
-    // ============================================================
-    // 1. CAPTURA DE LOCALIZAÇÃO
-    // ============================================================
+    // ---- CAPTURA DE LOCALIZAÇÃO ----
     const location = msg.message.locationMessage;
     if (location) {
       const lat = location.degreesLatitude;
       const lng = location.degreesLongitude;
 
-      if (
-        lat === undefined ||
-        lng === undefined ||
-        lat === null ||
-        lng === null
-      ) {
+      if (lat == null || lng == null) {
         await sock.sendMessage(sender, {
-          text: "📍 Localização inválida. Tente compartilhar novamente usando o botão de anexo do WhatsApp.",
+          text: "📍 Localização inválida. Tente compartilhar novamente.",
         });
-        await sock.sendPresenceUpdate("paused", sender);
         return;
       }
-
-      const nomeLocal = location.name || "Localização compartilhada";
-      console.log(
-        `📍 Localização recebida de [${sender}]: ${lat}, ${lng} - Nome: ${nomeLocal}`,
-      );
 
       const estadoAtual = sessions.get(sender);
 
       if (estadoAtual?.aguardandoLocalizacao?.ativo) {
         const tipo = estadoAtual.aguardandoLocalizacao.tipo;
-        console.log(`🔍 Buscando ${tipo} mais próximo...`);
-
         try {
           const unidades = await buscarUnidadesProximas(lat, lng, tipo);
-
           let resposta = "";
+
           if (unidades.length === 0) {
             resposta =
-              `📍 Não encontrei unidades de saúde públicas próximas a você.\n\n` +
-              `Tente buscar manualmente no Google Maps:\n` +
-              `https://www.google.com/maps/search/${
-                tipo === "HOSPITAL"
-                  ? "hospital+publico"
-                  : tipo === "UPA"
-                    ? "upa"
-                    : "ubs"
-              }/@${lat},${lng},15z`;
+              `📍 Não encontrei unidades públicas próximas.\n\n` +
+              `Busque no Google Maps:\n` +
+              `https://www.google.com/maps/search/${tipo}/@${lat},${lng},15z`;
           } else {
-            const tipoNome =
-              tipo === "HOSPITAL" ? "HOSPITAL" : tipo === "UPA" ? "UPA" : "UBS";
-            resposta = `📍 *Unidades de saúde pública (${tipoNome}) mais próximas:*\n\n`;
-
-            unidades.forEach((unidade: UnidadeSaude, index: number) => {
-              const distanciaKm = (unidade.distancia / 1000).toFixed(1);
+            resposta = `📍 *Unidades (${tipo}) mais próximas:*\n\n`;
+            unidades.forEach((u: UnidadeSaude, i: number) => {
               resposta +=
-                `${index + 1}. 🏥 *${unidade.nome}*\n` +
-                `   📌 ${unidade.endereco}\n` +
-                `   📏 ${distanciaKm} km de distância\n` +
-                `   🔗 [Abrir no Google Maps](${unidade.linkGoogleMaps})\n\n`;
+                `${i + 1}. 🏥 *${u.nome}*\n` +
+                `   📌 ${u.endereco}\n` +
+                `   📏 ${(u.distancia / 1000).toFixed(1)} km\n` +
+                `   🔗 ${u.linkGoogleMaps}\n\n`;
             });
-
-            resposta +=
-              `_⚠️ Recomendo ligar antes para confirmar o atendimento e horários._\n` +
-              `_Lembre-se: em emergências, acione o SAMU 192._`;
+            resposta += `_⚠️ Ligue antes para confirmar atendimento._`;
           }
 
           estadoAtual.aguardandoLocalizacao = undefined;
           sessions.set(sender, estadoAtual);
-
           await sock.sendMessage(sender, { text: resposta });
-          await sock.sendPresenceUpdate("paused", sender);
-          return;
-        } catch (error) {
-          console.error("❌ Erro ao buscar unidades:", error);
+        } catch (err) {
+          console.error("❌ Erro ao buscar unidades:", err);
           await sock.sendMessage(sender, {
-            text: "❌ Ocorreu um erro ao buscar unidades próximas. Tente novamente mais tarde.",
+            text: "❌ Erro ao buscar unidades próximas.",
           });
-          await sock.sendPresenceUpdate("paused", sender);
-          return;
         }
+        return;
       } else {
         await sock.sendMessage(sender, {
           text:
             `📍 Localização recebida!\n\n` +
-            `Se quiser encontrar a UPA, Hospital ou UBS mais próxima, diga:\n` +
-            `- "Quero a UPA mais próxima"\n` +
-            `- "Quero o hospital mais próximo"\n` +
-            `- "Quero a UBS mais próxima"\n\n` +
-            `Ou continue descrevendo seus sintomas para orientação médica.`,
+            `Diga "Quero a UPA mais próxima" para eu buscar.`,
         });
-        await sock.sendPresenceUpdate("paused", sender);
         return;
       }
     }
 
-    // ============================================================
-    // 2. SE NÃO HOUVER TEXTO, IGNORA
-    // ============================================================
     if (!cleanText) return;
 
-    console.log(`\n📩 Mensagem recebida de [${sender}]: "${cleanText}"`);
+    console.log(`\n📩 [${sender}] ${cleanText}`);
 
-    // ============================================================
-    // 3. COMANDO /RESET
-    // ============================================================
-    const textoLimpoComparacao = cleanText
+    // ---- RESET ----
+    const textoLimpo = cleanText
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
-    const deveReiniciar = comandosReset.some((cmd) => {
+    if (comandosReset.some((cmd) => {
       const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      return textoLimpoComparacao === cmdLimpo;
-    });
-
-    if (deveReiniciar) {
+      return textoLimpo === cmdLimpo;
+    })) {
       sessions.delete(sender);
-      console.log(`🔄 Sessão reiniciada para [${sender}]`);
       await sock.sendMessage(sender, {
-        text: `🔄 Conversa reiniciada.\n\n${MENSAGEM_BOAS_VINDAS}`,
+        text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}`,
       });
       return;
     }
 
-    // ============================================================
-    // 4. VERIFICA SE O USUÁRIO RESPONDEU "SIM" À PERGUNTA DE LOC
-    // ============================================================
+    // ---- RESPONDE SIM/NÃO PARA LOCALIZAÇÃO ----
     const estadoAtual = sessions.get(sender);
     if (estadoAtual?.aguardandoLocalizacao?.ativo) {
-      const textoSim = [
-        "sim",
-        "quero",
-        "sim quero",
-        "quero sim",
-        "ok",
-        "pode ser",
-        "gostaria",
-        "por favor",
-        "manda",
-      ];
-      const textoNao = [
-        "não",
-        "nao",
-        "dispensa",
-        "não quero",
-        "nao quero",
-        "depois",
-        "agora não",
-      ];
+      const sim = ["sim", "quero", "ok", "pode ser", "por favor", "manda"];
+      const nao = ["não", "nao", "dispensa", "depois", "agora não"];
 
-      const textoLimpo = cleanText
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-
-      if (textoSim.some((s) => textoLimpo.includes(s))) {
+      if (sim.some((s) => textoLimpo.includes(s))) {
         await sock.sendMessage(sender, {
           text:
-            `📍 Ótimo! Por favor, compartilhe sua localização atual usando o botão de anexo do WhatsApp (📎 → Localização).\n\n` +
-            `Isso me ajudará a encontrar a unidade mais próxima para você.`,
+            `📍 Compartilhe sua localização (📎 → Localização) para eu buscar a unidade.`,
         });
-        await sock.sendPresenceUpdate("paused", sender);
         return;
-      } else if (textoNao.some((s) => textoLimpo.includes(s))) {
+      } else if (nao.some((s) => textoLimpo.includes(s))) {
         estadoAtual.aguardandoLocalizacao = undefined;
         sessions.set(sender, estadoAtual);
         await sock.sendMessage(sender, {
-          text: "Tudo bem! Foco nos sintomas então. Posso ajudar com mais algo?",
+          text: "Tudo bem! Posso ajudar com mais algo?",
         });
-        await sock.sendPresenceUpdate("paused", sender);
         return;
       }
     }
 
-    // ============================================================
-    // 5. PROCESSA O TURNO NORMAL (IA / REGRAS)
-    // ============================================================
+    // ---- PROCESSA TURNO ----
     try {
       await sock.sendPresenceUpdate("composing", sender);
 
       if (!sessions.has(sender)) {
-        console.log(
-          `🆕 Criando nova sessão para [${sender}] e enviando boas-vindas.`,
-        );
         const novoEstado = JSON.parse(
           JSON.stringify(ESTADO_INICIAL),
         ) as EstadoConversa;
@@ -359,7 +258,6 @@ export async function startWhatsAppBot() {
         return;
       }
 
-      console.log("⏳ Enviando dados para o orquestrador...");
       const estadoAtualProcesso = sessions.get(sender)!;
       const { resultado, estado: novoEstado } = await processarTurno(
         cleanText,
@@ -367,61 +265,39 @@ export async function startWhatsAppBot() {
       );
       sessions.set(sender, novoEstado);
 
-      console.log(
-        "📤 Resposta gerada pela IA/Regras:",
-        JSON.stringify(resultado, null, 2),
-      );
-
-      // ============================================================
-      // 6. MONTAGEM DA RESPOSTA (com pergunta de localização)
-      // ============================================================
       let mensagemFinal = resultado.texto;
 
       if (resultado.tipo === "orientacao") {
         const respostaId = resultado.decisao?.resposta_id;
-
         let tipoLocalizacao: "UPA" | "HOSPITAL" | "UBS" | null = null;
 
         if (respostaId === "upa_001") tipoLocalizacao = "UPA";
         else if (
-          respostaId === "emergencia_001" ||
-          respostaId === "obstetricia_001" ||
-          respostaId === "pediatria_emergencia_001" ||
-          respostaId === "mental_emergencia_001"
-        ) {
-          tipoLocalizacao = "HOSPITAL";
-        } else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
+          ["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId)
+        ) tipoLocalizacao = "HOSPITAL";
+        else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
 
         if (tipoLocalizacao) {
-          const nomeUnidade =
-            tipoLocalizacao === "UPA"
-              ? "UPA"
-              : tipoLocalizacao === "HOSPITAL"
-                ? "hospital"
-                : "UBS";
-
+          const nome = tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
           mensagemFinal +=
-            `\n\n📍 *Gostaria de saber a ${nomeUnidade} mais próxima de você?* 🙋\n` +
-            `Compartilhe sua localização (botão de anexo → Localização) ou digite *"sim"* para eu te pedir a localização.`;
+            `\n\n📍 *Quer saber a ${nome} mais próxima?* 🙋\n` +
+            `Responda *"sim"* e depois compartilhe sua localização.`;
 
-          const estadoAtualApos = sessions.get(sender)!;
-          estadoAtualApos.aguardandoLocalizacao = {
+          const estadoApos = sessions.get(sender)!;
+          estadoApos.aguardandoLocalizacao = {
             ativo: true,
             tipo: tipoLocalizacao,
             mensagemOriginal: mensagemFinal,
           };
-          sessions.set(sender, estadoAtualApos);
+          sessions.set(sender, estadoApos);
         }
       }
 
-      // ============================================================
-      // 7. ENVIA A MENSAGEM FINAL
-      // ============================================================
       await sock.sendMessage(sender, { text: mensagemFinal });
     } catch (error) {
-      console.error("❌ Erro fatal ao processar turno:", error);
+      console.error("❌ Erro no processamento:", error);
       await sock.sendMessage(sender, {
-        text: "❌ Ocorreu um erro ao processar sua mensagem. Tente novamente ou digite /reset.",
+        text: "❌ Ocorreu um erro. Tente novamente ou digite /reset.",
       });
     } finally {
       await sock.sendPresenceUpdate("paused", sender);
