@@ -9,8 +9,8 @@ import QRCode from "qrcode-terminal";
 import pino from "pino";
 import dotenv from "dotenv";
 import fs from "fs";
-import http from "http";
 import path from "path";
+// ❌ NÃO importar http — não é mais usado
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
@@ -22,24 +22,10 @@ import {
 } from "../servicos/geolocalizacao.js";
 
 // ============================================================
-// SERVIDOR DE MONITORAMENTO (para Render)
-// ============================================================
-const PORT = process.env.PORT || 3000;
-http
-  .createServer((req, res) => {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Bot do WhatsApp rodando 24/7!");
-  })
-  .listen(PORT, () => {
-    console.log(`🌐 Servidor de monitoramento escutando na porta ${PORT}`);
-  });
-
-// ============================================================
 // SESSÕES EM MEMÓRIA
 // ============================================================
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
-
 // ============================================================
 // RESTAURAÇÃO DE CREDENCIAIS (para Render)
 // ============================================================
