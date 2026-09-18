@@ -4,7 +4,7 @@
   "description": "Bot do WhatsApp com a mesma lógica do app Direciona SUS",
   "main": "dist/index.js",
   "scripts": {
-    "start": "tsx src/index.ts",
+    "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "prod": "node dist/index.js"
@@ -12,11 +12,6 @@
   "dependencies": {
     "@google/genai": "^2.21.0",
     "@hapi/boom": "^10.0.1",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^4.17.25",
-    "@types/fast-levenshtein": "^0.0.4",
-    "@types/node": "^20.19.43",
-    "@types/qrcode-terminal": "^0.12.2",
     "@whiskeysockets/baileys": "^6.7.9",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
@@ -27,8 +22,16 @@
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/fast-levenshtein": "^0.0.4",
+    "@types/node": "^20.19.43",
     "@types/qrcode": "^1.5.6",
+    "@types/qrcode-terminal": "^0.12.2",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
