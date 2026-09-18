@@ -3,33 +3,26 @@
 export type UnidadeSaude = {
   nome: string;
   endereco: string;
-  distancia: number; // em metros
+  distancia: number;
   lat: number;
   lng: number;
   linkGoogleMaps: string;
 };
 
-/**
- * Busca unidades de saúde públicas (hospitais, UPAs, UBS) próximas a uma localização.
- * @param lat Latitude
- * @param lng Longitude
- * @param tipo 'UPA' | 'HOSPITAL' | 'UBS' | 'TODOS'
- * @param raioEmMetros Raio de busca (padrão 5000m = 5km)
- */
 export async function buscarUnidadesProximas(
   lat: number,
   lng: number,
   tipo: 'UPA' | 'HOSPITAL' | 'UBS' | 'TODOS' = 'TODOS',
   raioEmMetros: number = 5000,
 ): Promise<UnidadeSaude[]> {
-  // Monta a query Overpass conforme o tipo
+  // [FIX 14] regex Overpass agora é case-insensitive com `,i`
   let filtros = '';
 
   if (tipo === 'UPA') {
     filtros = `
       node["amenity"="clinic"](around:${raioEmMetros},${lat},${lng});
       node["healthcare"="clinic"](around:${raioEmMetros},${lat},${lng});
-      node["amenity"="hospital"][name~"UPA"](around:${raioEmMetros},${lat},${lng});
+      node["amenity"="hospital"]["name"~"UPA",i](around:${raioEmMetros},${lat},${lng});
     `;
   } else if (tipo === 'HOSPITAL') {
     filtros = `
@@ -38,9 +31,8 @@ export async function buscarUnidadesProximas(
     `;
   } else if (tipo === 'UBS') {
     filtros = `
-      node["amenity"="clinic"][name~"UBS"](around:${raioEmMetros},${lat},${lng});
-      node["healthcare"="clinic"][name~"UBS"](around:${raioEmMetros},${lat},${lng});
-      node["amenity"="hospital"][name~"UBS"](around:${raioEmMetros},${lat},${lng});
+      node["amenity"="clinic"]["name"~"UBS",i](around:${raioEmMetros},${lat},${lng});
+      node["healthcare"="clinic"]["name"~"UBS",i](around:${raioEmMetros},${lat},${lng});
     `;
   } else {
     filtros = `
@@ -51,40 +43,26 @@ export async function buscarUnidadesProximas(
     `;
   }
 
-  const overpassQuery = `
-    [out:json];
-    (
-      ${filtros}
-    );
-    out center;
-  `;
-
+  const overpassQuery = `[out:json];(${filtros});out center;`;
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
 
   try {
     const response = await fetch(url);
     const data = await response.json();
-
-    if (!data.elements || data.elements.length === 0) {
-      return [];
-    }
+    if (!data.elements || data.elements.length === 0) return [];
 
     const resultados: UnidadeSaude[] = [];
 
     for (const el of data.elements) {
       const elLat = el.lat || el.center?.lat || 0;
       const elLon = el.lon || el.center?.lon || 0;
-
       if (elLat === 0 || elLon === 0) continue;
 
       const nome = el.tags?.name || 'Unidade de Saúde';
-      const endereco =
-        el.tags?.['addr:street'] || el.tags?.['addr:full'] || 'Endereço não informado';
+      const endereco = el.tags?.['addr:street'] || el.tags?.['addr:full'] || 'Endereço não informado';
       const distancia = calcularDistancia(lat, lng, elLat, elLon);
-
       const nomeLower = nome.toLowerCase();
 
-      // Filtra por tipo quando específico
       if (tipo === 'UPA' && !nomeLower.includes('upa')) continue;
       if (tipo === 'UBS' && !nomeLower.includes('ubs')) continue;
 
@@ -98,10 +76,8 @@ export async function buscarUnidadesProximas(
       });
     }
 
-    // Ordena por distância
     resultados.sort((a, b) => a.distancia - b.distancia);
 
-    // Prioriza públicas
     const publicas = resultados.filter(
       (r) =>
         r.nome.toLowerCase().includes('sus') ||
@@ -109,24 +85,14 @@ export async function buscarUnidadesProximas(
         r.nome.toLowerCase().includes('ubs'),
     );
 
-    if (publicas.length > 0) {
-      return publicas.slice(0, 3);
-    }
-
-    return resultados.slice(0, 3);
+    return (publicas.length > 0 ? publicas : resultados).slice(0, 3);
   } catch (error) {
     console.error('Erro ao buscar unidades no Overpass:', error);
     return [];
   }
 }
 
-// Cálculo de distância Haversine (em metros)
-function calcularDistancia(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;

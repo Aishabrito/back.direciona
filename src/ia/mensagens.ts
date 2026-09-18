@@ -2,20 +2,16 @@ import mensagens from '../respostas/mensagens_aprovadas.json';
 import type { MensagemAprovada } from './tipos.js';
 import { contemAlgum, normalizarTexto } from './normalizar.js';
 
+// [FIX 11] removidos "vermelho", "laranja", "amarelo" e duplicata "classificação"
 const TERMOS_PROIBIDOS = [
   'infarto',
   'avc',
   'derrame',
   'manchester',
-  'vermelho',
-  'laranja',
-  'amarelo',
   'classificacao',
-  'classificação',
   'tempo de espera',
   'comprimido',
   'antibiotico',
-  'antibiótico',
   'tratamento com',
   'vaga',
 ];
@@ -28,9 +24,7 @@ export function mensagemPorId(id: string): MensagemAprovada {
 }
 
 export function sanitizarResposta(texto: string, idMensagem?: string): string {
-  if (idMensagem === 'recusa_medicamento' || idMensagem === 'recusa_diagnostico') {
-    return texto;
-  }
+  if (idMensagem === 'recusa_medicamento' || idMensagem === 'recusa_diagnostico') return texto;
 
   const n = normalizarTexto(texto);
   if (TERMOS_PROIBIDOS.some((termo) => n.includes(normalizarTexto(termo)))) {
