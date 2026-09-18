@@ -1,11 +1,9 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import { GoogleGenAI, Type } from '@google/genai';
 import { contemAlgum, normalizarTexto, unicos } from './normalizar';
 import { RELATO_VAZIO, type RelatoEstruturado } from './tipos';
 import { validarRelato } from './validador_de_saida';
 
+// [FIX 1] UTF-8 correto — antes era mojibake (mûÈe, bebûˆ, etc.)
 const TERCEIROS: Record<string, string> = {
   mae: 'mãe',
   pai: 'pai',
@@ -22,39 +20,40 @@ const TERCEIROS: Record<string, string> = {
   avo_masc: 'avô',
 };
 
+// [FIX 20] Regex de palavra clínica extraído para constante nomeada
+const REGEX_PALAVRA_CLINICA =
+  /dor|febre|tosse|queimadura|queimei|queimou|queda|ca[ií]|caiu|vomito|enjoo|sangramento|falta de ar|respirar|desmaio|apagou|confus|desorientad|ferida|corte|lacera|picada|escorpi|aranha|cobra|intoxica|ansiedade|panico|depressao|caps|pressao|hipertensao|convuls|infarto|avc|trauma|batida|alergia|coceira|mancha|vermelhid|inflama|doendo|dolor/i;
+
 function marcar(flag: boolean, lista: string[], rotulo: string) {
   if (flag) lista.push(rotulo);
 }
 
 function extrairSinaisObstetricos(n: string): string[] {
   const sinais: string[] = [];
-  if (/(contra[cç][oõ]es?|contraindo|dor de parto|contração)/i.test(n))
-    sinais.push('contracoes');
-  if (/(bolsa estourou|perda de l[ií]quido|rompeu a bolsa|saiu [aá]gua|líquido amniotico)/i.test(n))
+  if (/(contra[cç][oõ]es?|contraindo|dor de parto)/i.test(n)) sinais.push('contracoes');
+  if (/(bolsa estourou|perda de l[ií]quido|rompeu a bolsa|saiu [aá]gua|l[ií]quido amniotico)/i.test(n))
     sinais.push('perda_liquido_amniotico');
-  if (/(press[aã]o alta|hipertens[aã]o|press[aã]o [1-2][0-9]{2})/i.test(n))
-    sinais.push('pressao_alta');
+  if (/(press[aã]o alta|hipertens[aã]o|press[aã]o [1-2][0-9]{2})/i.test(n)) sinais.push('pressao_alta');
   if (sinais.includes('pressao_alta') && /dor de cabe[cç]a intensa|enxaqueca|cefaleia intensa/i.test(n))
     sinais.push('pre_eclampsia');
-  if (/sangramento vaginal|perda de sangue|hemorragia obstétrica/i.test(n))
+  if (/sangramento vaginal|perda de sangue|hemorragia obst[eé]trica/i.test(n))
     sinais.push('sangramento_obstetrico');
   return sinais;
 }
 
 function extrairSinaisTrauma(n: string): string[] {
   const sinais: string[] = [];
-  if (/(atropelamento|atropelado|acidente de trânsito|colisão|capotamento|carro|moto)/i.test(n))
+  if (/(atropelamento|atropelado|acidente de tr[aâ]nsito|colis[aã]o|capotamento|carro|moto)/i.test(n))
     sinais.push('trauma_automobilistico');
-  if (/(queda de altura|queda de [1-9] metros|caiu de [1-9] andar|precipitação)/i.test(n))
+  if (/(queda de altura|queda de [1-9] metros|caiu de [1-9] andar|precipita[cç][aã]o)/i.test(n))
     sinais.push('queda_altura');
-  if (/(ferimento por arma|faca|tiro|perfuração|esfaqueado)/i.test(n))
+  if (/(ferimento por arma|faca|tiro|perfura[cç][aã]o|esfaqueado)/i.test(n))
     sinais.push('ferimento_perfurante');
-  if (/(trauma craniano|batida na cabeça|concussão|pancada na cabeça)/i.test(n))
+  if (/(trauma craniano|batida na cabe[cç]a|concuss[aã]o|pancada na cabe[cç]a)/i.test(n))
     sinais.push('trauma_craniano');
   return sinais;
 }
 
-// ---- FALLBACK DETERMINÍSTICO (agora GENÉRICO) ----
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
   const sintomas: string[] = [];
@@ -62,43 +61,39 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   // ========== NEGAÇÕES EXPLÍCITAS ==========
   let forcarGestante: 'sim' | 'nao' | 'nao_informado' = 'nao_informado';
-  if (contemAlgum(n, ['nao estou gravida', 'não estou grávida', 'nao estou grávida', 'nao gravida', 'nao estou gestante'])) {
+  if (contemAlgum(n, ['nao estou gravida', 'nao estou gestante', 'nao gravida', 'nao gestante'])) {
     forcarGestante = 'nao';
   }
   let forcarFebre: boolean | 'nao_informado' = 'nao_informado';
-  if (contemAlgum(n, ['nao estou com febre', 'não estou com febre', 'sem febre'])) {
+  if (contemAlgum(n, ['nao estou com febre', 'sem febre'])) {
     forcarFebre = false;
   }
-  let forcarDor: boolean = false;
-  if (contemAlgum(n, ['sem dor', 'dor passou', 'nao estou com dor', 'não estou com dor'])) {
-    forcarDor = true;
+  // [FIX 19] renomeado: "forcarDor" era confuso (nome dizia oposto do comportamento)
+  let negarDor = false;
+  if (contemAlgum(n, ['sem dor', 'dor passou', 'nao estou com dor'])) {
+    negarDor = true;
   }
 
-  // ---- EXTRAÇÃO GENÉRICA DE SINAIS E SINTOMAS ----
-  // Detecta se há alguma palavra que indique saúde/queixa, sem listar todas
-  const temPalavraClinica = /dor|febre|tosse|queimadura|queimei|queimou|queda|ca[ií]|vomito|enjoo|sangramento|falta de ar|respirar|desmaio|apagou|confusão|desorientad|ferida|corte|laceração|picada|escorpião|aranha|cobra|intoxicação|ansiedade|pânico|depressão|caps|pressão|hipertensão|convulsão|infarto|avc|trauma|batida|alergia|coceira|mancha|vermelhidão|inflamação|dor no|dor na|dor nos|dor nas|doendo|dolor/i.test(n);
+  const temPalavraClinica = REGEX_PALAVRA_CLINICA.test(n);
 
-  // Se for apenas saudação, não considerar como queixa
-  const palavras = n.split(/\s+/).filter(p => p.length > 2);
-  const ehSaudacao = palavras.length <= 3 && /oi|ola|bom dia|boa tarde|boa noite|tudo bem|obrigado|valeu|blz|show|legal|sim|nao|não|ok|nada|nenhum/i.test(n);
+  const palavras = n.split(/\s+/).filter((p) => p.length > 2);
+  const ehSaudacao =
+    palavras.length <= 3 &&
+    /oi|ola|bom dia|boa tarde|boa noite|tudo bem|obrigado|valeu|blz|show|legal|sim|nao|ok|nada|nenhum/i.test(n);
 
   if (ehSaudacao && !temPalavraClinica) {
-    return {
-      ...RELATO_VAZIO,
-      informacao_insuficiente: true,
-    };
+    return { ...RELATO_VAZIO, informacao_insuficiente: true };
   }
 
-  // Se não há palavra clínica, mas o texto tem mais de 3 palavras, assume que pode ser uma queixa vaga
   if (!temPalavraClinica && palavras.length > 3) {
     sintomas.push('queixa inespecífica');
   }
 
-  // ========== DETECÇÃO DE SINTOMAS COMUNS (regex simples) ==========
-  // Não listamos todas as partes do corpo – o regex captura "dor no/na/nos/nas" seguido de qualquer palavra
-  if (!forcarDor) {
-    // Dor localizada
-    const matchDor = n.match(/dor no (s?[a-záéíóúâêôãõç]+)|dor na (s?[a-záéíóúâêôãõç]+)|dor nos (s?[a-záéíóúâêôãõç]+)|dor nas (s?[a-záéíóúâêôãõç]+)/);
+  // Dor localizada
+  if (!negarDor) {
+    const matchDor = n.match(
+      /dor no (s?[a-záéíóúâêôãõçà]+)|dor na (s?[a-záéíóúâêôãõçà]+)|dor nos (s?[a-záéíóúâêôãõçà]+)|dor nas (s?[a-záéíóúâêôãõçà]+)/,
+    );
     if (matchDor) {
       const local = matchDor[1] || matchDor[2] || matchDor[3] || matchDor[4] || 'parte do corpo';
       sintomas.push(`dor no ${local}`);
@@ -107,7 +102,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
-  // Outros sintomas comuns (apenas palavras-chave amplas)
   const sintomasMap: [RegExp, string][] = [
     [/febre/, 'febre'],
     [/tosse/, 'tosse'],
@@ -118,33 +112,30 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     [/falta de ar|respirar/, 'falta de ar'],
     [/desmaio|apagou/, 'desmaio'],
     [/confus[aã]o|desorientad/, 'confusão'],
-    [/ferida|corte|laceração/, 'ferida'],
-    [/picada|escorpião|aranha|cobra/, 'picada de animal peçonhento'],
-    [/intoxicaç[aã]o|envenenamento/, 'intoxicação'],
-    [/ansiedade|pânico|depressão|caps/, 'sofrimento psíquico'],
-    [/press[aã]o alta|hipertensão/, 'pressão alta'],
+    [/ferida|corte|lacera[cç][aã]o/, 'ferida'],
+    [/picada|escorpi[aã]o|aranha|cobra/, 'picada de animal peçonhento'],
+    [/intoxica[cç][aã]o|envenenamento/, 'intoxicação'],
+    [/ansiedade|p[aâ]nico|depress[aã]o|caps/, 'sofrimento psíquico'],
+    [/press[aã]o alta|hipertens[aã]o/, 'pressão alta'],
     [/convuls[aã]o/, 'convulsão'],
     [/alergia|coceira|mancha/, 'alergia/coceira'],
   ];
 
   for (const [regex, label] of sintomasMap) {
-    if (regex.test(n) && !sintomas.includes(label)) {
-      sintomas.push(label);
-    }
+    if (regex.test(n) && !sintomas.includes(label)) sintomas.push(label);
   }
 
-  // Se ainda não há sintomas e o texto não é saudação, assume queixa inespecífica
   if (sintomas.length === 0 && palavras.length > 2 && !ehSaudacao) {
     sintomas.push('queixa inespecífica');
   }
 
-  // ---- SINAIS DE ALERTA (emergência) ----
-  if (/falta de ar|respirar|labios roxos/.test(n)) sinais.push('falta_de_ar');
+  // Sinais de alerta
+  if (/falta de ar|respirar|l[aá]bios roxos/.test(n)) sinais.push('falta_de_ar');
   if (/desmaio|apagou|inconsciente/.test(n)) sinais.push('alteração da consciência');
   if (/confus[aã]o|desorientad/.test(n)) sinais.push('alteração da consciência');
   if (/trauma|acidente|batida|queda de altura|atropel/.test(n)) sinais.push('trauma');
   if (/convuls[aã]o/.test(n)) sinais.push('convulsao');
-  if (/dor no peito|aperto no peito|pressão no peito/.test(n)) {
+  if (/dor no peito|aperto no peito|press[aã]o no peito/.test(n)) {
     const faltaDeAr = /falta de ar|respirar/.test(n);
     const desmaio = /desmaio|apagou/.test(n);
     const confusao = /confus[aã]o/.test(n);
@@ -154,13 +145,12 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
-  // Sinais obstétricos e trauma (usando funções existentes)
   const sinaisObstetricos = extrairSinaisObstetricos(n);
   const sinaisTrauma = extrairSinaisTrauma(n);
   if (sinaisObstetricos.length) sinais.push(...sinaisObstetricos);
   if (sinaisTrauma.length) sinais.push(...sinaisTrauma);
 
-  // ---- TERCEIROS ----
+  // Terceiros
   let pessoa = 'nao_informado';
   let terceiro = false;
   for (const [chave, rotulo] of Object.entries(TERCEIROS)) {
@@ -172,10 +162,10 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   }
   if (contemAlgum(n, ['pessoa', 'alguem', 'homem', 'mulher', 'senhor', 'senhora', 'crianca'])) {
     terceiro = true;
-    pessoa = 'terceiro';
+    if (pessoa === 'nao_informado') pessoa = 'terceiro';
   }
 
-  // ---- IDADE ----
+  // Idade
   let idade: RelatoEstruturado['idade_grupo'] = 'nao_informado';
   if (contemAlgum(n, ['bebe', 'recem nascido', 'meses de vida'])) idade = 'bebe';
   else if (contemAlgum(n, ['crianca', 'meu filho', 'minha filha'])) idade = 'crianca';
@@ -183,21 +173,22 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   else if (contemAlgum(n, ['idoso', 'senhor', 'senhora'])) idade = 'idoso';
   else if (contemAlgum(n, ['adulto'])) idade = 'adulto';
 
-  // ---- DURAÇÃO ----
-  const duracaoMatch = n.match(/ha\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(dia|dias|hora|horas|semana|semanas|mes|meses)/);
+  // Duração
+  const duracaoMatch = n.match(
+    /ha\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(dia|dias|hora|horas|semana|semanas|mes|meses)/,
+  );
   const duracao = duracaoMatch ? duracaoMatch[0].replace('ha ', '') : 'nao_informado';
 
-  // ---- GESTANTE (com negação) ----
+  // Gestante
   let gestante: 'sim' | 'nao' | 'nao_informado' = 'nao_informado';
-  if (forcarGestante === 'nao') {
-    gestante = 'nao';
-  } else if (contemAlgum(n, ['gravida', 'gestante', 'estou gravida'])) {
-    gestante = 'sim';
-  }
+  if (forcarGestante === 'nao') gestante = 'nao';
+  else if (contemAlgum(n, ['gravida', 'gestante'])) gestante = 'sim';
 
-  const posParto = contemAlgum(n, ['pos parto', 'depois do parto', 'tive bebe recentemente', 'puerperio']) ? 'sim' : 'nao_informado';
+  const posParto = contemAlgum(n, ['pos parto', 'depois do parto', 'puerperio'])
+    ? 'sim'
+    : 'nao_informado';
 
-  // ---- RISCO MENTAL ----
+  // Risco mental
   let riscoMental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/quero me matar|vou me matar|tentativa de suicidio|risco de se machucar agora/.test(n)) {
     riscoMental = 'iminente';
@@ -205,17 +196,16 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     riscoMental = 'sem_risco_imediato';
   }
 
-  // ---- PIORA, INTENSIDADE ----
   const piora = contemAlgum(n, ['piorando', 'piorou', 'cada vez pior']) ? 'sim' : 'nao_informado';
   let intensidade = 'nao_informado';
-  if (contemAlgum(n, ['forte', 'intensa', 'muito forte', 'insuportável'])) intensidade = 'intensa';
+  if (contemAlgum(n, ['forte', 'intensa', 'muito forte', 'insuportavel'])) intensidade = 'intensa';
   else if (contemAlgum(n, ['leve', 'moderada'])) intensidade = 'leve';
 
-  // ---- INFORMAÇÃO INSUFICIENTE ----
   const temConteudoClinico = sintomas.length > 0 || sinais.length > 0 || temPalavraClinica;
-  const informacaoInsuficiente = !temConteudoClinico || (sintomas.length === 1 && sintomas[0] === 'queixa inespecífica' && palavras.length < 4);
+  const informacaoInsuficiente =
+    !temConteudoClinico ||
+    (sintomas.length === 1 && sintomas[0] === 'queixa inespecífica' && palavras.length < 4);
 
-  // ---- MONTAGEM FINAL ----
   const bruto: RelatoEstruturado = {
     ...RELATO_VAZIO,
     relato_sobre_terceiro: terceiro,
@@ -228,14 +218,14 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     piora,
     intensidade,
     falta_de_ar: /falta de ar|respirar/.test(n) ? true : 'nao_informado',
-    dor_no_peito: /dor no peito|aperto no peito|pressão no peito/.test(n) ? true : 'nao_informado',
+    dor_no_peito: /dor no peito|aperto no peito|press[aã]o no peito/.test(n) ? true : 'nao_informado',
     desmaio: /desmaio|apagou|inconsciente/.test(n) ? true : 'nao_informado',
     confusao: /confus[aã]o|desorientad/.test(n) ? true : 'nao_informado',
     sangramento: /sangramento|sangrando/.test(n) ? true : 'nao_informado',
-    febre: forcarFebre !== 'nao_informado' ? forcarFebre : (/febre/.test(n) ? true : 'nao_informado'),
+    febre: forcarFebre !== 'nao_informado' ? forcarFebre : /febre/.test(n) ? true : 'nao_informado',
     vomitos: /vomito|vomitando|enjoo/.test(n) ? true : 'nao_informado',
     trauma: /trauma|acidente|batida|queda|atropel/.test(n) ? true : 'nao_informado',
-    exposicao_intoxicacao: /intoxicaç[aã]o|envenenamento/.test(n) ? true : 'nao_informado',
+    exposicao_intoxicacao: /intoxica[cç][aã]o|envenenamento/.test(n) ? true : 'nao_informado',
     gestante,
     pos_parto: posParto,
     risco_mental: riscoMental,
@@ -245,15 +235,19 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     sinais_trauma: unicos(sinaisTrauma),
   };
 
-  return validarRelato(bruto).relato;
+  // [FIX 13] não descarta mais `.ok` silenciosamente
+  const validado = validarRelato(bruto);
+  if (!validado.ok) {
+    console.warn('Relato fora do formato esperado:', bruto);
+  }
+  return validado.relato;
 }
 
-// ---- INTERPRETAÇÃO INTELIGENTE VIA GEMINI ----
 export async function interpretarRelato(texto: string): Promise<RelatoEstruturado> {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    console.warn("⚠️ GEMINI_API_KEY não encontrada no .env. Usando extrator local.");
+    console.warn('⚠️ GEMINI_API_KEY não encontrada. Usando extrator local.');
     return extrairInformacoes(texto);
   }
 
@@ -290,7 +284,10 @@ DIRETRIZES:
             sangramento: { type: Type.BOOLEAN },
             vomitos: { type: Type.BOOLEAN },
             gestante: { type: Type.STRING, enum: ['sim', 'nao', 'nao_informado'] },
-            idade_grupo: { type: Type.STRING, enum: ['bebe', 'crianca', 'adolescente', 'adulto', 'idoso', 'nao_informado'] },
+            idade_grupo: {
+              type: Type.STRING,
+              enum: ['bebe', 'crianca', 'adolescente', 'adulto', 'idoso', 'nao_informado'],
+            },
             intensidade: { type: Type.STRING, enum: ['leve', 'moderada', 'intensa', 'nao_informado'] },
             informacao_insuficiente: { type: Type.BOOLEAN },
           },
@@ -336,9 +333,10 @@ DIRETRIZES:
     };
 
     const validado = validarRelato(dadosEstruturados);
+    if (!validado.ok) console.warn('Relato IA fora do formato esperado:', dadosEstruturados);
     return validado.relato;
   } catch (error) {
-    console.error('Falha ao processar com o Gemini, acionando fallback determinístico:', error);
+    console.error('Falha no Gemini, acionando fallback determinístico:', error);
     return extrairInformacoes(texto);
   }
 }
