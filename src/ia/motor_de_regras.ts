@@ -1,23 +1,14 @@
-import { registrarDecisao } from './auditoria.js';
 import { contemAlgum, normalizarTexto } from './normalizar.js';
 import { VERSAO_REGRAS, type DecisaoRegras, type RelatoEstruturado } from './tipos.js';
 
 import emergencias from '../regras/emergencias.json';
-import obstetricia from '../regras/obstetricia.json';
 import saudeMental from '../regras/saude_mental.json';
 import vulneraveis from '../regras/grupos_vulneraveis.json';
 import urgencias from '../regras/urgencias.json';
 import baixaGravidade from '../regras/baixa_gravidade.json';
 
-type RegraJson = {
-  id: string;
-  quando: string[];
-};
-
-type RegrasContainer = {
-  versao: string;
-  regras: RegraJson[];
-};
+type RegraJson = { id: string; quando: string[] };
+type RegrasContainer = { versao: string; regras: RegraJson[] };
 
 function flagTriStateToBoolean(valor: boolean | 'nao_informado'): boolean {
   return valor === true;
@@ -25,9 +16,7 @@ function flagTriStateToBoolean(valor: boolean | 'nao_informado'): boolean {
 
 function casaRegra(texto: string, regras: RegraJson[]): RegraJson | null {
   for (const regra of regras) {
-    if (regra.quando.some((palavra) => texto.includes(normalizarTexto(palavra)))) {
-      return regra;
-    }
+    if (regra.quando.some((palavra) => texto.includes(normalizarTexto(palavra)))) return regra;
   }
   return null;
 }
@@ -52,7 +41,8 @@ function verificarEmergenciaObstetrica(relato: RelatoEstruturado, texto: string)
     sinais.includes('perda_liquido_amniotico') ||
     sinais.includes('contracoes') ||
     sinais.includes('sangramento_obstetrico') ||
-    (sinais.includes('pressao_alta') && contemAlgum(texto, ['dor de cabeca intensa', 'enxaqueca', 'visao turva']));
+    (sinais.includes('pressao_alta') &&
+      contemAlgum(texto, ['dor de cabeca intensa', 'enxaqueca', 'visao turva']));
 
   if (temSinalObstetrico) {
     return {
@@ -108,18 +98,35 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   const texto = corpus(relato, textoOriginal || '');
 
   // ==========================================================
-  // 1. EMERGÊNCIAS GRAVES (vida em risco)
+  // 1. EMERGÊNCIAS GRAVES
   // ==========================================================
-
-  // Trauma grave
   const trauma = verificarTraumaGrave(relato, texto);
   if (trauma) return trauma;
 
-  // Hipertensão com sinais de alarme neurológico/cardíaco
+  // [FIX 4] Saúde mental iminente ANTES de qualquer regra "sem risco"
+  if (relato.risco_mental === 'iminente') {
+    return {
+      categoria_interna: 'emergencia',
+      destino: 'SAMU_192_PRONTO_SOCORRO',
+      resposta_id: 'mental_emergencia_001',
+      regra_acionada: 'mental_risco_iminente',
+      versao_regras: VERSAO_REGRAS,
+    };
+  }
+
+  // Hipertensão com sinais de alarme
   const temPressao = contemAlgum(texto, ['pressao alta', 'pressao subiu', 'pressao elevada', 'hipertensao']);
   if (
     temPressao &&
-    contemAlgum(texto, ['dor de cabeca', 'cabeca explodindo', 'visao turva', 'visao embacada', 'dor no peito', 'falta de ar', 'vomito'])
+    contemAlgum(texto, [
+      'dor de cabeca',
+      'cabeca explodindo',
+      'visao turva',
+      'visao embacada',
+      'dor no peito',
+      'falta de ar',
+      'vomito',
+    ])
   ) {
     return {
       categoria_interna: 'emergencia',
@@ -130,7 +137,11 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Regras gerais de emergência (JSON)
+  // [FIX 3] Obstetrícia AGORA vem antes da queixa genérica
+  const obst = verificarEmergenciaObstetrica(relato, texto);
+  if (obst) return obst;
+
+  // Regras JSON de emergência
   const regrasEmergencia = (emergencias as RegrasContainer).regras;
   const emerg = casaRegra(texto, regrasEmergencia);
   if (emerg) {
@@ -143,7 +154,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Bebê com febre (prioridade pediátrica)
+  // Bebê com febre
   if (relato.idade_grupo === 'bebe' && flagTriStateToBoolean(relato.febre)) {
     return {
       categoria_interna: 'emergencia',
@@ -154,32 +165,39 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Saúde mental com risco iminente
-  if (relato.risco_mental === 'iminente') {
+  // ==========================================================
+  // 2. SINAL DE ALARME ISOLADO SEM CRITÉRIO DE EMERGÊNCIA → UPA
+  // ==========================================================
+  if (
+    relato.dor_no_peito === true ||
+    relato.falta_de_ar === true ||
+    relato.desmaio === true ||
+    relato.confusao === true ||
+    relato.sangramento === true
+  ) {
     return {
-      categoria_interna: 'emergencia',
-      destino: 'SAMU_192_PRONTO_SOCORRO',
-      resposta_id: 'mental_emergencia_001',
-      regra_acionada: 'mental_risco_iminente',
+      categoria_interna: 'urgencia',
+      destino: 'UPA_24H',
+      resposta_id: 'upa_001',
+      regra_acionada: 'urgencia_sinal_alarme_isolado',
       versao_regras: VERSAO_REGRAS,
     };
   }
 
   // ==========================================================
-  // 2. QUEIXA AGUDA GENÉRICA → UPA (ANTES da obstetrícia)
+  // 3. QUEIXA AGUDA GENÉRICA → UPA
   // ==========================================================
-  // Qualquer sintoma agudo (dor, queimadura, febre, queda, etc.) que não seja emergência
-  const temQueixaAguda = relato.sintomas.some(s =>
-    /dor|queimadura|ferida|corte|queda|picada|enjoo|vomito|febre|tosse|falta de ar|queixa inespecífica/.test(s)
+  const temQueixaAguda = relato.sintomas.some((s) =>
+    /dor|queimadura|ferida|corte|queda|picada|enjoo|vomito|febre|tosse|falta de ar/.test(s),
   );
 
+  // [FIX 3] removido `relato.sintomas.length === 1` (mandava "vacina" para UPA)
   const queixaAguda =
     temQueixaAguda &&
     (relato.intensidade === 'intensa' ||
       relato.piora === 'sim' ||
       relato.duracao !== 'nao_informado' ||
-      relato.inicio !== 'nao_informado' ||
-      relato.sintomas.length === 1); // qualquer sintoma isolado é considerado agudo
+      relato.inicio !== 'nao_informado');
 
   if (queixaAguda) {
     return {
@@ -192,16 +210,16 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   }
 
   // ==========================================================
-  // 3. OBSTETRÍCIA (só após descartar queixa aguda comum)
-  // ==========================================================
-  const obst = verificarEmergenciaObstetrica(relato, texto);
-  if (obst) return obst;
-
-  // ==========================================================
   // 4. SAÚDE MENTAL SEM RISCO IMEDIATO
   // ==========================================================
   const regrasSaudeMental = (saudeMental as RegrasContainer).regras;
-  if (relato.risco_mental === 'sem_risco_imediato' || casaRegra(texto, regrasSaudeMental)) {
+  // [FIX 4] não confundir mais "mental_iminente" com "sem risco"
+  const regraMental = casaRegra(texto, regrasSaudeMental);
+  const mentalSemRisco =
+    relato.risco_mental === 'sem_risco_imediato' ||
+    (regraMental !== null && regraMental.id === 'mental_sem_risco_imediato');
+
+  if (mentalSemRisco) {
     return {
       categoria_interna: 'saude_mental_sem_risco_imediato',
       destino: 'CAPS_OU_SERVICO_DE_SAUDE_MENTAL',
@@ -212,10 +230,8 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   }
 
   // ==========================================================
-  // 5. URGÊNCIAS (UPA)
+  // 5. URGÊNCIAS ESPECÍFICAS (UPA)
   // ==========================================================
-
-  // Picada de animal peçonhento
   if (contemAlgum(texto, ['escorpiao', 'aranha', 'cobra', 'peconhento', 'jararaca', 'cascavel', 'coral'])) {
     return {
       categoria_interna: 'urgencia',
@@ -226,11 +242,18 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Sintoma urinário com febre ou dor lombar/costas
-  const temUrinario = contemAlgum(texto, ['urinar', 'xixi', 'ardor ao urinar', 'dor ao urinar', 'queimacao ao urinar', 'infeccao urinaria']);
+  const temUrinario = contemAlgum(texto, [
+    'urinar',
+    'xixi',
+    'ardor ao urinar',
+    'dor ao urinar',
+    'queimacao ao urinar',
+    'infeccao urinaria',
+  ]);
   if (
     temUrinario &&
-    (flagTriStateToBoolean(relato.febre) || contemAlgum(texto, ['dor nas costas', 'dor lombar', 'dor nos rins', 'febre']))
+    (flagTriStateToBoolean(relato.febre) ||
+      contemAlgum(texto, ['dor nas costas', 'dor lombar', 'dor nos rins', 'febre']))
   ) {
     return {
       categoria_interna: 'urgencia',
@@ -241,11 +264,15 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Febre com prostração ou persistente
+  // [FIX 7] regex de duração corrigido — antes /[3-9]/ casava com "13"
+  const duracaoNum = parseInt(relato.duracao.match(/\d+/)?.[0] || '0', 10);
+  const duracaoLonga =
+    duracaoNum >= 3 ||
+    /tres|quatro|cinco|seis|sete|oito|nove|dez/.test(normalizarTexto(relato.duracao));
+
   if (
     flagTriStateToBoolean(relato.febre) &&
-    (contemAlgum(texto, ['fraqueza', 'prostracao', 'liquidos']) ||
-      /[3-9]|tres|quatro|cinco/.test(normalizarTexto(relato.duracao)))
+    (contemAlgum(texto, ['fraqueza', 'prostracao', 'liquidos']) || duracaoLonga)
   ) {
     return {
       categoria_interna: 'urgencia',
@@ -256,7 +283,6 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // Urgências gerais (JSON)
   const regrasUrgencias = (urgencias as RegrasContainer).regras;
   const urgencia = casaRegra(texto, regrasUrgencias);
   if (urgencia) {
@@ -272,8 +298,6 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
   // ==========================================================
   // 6. BAIXA GRAVIDADE (UBS)
   // ==========================================================
-
-  // Grupos vulneráveis / rotina estável
   const regrasVulneraveis = (vulneraveis as RegrasContainer).regras;
   const vulneravel = casaRegra(texto, regrasVulneraveis);
   if (vulneravel) {
@@ -298,9 +322,6 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     };
   }
 
-  // ==========================================================
-  // 7. FALLBACK SEGURO
-  // ==========================================================
   return {
     categoria_interna: 'informacao_insuficiente',
     destino: 'FALLBACK',
