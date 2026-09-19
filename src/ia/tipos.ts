@@ -1,43 +1,31 @@
-// ia/tipos.ts
 export const VERSAO_REGRAS = '1.0.0';
 
 export const IDADE_GRUPOS = [
-  'bebe',
-  'crianca',
-  'adolescente',
-  'adulto',
-  'idoso',
-  'nao_informado',
+  'bebe', 'crianca', 'adolescente', 'adulto', 'idoso', 'nao_informado',
 ] as const;
 
 export const VALORES_SIM_NAO = ['sim', 'nao', 'nao_informado'] as const;
 
 export const RISCOS_MENTAIS = [
-  'iminente',
-  'sem_risco_imediato',
-  'nao_mencionado',
+  'iminente', 'sem_risco_imediato', 'nao_mencionado',
 ] as const;
 
 export const CATEGORIAS_INTERNAS = [
-  'emergencia',
-  'urgencia',
-  'baixa_gravidade',
-  'saude_mental_sem_risco_imediato',
-  'situacao_obstetrica',
-  'informacao_insuficiente',
-  'fora_do_escopo',
+  'emergencia', 'urgencia', 'baixa_gravidade',
+  'saude_mental_sem_risco_imediato', 'situacao_obstetrica',
+  'informacao_insuficiente', 'fora_do_escopo',
 ] as const;
- 
+
 export const DESTINOS = [
-  'SAMU_192',
-  'PRONTO_SOCORRO',
-  'SAMU_192_PRONTO_SOCORRO',
-  'UPA_24H',
-  'UBS_CLINICA_DA_FAMILIA',
+  'SAMU_192', 'PRONTO_SOCORRO', 'SAMU_192_PRONTO_SOCORRO',
+  'UPA_24H', 'UBS_CLINICA_DA_FAMILIA',
   'MATERNIDADE_PRONTO_SOCORRO_OBSTETRICO',
   'CAPS_OU_SERVICO_DE_SAUDE_MENTAL',
   'FALLBACK',
 ] as const;
+
+
+export const NIVEIS = ['SAMU_AGORA', 'UPA_AGORA', 'HOJE', 'AGENDAR'] as const;
 
 export type IdadeGrupo = (typeof IDADE_GRUPOS)[number];
 export type SimNao = (typeof VALORES_SIM_NAO)[number];
@@ -45,12 +33,13 @@ export type RiscoMental = (typeof RISCOS_MENTAIS)[number];
 export type CategoriaInterna = (typeof CATEGORIAS_INTERNAS)[number];
 export type Destino = (typeof DESTINOS)[number];
 export type FlagTriState = boolean | 'nao_informado';
-
+export type Nivel = (typeof NIVEIS)[number];
 
 export type RelatoEstruturado = {
   relato_sobre_terceiro: boolean;
   pessoa: string;
   idade_grupo: IdadeGrupo;
+  idade_numerica: number | null;
   sintomas: string[];
   sinais_alerta: string[];
   inicio: string;
@@ -71,10 +60,16 @@ export type RelatoEstruturado = {
   risco_mental: RiscoMental;
   informacao_insuficiente: boolean;
   informacoes_contraditorias: string[];
-  // NOVOS CAMPOS
-  sinais_obstetricos?: string[];
-  sinais_trauma?: string[];
-  texto_original_acumulado?: string;
+  // Listas especializadas
+  sinais_obstetricos: string[];
+  sinais_trauma: string[];
+  sinais_neurologicos: string[];
+  fala_frases: FlagTriState;
+  labios_roxos: FlagTriState;
+  consegue_beber: FlagTriState;
+  alergia_grave: FlagTriState;
+  autodiagnostico_grave: string | null;
+  texto_original_acumulado: string;
 };
 
 export type DecisaoRegras = {
@@ -83,6 +78,9 @@ export type DecisaoRegras = {
   resposta_id: string;
   regra_acionada: string;
   versao_regras: string;
+  
+  nivel: Nivel;
+  motivos: string[];
 };
 
 export type MensagemAprovada = {
@@ -92,22 +90,40 @@ export type MensagemAprovada = {
 };
 
 export type TurnoResultado =
-  | {
-      tipo: 'orientacao';
-      texto: string;
-      decisao: DecisaoRegras;
-    }
-  | {
-      tipo: 'perguntas';
-      texto: string;
-      perguntas: string[];
-      tema: string;
-    };
+  | { tipo: 'orientacao'; texto: string; decisao: DecisaoRegras }
+  | { tipo: 'perguntas'; texto: string; perguntas: string[]; tema: string };
+
+// [NOVO] Última pergunta feita — para interpretar respostas curtas
+export type UltimaPergunta = {
+  id: string;
+  campoAlvo?: keyof RelatoEstruturado;
+  texto: string;
+};
+
+export type FaseConversa = 'inicio' | 'coletando' | 'orientado';
+
+export type EstadoConversa = {
+  relatos: RelatoEstruturado[];
+  rodadasPerguntas: number;
+  temaPergunta?: string;
+  texto_original_acumulado: string;
+  // [NOVO]
+  fase: FaseConversa;
+  perguntasJaFeitas: string[];
+  ultimaPergunta?: UltimaPergunta;
+  // Já existia
+  aguardandoLocalizacao?: {
+    ativo: boolean;
+    tipo: 'UPA' | 'HOSPITAL' | 'UBS';
+    mensagemOriginal: string;
+  };
+};
 
 export const RELATO_VAZIO: RelatoEstruturado = {
   relato_sobre_terceiro: false,
   pessoa: 'nao_informado',
   idade_grupo: 'nao_informado',
+  idade_numerica: null,
   sintomas: [],
   sinais_alerta: [],
   inicio: 'nao_informado',
@@ -130,17 +146,11 @@ export const RELATO_VAZIO: RelatoEstruturado = {
   informacoes_contraditorias: [],
   sinais_obstetricos: [],
   sinais_trauma: [],
+  sinais_neurologicos: [],
+  fala_frases: 'nao_informado',
+  labios_roxos: 'nao_informado',
+  consegue_beber: 'nao_informado',
+  alergia_grave: 'nao_informado',
+  autodiagnostico_grave: null,
   texto_original_acumulado: '',
-};
-export type EstadoConversa = {
-  relatos: RelatoEstruturado[];
-  rodadasPerguntas: number;
-  temaPergunta?: string;
-  texto_original_acumulado: string;
-  // NOVO
-  aguardandoLocalizacao?: {
-    ativo: boolean;
-    tipo: 'UPA' | 'HOSPITAL' | 'UBS' ;
-    mensagemOriginal: string; // para lembrar o que foi perguntado
-  };
 };
