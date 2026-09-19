@@ -1,45 +1,48 @@
-export type TemaPergunta =
-  | 'vago'
-  | 'dor'
-  | 'febre'
-  | 'respiratorio'
-  | 'falta_de_ar'
-  | 'crianca'
-  | 'gestacao'
-  | 'saude_mental';
+import type { RelatoEstruturado, UltimaPergunta } from './tipos';
 
-export const PERGUNTAS: Record<TemaPergunta, string[]> = {
+export type TemaPergunta =
+  | 'vago' | 'dor' | 'febre' | 'respiratorio'
+  | 'falta_de_ar' | 'crianca' | 'gestacao' | 'saude_mental';
+
+export type Pergunta = {
+  id: string;
+  texto: string;
+  campoAlvo?: keyof RelatoEstruturado;
+  quando?: (r: RelatoEstruturado) => boolean;
+};
+
+export const PERGUNTAS: Record<TemaPergunta, Pergunta[]> = {
   vago: [
-    'O que você está sentindo e há quanto tempo começou?',
-    'Você está com falta de ar, dor no peito, desmaio ou confusão?',
+    { id: 'vago_oque', texto: 'O que você está sentindo e há quanto tempo começou?', campoAlvo: 'sintomas' },
+    { id: 'vago_duracao', texto: 'Isso começou há quantos dias?', campoAlvo: 'duracao' },
   ],
   febre: [
-    'Há quantos dias você está com febre?',
-    'Está conseguindo beber líquidos normalmente ou sente muita fraqueza e prostração?',
+    { id: 'febre_duracao', texto: 'Há quantos dias você está com febre?', campoAlvo: 'duracao' },
+    { id: 'febre_liquidos', texto: 'Você está conseguindo beber líquidos ou sente muita fraqueza?', campoAlvo: 'consegue_beber' },
   ],
   respiratorio: [
-    'Você tem falta de ar ou chiado no peito ao respirar?',
-    'A tosse ou secreção começou há quanto tempo? Há febre associada?',
+    { id: 'resp_falta_ar', texto: 'Você está com falta de ar ou chiado no peito?', campoAlvo: 'falta_de_ar' },
+    { id: 'resp_duracao', texto: 'A tosse começou há quantos dias?', campoAlvo: 'duracao' },
   ],
   dor: [
-    'A dor começou de repente ou já dura vários dias?',
-    'Há outros sintomas juntos, como vômitos persistentes, febre, desmaio ou sangramento?',
+    { id: 'dor_tempo', texto: 'A dor começou de repente ou já dura vários dias?', campoAlvo: 'duracao' },
+    { id: 'dor_assoc', texto: 'Há vômitos, febre, desmaio ou sangramento junto?', campoAlvo: 'sinais_alerta' },
   ],
   falta_de_ar: [
-    'Você consegue falar frases inteiras sem parar para respirar?',
-    'Há lábios arroxeados, desmaio ou confusão?',
+    { id: 'falta_frases', texto: 'Você consegue falar uma frase inteira sem parar pra respirar?', campoAlvo: 'fala_frases' },
+    { id: 'falta_labios', texto: 'Seus lábios estão arroxeados? Você está confuso ou com muito suor?', campoAlvo: 'labios_roxos' },
   ],
   crianca: [
-    'Qual é a idade da criança?',
-    'Ela está alerta, respirando normalmente e conseguindo beber líquidos?',
+    { id: 'crianca_idade', texto: 'Qual é a idade da criança?', campoAlvo: 'idade_numerica' },
+    { id: 'crianca_alerta', texto: 'Ela está alerta, respirando normalmente e conseguindo beber líquidos?', campoAlvo: 'consegue_beber' },
   ],
   gestacao: [
-    'A pessoa está grávida ou teve bebê recentemente?',
-    'Há sangramento, perda de líquido, dor forte, desmaio ou redução dos movimentos do bebê?',
+    { id: 'gest_confirmacao', texto: 'A pessoa está grávida ou teve bebê recentemente?', campoAlvo: 'gestante' },
+    { id: 'gest_sinais', texto: 'Há sangramento, perda de líquido, dor forte ou redução dos movimentos do bebê?' },
   ],
   saude_mental: [
-    'Existe risco de a pessoa se machucar ou machucar alguém agora?',
-    'Houve tentativa recente, intoxicação, desmaio ou dificuldade para respirar?',
+    { id: 'mental_risco', texto: 'Existe risco de a pessoa se machucar ou machucar alguém agora?', campoAlvo: 'risco_mental' },
+    { id: 'mental_intox', texto: 'Houve tentativa recente, intoxicação ou desmaio?' },
   ],
 };
 
@@ -51,25 +54,50 @@ export function escolherTemaPergunta(params: {
   falta_de_ar: boolean | 'nao_informado';
   febre?: boolean | 'nao_informado';
 }): TemaPergunta {
-  // 1. Grupos prioritários e saúde mental
   if (params.risco_mental === 'sem_risco_imediato') return 'saude_mental';
   if (params.idade_grupo === 'bebe' || params.idade_grupo === 'crianca') return 'crianca';
-  if (params.gestante === 'nao_informado' && params.sintomas.some((s) => s.includes('sangramento'))) {
-    return 'gestacao';
-  }
+  if (params.gestante === 'nao_informado' && params.sintomas.some((s) => s.includes('sangramento'))) return 'gestacao';
   if (params.falta_de_ar === true) return 'falta_de_ar';
-
-  // 2. Novos temas de refinamento clínico
-  if (params.febre === true || params.sintomas.includes('febre')) {
-    return 'febre';
-  }
-  if (params.sintomas.some((s) => s.includes('tosse') || s.includes('resfriado') || s.includes('garganta'))) {
-    return 'respiratorio';
-  }
-  if (params.sintomas.some((s) => s.includes('dor') || s.includes('barriga') || s.includes('costas'))) {
-    return 'dor';
-  }
-
-  // 3. Padrão para relatos genéricos
+  if (params.febre === true || params.sintomas.includes('febre')) return 'febre';
+  if (params.sintomas.some((s) => /tosse|resfriado|garganta/.test(s))) return 'respiratorio';
+  if (params.sintomas.some((s) => /dor|barriga|costas|cabeca/.test(s))) return 'dor';
   return 'vago';
+}
+
+export function escolherProximaPergunta(
+  tema: TemaPergunta,
+  relato: RelatoEstruturado,
+  perguntasJaFeitas: string[],
+): Pergunta | null {
+  const lista = PERGUNTAS[tema] || PERGUNTAS.vago;
+  for (const p of lista) {
+    if (perguntasJaFeitas.includes(p.id)) continue;
+    if (p.quando && !p.quando(relato)) continue;
+    return p;
+  }
+  return null;
+}
+
+/** [FIX] Interpreta respostas curtas ("sim"/"não") com base na última pergunta. */
+export function interpretarRespostaCurta(
+  texto: string,
+  ultima: UltimaPergunta | undefined,
+): Partial<RelatoEstruturado> | null {
+  if (!ultima?.campoAlvo) return null;
+  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (n.split(/\s+/).length > 4) return null;
+
+  const sim = /^(sim|s|ok|isso|positivo|tenho|estou|consigo|afirmativo|claro)\b/.test(n);
+  const nao = /^(nao|n|nunca|negativo|nao tenho|nao estou|nao consigo)\b/.test(n);
+  if (!sim && !nao) return null;
+
+  const campo = ultima.campoAlvo;
+  const flagsBooleanas: (keyof RelatoEstruturado)[] = [
+    'falta_de_ar', 'dor_no_peito', 'desmaio', 'confusao', 'sangramento',
+    'febre', 'vomitos', 'trauma', 'fala_frases', 'labios_roxos',
+    'consegue_beber', 'alergia_grave',
+  ];
+  if (!flagsBooleanas.includes(campo)) return null;
+
+  return { [campo]: sim ? true : false } as Partial<RelatoEstruturado>;
 }
