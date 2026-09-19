@@ -140,7 +140,7 @@ export type EstadoConversa = {
   // NOVO
   aguardandoLocalizacao?: {
     ativo: boolean;
-    tipo: 'UPA' | 'HOSPITAL' | 'UBS' | 'TODOS';
+    tipo: 'UPA' | 'HOSPITAL' | 'UBS' ;
     mensagemOriginal: string; // para lembrar o que foi perguntado
   };
 };
