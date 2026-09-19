@@ -12,15 +12,16 @@ import path from "path";
 
 import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import { interpretarAudio } from "../ia/extrator_de_informacoes.js";
+import { mensagemPorId } from "../ia/mensagens.js";
 import type { EstadoConversa } from "../ia/tipos.js";
-import { buscarUnidadesProximas, buscarUpaEEmergencia, formatarUnidades, TipoBusca, type UnidadeSaude } from "../servicos/geolocalizacao.js";
+import {
+  buscarUnidadesProximas, buscarUpaEEmergencia,
+  formatarUnidades, type UnidadeSaude, type TipoBusca,
+} from "../servicos/geolocalizacao.js";
+import { buscarCoordenadasPorTexto } from "../servicos/nominatim.js";
 import { setQrCode } from "../index.js";
 import {
-  criarClienteDb,
-  baixarSessaoParaDisco,
-  iniciarSyncPeriodico,
-  registrarSyncNoShutdown,
-  type Sql,
+  criarClienteDb, baixarSessaoParaDisco, iniciarSyncPeriodico, registrarSyncNoShutdown, type Sql,
 } from "./persistencia_sessao.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -28,11 +29,15 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
 
-// [FIX 2] Limpeza periódica de sessões inativas (antes o Map crescia infinito)
+// ────────────────────────────────────────────────────────────
+// [FIX] Guarda contra dupla inicialização
+// ────────────────────────────────────────────────────────────
+let botIniciado = false;
+let socketAtual: ReturnType<typeof makeWASocket> | null = null;
+let sqlCliente: Sql | null = null;
+let syncIniciado = false;
+
 setInterval(() => {
-  // Como não temos timestamp por sessão, limpamos só sessões já "orientado"
-  // (o estado terminal) e que já foram respondidas há mais de 30 min.
-  // Simplificação conservadora: mantém só as 1000 sessões mais recentes.
   if (sessions.size > 1000) {
     const excesso = sessions.size - 1000;
     const chaves = sessions.keys();
@@ -55,18 +60,14 @@ const comandosReset = [
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
 
-// ============================================================
-// PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
-// ============================================================
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   // [FIX] Pergunta de FAQ / institucional NÃO é pedido de localização
-  if (/\b(diferenca|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar|precisa de|preciso de encaminhamento)\b/.test(n)) {
+  if (/\b(diferenca|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) {
     return null;
   }
 
-  // [FIX] Precisa ser claramente pedido de localização (verbo direto)
   const temVerboLocal =
     /\b(onde (tem|fica|e|eh|esta)|me manda|me passa|me indica|qual (a|o) (upa|ubs|hospital|posto)|qual (upa|ubs|hospital)|quero (ir|saber)|preciso (ir|saber)|tem (uma|um|algum)|existe (uma|um|algum))\b/.test(n);
   if (!temVerboLocal) return null;
@@ -79,8 +80,8 @@ function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | 
 
 function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   const norm = textoLimpo.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
-  if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor|pfv|pf)\b/.test(norm)) return "sim";
-  if (/^(nao|dispensa|depois|agora nao|n)\b/.test(norm)) return "nao";
+  if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor|pfv|pf)$/.test(norm)) return "sim";
+  if (/^(nao|dispensa|depois|agora nao|n)$/.test(norm)) return "nao";
   return null;
 }
 
@@ -94,9 +95,6 @@ async function buscarParaTipo(
   return buscarUnidadesProximas(lat, lng, tipo);
 }
 
-// ============================================================
-// OFERECE LOCALIZAÇÃO APÓS UMA ORIENTAÇÃO
-// ============================================================
 function oferecerLocalizacao(
   sender: string,
   resultado: { tipo: string; decisao?: { resposta_id: string } },
@@ -108,7 +106,7 @@ function oferecerLocalizacao(
   let tipoLocalizacao: 'UPA' | 'HOSPITAL' | 'UBS' | null = null;
 
   if (respostaId === 'upa_001') tipoLocalizacao = 'UPA';
-  else if (['emergencia_001','obstetricia_001','pediatria_emergencia_001','mental_emergencia_001'].includes(respostaId))
+  else if (['emergencia_001','obstetricia_001','pediatria_emergencia_001','mental_emergencia_001','violencia_001'].includes(respostaId))
     tipoLocalizacao = 'HOSPITAL';
   else if (respostaId === 'ubs_001') tipoLocalizacao = 'UBS';
 
@@ -126,18 +124,60 @@ function oferecerLocalizacao(
   return texto;
 }
 
-// [FIX 1] Backoff entre reconexões (antes era recursão direta sem delay)
+// ────────────────────────────────────────────────────────────
+// [FIX] Backoff + referência única ao socket
+// ────────────────────────────────────────────────────────────
 let tentativasReconexao = 0;
 const MAX_BACKOFF_MS = 60_000;
+let reconexaoAgendada = false;
 
-// ============================================================
-// BOT
-// ============================================================
-export async function startWhatsAppBot() {
-  const sql: Sql | null = await criarClienteDb();
-  await baixarSessaoParaDisco(sql);
-  iniciarSyncPeriodico(sql);
-  registrarSyncNoShutdown(sql);
+function agendarReconexao() {
+  if (reconexaoAgendada) return;
+  reconexaoAgendada = true;
+
+  const espera = Math.min(MAX_BACKOFF_MS, 2000 * Math.pow(2, tentativasReconexao));
+  tentativasReconexao++;
+  console.log(`🔄 Reconectando em ${espera / 1000}s (tentativa ${tentativasReconexao})...`);
+
+  setTimeout(() => {
+    reconexaoAgendada = false;
+    if (socketAtual) {
+      try { socketAtual.end(undefined); } catch {}
+      socketAtual = null;
+    }
+    startWhatsAppBot().catch((err) => console.error('❌ Erro na reconexão:', err));
+  }, espera);
+}
+
+// ────────────────────────────────────────────────────────────
+// START
+// ────────────────────────────────────────────────────────────
+export async function startWhatsAppBot(): Promise<void> {
+  // [FIX] Se já tem socket ativo, não cria outro
+  if (socketAtual) {
+    console.warn('⚠️ Já existe um socket ativo. Ignorando chamada duplicada.');
+    return;
+  }
+
+  // [FIX] Cliente Postgres criado UMA vez, reaproveitado entre reconexões
+  if (!sqlCliente) {
+    sqlCliente = await criarClienteDb();
+  }
+  const sql = sqlCliente;
+
+  // [FIX] Baixa a sessão do banco apenas na primeira vez
+  if (!botIniciado) {
+    await baixarSessaoParaDisco(sql);
+  }
+
+  // [FIX] Sync periódico iniciado UMA vez
+  if (!syncIniciado && sql) {
+    iniciarSyncPeriodico(sql);
+    registrarSyncNoShutdown(sql);
+    syncIniciado = true;
+  }
+
+  botIniciado = true;
 
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version } = await fetchLatestBaileysVersion();
@@ -151,6 +191,8 @@ export async function startWhatsAppBot() {
     logger: pino({ level: "silent" }) as any,
     browser: ["Direciona SUS", "Chrome", "1.0.0"],
   });
+
+  socketAtual = sock;
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -166,15 +208,13 @@ export async function startWhatsAppBot() {
 
     if (connection === "close") {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-      const permanente =
-        statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403;
+      const permanente = statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403;
+
+      // [FIX] Descarta a referência deste socket para não bloquear a próxima tentativa
+      socketAtual = null;
 
       if (!permanente) {
-        // [FIX 1] Espera crescente antes de tentar de novo
-        const espera = Math.min(MAX_BACKOFF_MS, 1000 * Math.pow(2, tentativasReconexao));
-        tentativasReconexao++;
-        console.log(`🔄 Reconectando em ${espera / 1000}s (tentativa ${tentativasReconexao})...`);
-        setTimeout(() => startWhatsAppBot().catch(console.error), espera);
+        agendarReconexao();
       } else {
         console.log("❌ Desconectado permanentemente.");
       }
@@ -187,6 +227,9 @@ export async function startWhatsAppBot() {
     }
   });
 
+  // ──────────────────────────────────────────────────────────
+  // MENSAGENS
+  // ──────────────────────────────────────────────────────────
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type !== "notify") return;
     const msg = messages[0];
@@ -195,171 +238,189 @@ export async function startWhatsAppBot() {
     const sender = msg.key.remoteJid;
     if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast") return;
 
-    const text =
-      msg.message.conversation ||
-      msg.message.extendedTextMessage?.text ||
-      msg.message.imageMessage?.caption ||
-      "";
-    const cleanText = text.trim();
+    try {
+      const text =
+        msg.message.conversation ||
+        msg.message.extendedTextMessage?.text ||
+        msg.message.imageMessage?.caption ||
+        "";
+      const cleanText = text.trim();
 
-    // ============================================================
-    // LOCALIZAÇÃO RECEBIDA
-    // ============================================================
-    const location = msg.message.locationMessage;
-    if (location) {
-      const lat = location.degreesLatitude;
-      const lng = location.degreesLongitude;
-      if (lat == null || lng == null) {
-        await sock.sendMessage(sender, { text: "📍 Localização inválida. Tente novamente." });
+      // LOCALIZAÇÃO RECEBIDA
+      const location = msg.message.locationMessage;
+      if (location) {
+        const lat = location.degreesLatitude;
+        const lng = location.degreesLongitude;
+        if (lat == null || lng == null) {
+          await sock.sendMessage(sender, { text: "📍 Localização inválida. Tente novamente." });
+          return;
+        }
+
+        const estadoAtual = sessions.get(sender);
+        if (estadoAtual?.aguardandoLocalizacao?.ativo) {
+          const tipo = estadoAtual.aguardandoLocalizacao.tipo;
+          try {
+            await sock.sendPresenceUpdate("composing", sender);
+            console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
+            const unidades = await buscarParaTipo(lat, lng, tipo);
+            console.log(`📦 ${unidades.length} unidades retornadas`);
+            const resposta = formatarUnidades(unidades, lat, lng, tipo as TipoBusca);
+
+            estadoAtual.aguardandoLocalizacao = undefined;
+            sessions.set(sender, estadoAtual);
+            await sock.sendMessage(sender, { text: resposta });
+          } catch (err) {
+            console.error("❌ Erro ao buscar unidades:", err);
+            await sock.sendMessage(sender, {
+              text: "❌ Erro ao buscar unidades próximas. Se for emergência, ligue 192 agora.",
+            });
+          }
+          return;
+        }
+        await sock.sendMessage(sender, {
+          text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* que eu busco.`,
+        });
         return;
       }
 
-      const estadoAtual = sessions.get(sender);
-      if (estadoAtual?.aguardandoLocalizacao?.ativo) {
-        const tipo = estadoAtual.aguardandoLocalizacao.tipo;
+      // ÁUDIO
+      const audioMessage = msg.message.audioMessage;
+      if (audioMessage) {
         try {
           await sock.sendPresenceUpdate("composing", sender);
-          console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
-          const unidades = await buscarParaTipo(lat, lng, tipo);
-          console.log(`📦 ${unidades.length} unidades retornadas`);
-         const resposta = formatarUnidades(unidades, lat, lng, tipo as TipoBusca);
 
-          estadoAtual.aguardandoLocalizacao = undefined;
-          sessions.set(sender, estadoAtual);
-          await sock.sendMessage(sender, { text: resposta });
+          const buffer = (await downloadMediaMessage(
+            msg, 'buffer', {},
+            { logger: pino({ level: 'silent' }) as any, reuploadRequest: sock.updateMediaMessage },
+          )) as Buffer;
+
+          if (!buffer || buffer.length === 0) throw new Error('Buffer de áudio vazio');
+
+          const mime = audioMessage.mimetype || 'audio/ogg; codecs=opus';
+          console.log(`🎤 [${sender}] Áudio recebido (${(buffer.length / 1024).toFixed(1)} KB)`);
+
+          const relatoDoAudio = await interpretarAudio(buffer, mime);
+
+          const primeiraMensagemAudio = !sessions.has(sender);
+          if (primeiraMensagemAudio) {
+            sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+          }
+          const estadoAtualAudio = sessions.get(sender)!;
+
+          const { resultado, estado: novoEstado } = await processarTurnoComRelato(
+            '[áudio]', relatoDoAudio, estadoAtualAudio,
+          );
+          sessions.set(sender, novoEstado);
+
+          let respostaAudio = resultado.texto;
+          if (primeiraMensagemAudio) {
+            respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
+          }
+
+          respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
+
+          await sock.sendMessage(sender, { text: respostaAudio });
+          await sock.sendPresenceUpdate("paused", sender);
+          return;
         } catch (err) {
-          console.error("❌ Erro ao buscar unidades:", err);
-          await sock.sendMessage(sender, { text: "❌ Erro ao buscar unidades próximas." });
-        }
-        return;
-      }
-      await sock.sendMessage(sender, {
-        text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* que eu busco.`,
-      });
-      return;
-    }
-
-    // ============================================================
-    // ÁUDIO — interpreta DIRETO no Gemini
-    // ============================================================
-    const audioMessage = msg.message.audioMessage;
-    if (audioMessage) {
-      try {
-        await sock.sendPresenceUpdate("composing", sender);
-
-        const buffer = (await downloadMediaMessage(
-          msg,
-          'buffer',
-          {},
-          {
-            logger: pino({ level: 'silent' }) as any,
-            reuploadRequest: sock.updateMediaMessage,
-          },
-        )) as Buffer;
-
-        if (!buffer || buffer.length === 0) throw new Error('Buffer de áudio vazio');
-
-        const mime = audioMessage.mimetype || 'audio/ogg; codecs=opus';
-        console.log(`🎤 [${sender}] Áudio recebido (${(buffer.length / 1024).toFixed(1)} KB)`);
-
-        const relatoDoAudio = await interpretarAudio(buffer, mime);
-
-        const primeiraMensagemAudio = !sessions.has(sender);
-        if (primeiraMensagemAudio) {
-          sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-        }
-        const estadoAtualAudio = sessions.get(sender)!;
-
-        const { resultado, estado: novoEstado } = await processarTurnoComRelato(
-          '[áudio]', relatoDoAudio, estadoAtualAudio,
-        );
-        sessions.set(sender, novoEstado);
-
-        let respostaAudio = resultado.texto;
-        if (primeiraMensagemAudio) {
-          respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
-        }
-
-        respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
-
-        await sock.sendMessage(sender, { text: respostaAudio });
-        await sock.sendPresenceUpdate("paused", sender);
-        return;
-      } catch (err) {
-        console.error('❌ Erro ao processar áudio:', err);
-        await sock.sendMessage(sender, {
-          text: '🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.',
-        });
-        await sock.sendPresenceUpdate("paused", sender);
-        return;
-      }
-    }
-
-    if (!cleanText) return;
-
-    console.log(`\n📩 [${sender}] ${cleanText}`);
-
-    const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-    // RESET
-    if (comandosReset.some((cmd) => {
-      const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      return textoLimpo === cmdLimpo;
-    })) {
-      sessions.delete(sender);
-      await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
-      return;
-    }
-
-    // ============================================================
-    // [FIX 3] SIM/NÃO quando aguarda localização
-    // Antes: qualquer "sim" ou "não" era capturado, mesmo que viesse
-    // acompanhado de sintoma grave ("não, agora estou com falta de ar").
-    // Agora: só intercepta se for curto E sem palavra clínica.
-    // ============================================================
-    const estadoAtualSimNao = sessions.get(sender);
-    if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
-      const decisao = matchSimNao(textoLimpo);
-      const palavras = textoLimpo.split(/\s+/).filter(Boolean);
-      const temPalavraClinica = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto)\b/.test(textoLimpo);
-      const podeSerSimNao = decisao !== null && palavras.length <= 4 && !temPalavraClinica;
-
-      if (podeSerSimNao) {
-        if (decisao === "sim") {
+          console.error('❌ Erro ao processar áudio:', err);
           await sock.sendMessage(sender, {
-            text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco a unidade mais próxima.`,
+            text: '🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.',
           });
-          return;
-        }
-        if (decisao === "nao") {
-          estadoAtualSimNao.aguardandoLocalizacao = undefined;
-          sessions.set(sender, estadoAtualSimNao);
-          await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
+          await sock.sendPresenceUpdate("paused", sender);
           return;
         }
       }
 
-      // Se veio sintoma ou texto longo, cancela a espera de localização
-      // e deixa a mensagem seguir para a triagem normal.
-      estadoAtualSimNao.aguardandoLocalizacao = undefined;
-      sessions.set(sender, estadoAtualSimNao);
-    }
+      // FOTO / STICKER / DOCUMENTO SEM LEGENDA
+      const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
+      if (temImagem && !cleanText) {
+        await sock.sendMessage(sender, { text: mensagemPorId('foto_sem_legenda_001').texto });
+        return;
+      }
 
-    // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
-    const pedidoLoc = detectarPedidoLocalizacao(cleanText);
-    if (pedidoLoc) {
-      const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-      estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText };
-      sessions.set(sender, estado);
-      const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
-      await sock.sendMessage(sender, {
-        text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco ${pedidoLoc === 'UBS' ? 'a' : 'o'} ${nome} mais ${pedidoLoc === 'UBS' ? 'próxima' : 'próximo'}.`,
-      });
-      return;
-    }
+      if (!cleanText) return;
 
-    // PROCESSA TURNO TEXTO
-    try {
+      console.log(`\n📩 [${sender}] ${cleanText}`);
+
+      const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      // RESET
+      if (comandosReset.some((cmd) => {
+        const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return textoLimpo === cmdLimpo;
+      })) {
+        sessions.delete(sender);
+        await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
+        return;
+      }
+
+      // SIM/NÃO + LOCALIZAÇÃO POR TEXTO
+      const estadoAtualSimNao = sessions.get(sender);
+      if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
+        const decisao = matchSimNao(textoLimpo);
+        const palavras = textoLimpo.split(/\s+/).filter(Boolean);
+        const temPalavraClinica = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto)\b/.test(textoLimpo);
+        const podeSerSimNao = decisao !== null && palavras.length <= 4 && !temPalavraClinica;
+
+        if (podeSerSimNao) {
+          if (decisao === "sim") {
+            await sock.sendMessage(sender, {
+              text: `📍 Me mande sua localização pelo 📎 → *Localização*.\n\nOu, se preferir, escreva seu *bairro e cidade* (ex: "Icaraí, Niterói") que eu busco pra você.`,
+            });
+            estadoAtualSimNao.aguardandoLocalizacao!.aguardandoTexto = true;
+            sessions.set(sender, estadoAtualSimNao);
+            return;
+          }
+          if (decisao === "nao") {
+            estadoAtualSimNao.aguardandoLocalizacao = undefined;
+            sessions.set(sender, estadoAtualSimNao);
+            await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
+            return;
+          }
+        }
+
+        if (estadoAtualSimNao.aguardandoLocalizacao.aguardandoTexto && palavras.length >= 2 && !temPalavraClinica) {
+          try {
+            await sock.sendPresenceUpdate("composing", sender);
+            const coords = await buscarCoordenadasPorTexto(cleanText);
+            if (coords) {
+              const tipo = estadoAtualSimNao.aguardandoLocalizacao.tipo;
+              const unidades = await buscarParaTipo(coords.lat, coords.lng, tipo);
+              const resposta = formatarUnidades(unidades, coords.lat, coords.lng, tipo as TipoBusca);
+              estadoAtualSimNao.aguardandoLocalizacao = undefined;
+              sessions.set(sender, estadoAtualSimNao);
+              await sock.sendMessage(sender, { text: resposta });
+              return;
+            } else {
+              await sock.sendMessage(sender, {
+                text: "Não consegui localizar esse endereço. Tente ser mais específico (bairro + cidade) ou compartilhe pelo 📎 → Localização.",
+              });
+              return;
+            }
+          } catch (err) {
+            console.error("❌ Erro no Nominatim:", err);
+          }
+        }
+
+        estadoAtualSimNao.aguardandoLocalizacao = undefined;
+        sessions.set(sender, estadoAtualSimNao);
+      }
+
+      // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
+      const pedidoLoc = detectarPedidoLocalizacao(cleanText);
+      if (pedidoLoc) {
+        const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+        estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText };
+        sessions.set(sender, estado);
+        const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
+        await sock.sendMessage(sender, {
+          text: `📍 Compartilhe sua localização (📎 → Localização) ou escreva seu *bairro e cidade* que eu busco ${pedidoLoc === 'UBS' ? 'a' : 'o'} ${nome} mais ${pedidoLoc === 'UBS' ? 'próxima' : 'próximo'}.`,
+        });
+        return;
+      }
+
+      // PROCESSA TURNO TEXTO
       await sock.sendPresenceUpdate("composing", sender);
 
       const primeiraMensagem = !sessions.has(sender);
@@ -373,21 +434,19 @@ export async function startWhatsAppBot() {
 
       let mensagemFinal = resultado.texto;
       if (primeiraMensagem) {
-        mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${mensagemFinal}`;
+        const privacidade = mensagemPorId('privacidade_001').texto;
+        mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}\n\n---\n\n${mensagemFinal}`;
       }
 
       mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
 
       await sock.sendMessage(sender, { text: mensagemFinal });
-    } catch (error) {
-      console.error("❌ Erro no processamento:", error);
-      await sock.sendMessage(sender, {
-        text: "❌ Ocorreu um erro. Tente novamente ou digite /reset.",
-      });
-    } finally {
       await sock.sendPresenceUpdate("paused", sender);
+    } catch (err) {
+      // [FIX] Não deixa o erro derrubar o processo
+      console.error('❌ Erro no handler de mensagem:', err);
     }
   });
 }
 
-startWhatsAppBot().catch(console.error);
+// [FIX] NÃO chama startWhatsAppBot() aqui. O index.ts é quem chama.

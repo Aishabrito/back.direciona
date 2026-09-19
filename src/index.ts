@@ -8,6 +8,14 @@ import { startWhatsAppBot } from './whatsapp/bot.js';
 
 dotenv.config();
 
+// [FIX] Não deixa o processo morrer por promise rejeitada ou exceção não capturada
+process.on('unhandledRejection', (err) => {
+  console.error('❌ Unhandled rejection:', err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught exception:', err);
+});
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -21,7 +29,6 @@ export function setQrCode(qr: string | null) {
   qrCodeString = qr;
 }
 
-// Rota que retorna a imagem do QR Code (abra no navegador)
 app.get('/qr', async (_req, res) => {
   if (!qrCodeString) {
     return res
@@ -47,28 +54,21 @@ app.get('/qr', async (_req, res) => {
   }
 });
 
-// ============================================================
-// HEALTH CHECK (UptimeRobot)
-// ============================================================
 app.get('/health', (_req, res) => {
   res.status(200).send('OK');
 });
 
-// ============================================================
-// API para o app móvel
-// ============================================================
 app.use('/api', rotasApi);
 
 const PORTA = Number(process.env.PORT) || 3000;
-
-
 app.listen(PORTA, '0.0.0.0', () => {
   console.log(`🚀 API do Direciona SUS rodando na porta ${PORTA}`);
   console.log(`📡 Health check: http://localhost:${PORTA}/health`);
   console.log(`📲 QR Code: http://localhost:${PORTA}/qr`);
 });
+
 // ============================================================
-// Inicia o bot do WhatsApp
+// Inicia o bot do WhatsApp — UMA ÚNICA VEZ
 // ============================================================
 startWhatsAppBot().catch((err: unknown) => {
   console.error('❌ Erro ao iniciar o WhatsApp:', err);

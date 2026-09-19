@@ -1,4 +1,4 @@
-
+// src/whatsapp/persistencia_sessao.ts
 import postgres from 'postgres';
 import fs from 'fs';
 import path from 'path';
@@ -15,9 +15,11 @@ export async function criarClienteDb(): Promise<Sql | null> {
     return null;
   }
 
+  // [FIX] Pool pequeno: o Supabase Session Pooler limita a 15 conexões no total.
+  // Com max: 2, sobra espaço para outras ferramentas.
   const sql = postgres(connectionString, {
     ssl: 'require',
-    max: 5,
+    max: 2,
     idle_timeout: 20,
     connect_timeout: 15,
   });
@@ -79,7 +81,6 @@ export async function subirSessaoParaBanco(sql: Sql | null): Promise<void> {
   }
 }
 
-// Sobe a sessão a cada 30s (polling simples, robusto)
 export function iniciarSyncPeriodico(sql: Sql | null): NodeJS.Timeout | null {
   if (!sql) return null;
   return setInterval(() => {
@@ -89,7 +90,6 @@ export function iniciarSyncPeriodico(sql: Sql | null): NodeJS.Timeout | null {
   }, 30_000);
 }
 
-// Sobe a sessão quando o processo for encerrado
 export function registrarSyncNoShutdown(sql: Sql | null): void {
   if (!sql) return;
   const handler = async (signal: string) => {
