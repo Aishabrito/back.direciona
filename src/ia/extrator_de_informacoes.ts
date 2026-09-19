@@ -14,13 +14,11 @@ const TERCEIROS: Record<string, string> = {
 const REGEX_PALAVRA_CLINICA =
   /\bdor\b|\bfebre\b|\btosse\b|queimadura|queimei|queimou|queimar|\bqueda\b|\bcaiu\b|\bcai\b|vomito|vomitando|vomitei|enjoo|nausea|\bsangramento\b|\bsangrando\b|falta de ar|respirar|\bdesmaio\b|apagou|desmaiei|confus|desorientad|ferida|corte|lacera|picada|escorpi|aranha|cobra|intoxica|envenen|ansiedade|panico|depressao|caps|pressao|hipertensao|convuls|trauma|batida|alergia|coceira|mancha|vermelhid|inflama|doendo|\bdolor\b|tontura|inchaco|inchaço|ardor|queimacao|queimação/i;
 
-// [NOVO] Autodiagnóstico perigoso
 const AUTODIAGNOSTICO: [RegExp, string][] = [
   [/\binfarto\b/, 'infarto'],
   [/\bavc\b|\bderrame\b/, 'avc'],
 ];
 
-// [NOVO] Sinais neurológicos (AVC)
 const NEUROLOGICOS: [RegExp, string][] = [
   [/\bboca torta\b|\blabio torto\b|\bface torta\b/, 'boca_torta'],
   [/\bfala enrolada\b|\bnao fala direito\b|\bfala embolada\b|\bnao consegue falar\b/, 'fala_enrolada'],
@@ -28,7 +26,6 @@ const NEUROLOGICOS: [RegExp, string][] = [
   [/\bperda (s[uú]bita )?de visao\b|\bnao enxerga (de )?repente\b/, 'perda_visao_subita'],
 ];
 
-// [FIX] Obstétricos SÓ quando gestante ou pós-parto
 function extrairSinaisObstetricos(n: string, gestante: string, posParto: string): string[] {
   if (gestante !== 'sim' && posParto !== 'sim') return [];
   const sinais: string[] = [];
@@ -40,7 +37,6 @@ function extrairSinaisObstetricos(n: string, gestante: string, posParto: string)
   return sinais;
 }
 
-// [FIX] Trauma: "carro" só vale se tiver acidente/batida/colisão
 function extrairSinaisTrauma(n: string): string[] {
   const sinais: string[] = [];
   const temAcidente = /\b(atropel|acidente|colis[aã]o|capot|batida|bati|bateu|colidiu)\b/.test(n);
@@ -60,7 +56,6 @@ function extrairNeurologicos(n: string): string[] {
   return sinais;
 }
 
-// [NOVO] Idade numérica
 function extrairIdade(n: string): { grupo: RelatoEstruturado['idade_grupo']; numerica: number | null } {
   const m = n.match(/\b(\d{1,3})\s*(anos?|meses?)\b/);
   let numerica: number | null = null;
@@ -82,7 +77,6 @@ function extrairIdade(n: string): { grupo: RelatoEstruturado['idade_grupo']; num
   return { grupo, numerica };
 }
 
-//] Duração aceita várias formas
 function extrairDuracao(n: string): string {
   const num = n.match(
     /\b(?:ha|faz|desde)\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(dia|dias|hora|horas|semana|semanas|mes|meses)\b/,
@@ -105,7 +99,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   if (ehSaudacao) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
-  // ==== FLAGS COM NEGAÇÃO GENÉRICA ====
+  // FLAGS COM NEGAÇÃO GENÉRICA
   const falta_de_ar = afirmadoTri(n, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
   const dor_no_peito = afirmadoTri(n, /\bdor (no|do) peito\b|\baperto no peito\b|\bpressao no peito\b/);
   const desmaio = afirmadoTri(n, /\bdesmaio\b|\bdesmaiei\b|\bapaguei\b|\bapagou\b|\binconsciente\b/);
@@ -120,16 +114,15 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   const fala_frases = afirmadoTri(n, /\bnao consigo falar\b|\bnao falo\b|\bnao consigo terminar a frase\b/);
   const alergia_grave = afirmadoTri(n, /\bgarganta (fechando|fechou)\b|\bnao consigo engolir\b|\banafilaxia\b|\balergia grave\b/);
 
-  // ==== AUTODIAGNÓSTICO PERIGOSO ====
+  // AUTODIAGNÓSTICO
   let autodiagnostico: string | null = null;
   for (const [re, label] of AUTODIAGNOSTICO) {
     if (re.test(n)) { autodiagnostico = label; break; }
   }
 
-  // ==== SINAIS NEUROLÓGICOS (AVC) ====
   const neuro = extrairNeurologicos(n);
 
-  // ==== RISCO MENTAL ====
+  // RISCO MENTAL
   let risco_mental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/\bquero me matar\b|\bvou me matar\b|\bn[aã]o quero mais viver\b|\bquero morrer\b|\bacabar com tudo\b|\btentativa de suic[ií]dio\b|\bme machucar\b/.test(n)) {
     risco_mental = 'iminente';
@@ -137,7 +130,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     risco_mental = 'sem_risco_imediato';
   }
 
-  // ==== GESTANTE / POS-PARTO ====
+  // GESTANTE / POS-PARTO
   let gestante: RelatoEstruturado['gestante'] = 'nao_informado';
   const gest = afirmado(n, /\bgravida\b|\bgestante\b/);
   if (gest === true) gestante = 'sim';
@@ -146,7 +139,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   const posParto: RelatoEstruturado['pos_parto'] = contemAlgum(n, ['pos parto', 'depois do parto', 'puerperio', 'tive bebe recentemente'])
     ? 'sim' : 'nao_informado';
 
-  // ==== SINAIS ESPECIALIZADOS ====
+  // SINAIS ESPECIALIZADOS
   const obstetricos = extrairSinaisObstetricos(n, gestante, posParto);
   const traumaSinais = extrairSinaisTrauma(n);
   if (obstetricos.length) sinais.push(...obstetricos);
@@ -167,7 +160,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
-  // ==== SINTOMAS COMUNS ====
+  // SINTOMAS COMUNS
   const sintomasMap: [RegExp, string][] = [
     [/\bfebre\b/, 'febre'],
     [/\btosse\b/, 'tosse'],
@@ -194,7 +187,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     if (r === true && !sintomas.includes(label)) sintomas.push(label);
   }
 
-  // Dor localizada (com negação)
   const dor = afirmado(n, /\bdor\b/);
   if (dor === true) {
     const m = n.match(/dor (no|na|nos|nas|de)\s+([a-z]{3,})/);
@@ -206,7 +198,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
-  // ==== TERCEIROS ====
+  // TERCEIROS
   let pessoa = 'nao_informado';
   let terceiro = false;
   for (const [chave, rotulo] of Object.entries(TERCEIROS)) {
@@ -219,26 +211,20 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
       break;
     }
   }
-  // [FIX] "sou mulher" NÃO é terceiro
   if (!terceiro && contemAlgum(n, ['pessoa', 'alguem', 'homem', 'mulher', 'senhor', 'senhora'])
       && !/\b(sou|eu sou|me chamo)\b/.test(n)) {
     terceiro = true;
     pessoa = 'terceiro';
   }
 
-  // ==== IDADE ====
   const { grupo: idade_grupo, numerica: idade_numerica } = extrairIdade(n);
-
-  // ==== DURAÇÃO ====
   const duracao = extrairDuracao(n);
 
-  // ==== PIORA / INTENSIDADE ====
   const piora: RelatoEstruturado['piora'] = contemAlgum(n, ['piorando', 'piorou', 'cada vez pior', 'aumentando']) ? 'sim' : 'nao_informado';
   let intensidade = 'nao_informado';
   if (contemAlgum(n, ['forte', 'intensa', 'muito forte', 'insuportavel', 'insuportável', 'horrivel'])) intensidade = 'intensa';
   else if (contemAlgum(n, ['leve', 'moderada', 'pouca'])) intensidade = 'leve';
 
-  // ==== INFORMAÇÃO INSUFICIENTE ====
   const soRespostaCurta = /^(sim|nao|s|n|ok|isso)$/.test(n);
   const informacao_insuficiente =
     soRespostaCurta ||
@@ -268,7 +254,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     gestante,
     pos_parto: posParto,
     risco_mental,
-    informacao_insuficiente: informacao_insuficiente,
+    informacao_insuficiente,
     informacoes_contraditorias: [],
     sinais_obstetricos: unicos(obstetricos),
     sinais_trauma: unicos(traumaSinais),
@@ -287,7 +273,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 }
 
 // ============================================================
-// GEMINI — schema completo + timeout + temperature 0 + união
+// GEMINI texto — schema completo + timeout + temperature 0 + união
 // ============================================================
 export async function interpretarRelato(texto: string): Promise<RelatoEstruturado> {
   const local = extrairInformacoes(texto);
@@ -350,7 +336,6 @@ DIRETRIZES:
     const parsed = JSON.parse(response.text || '{}');
     const g = validarRelato({ ...parsed, texto_original_acumulado: '' }).relato;
 
-    // Une local + Gemini (sinais_alerta sempre soma, por segurança)
     const sintomasFinal = unicos([...local.sintomas, ...g.sintomas]);
     const sinaisFinal = unicos([...local.sinais_alerta, ...g.sinais_alerta]);
     const neuroFinal = unicos([...(local.sinais_neurologicos || []), ...(g.sinais_neurologicos || [])]);
@@ -388,5 +373,102 @@ DIRETRIZES:
   } catch (error) {
     console.error('❌ Gemini falhou/timeout, usando extrator local:', error);
     return local;
+  }
+}
+
+// ============================================================
+// [NOVO] ÁUDIO — interpreta DIRETO no Gemini, sem transcrição
+// ============================================================
+export async function interpretarAudio(
+  audioBuffer: Buffer,
+  mimeType: string = 'audio/ogg; codecs=opus',
+): Promise<RelatoEstruturado> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn('⚠️ GEMINI_API_KEY ausente. Não é possível interpretar áudio.');
+    return { ...RELATO_VAZIO };
+  }
+
+  const mimeLimpo = mimeType.split(';')[0].trim();
+  const base64Audio = audioBuffer.toString('base64');
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+
+    const promessa = ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          inlineData: {
+            mimeType: mimeLimpo,
+            data: base64Audio,
+          },
+        },
+        {
+          text:
+            'Ouça este relato de saúde em áudio e extraia os dados clínicos estruturados. ' +
+            'Trate como se fosse uma mensagem de texto do paciente. ' +
+            'Não diagnostique, não prescreva, apenas extraia o que foi dito.',
+        },
+      ],
+      config: {
+        temperature: 0,
+        responseMimeType: 'application/json',
+        systemInstruction: `Você é um médico regulador e triador do SUS (SAMU 192, UBS, UPA).
+Ouça o áudio e interprete a gravidade e o contexto por trás da fala — gírias, erros, relatos sobre terceiros.
+Extraia apenas o que está explícito no áudio, não invente informações.
+DIRETRIZES:
+- Identifique sintomas (dor, febre, tosse, queimadura, queda).
+- Sinalize emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave, sinais de AVC (boca torta, fala enrolada).
+- Marque se o relato é sobre terceiro (mãe, pai, filho) e identifique a pessoa.
+- Identifique ideação suicida ou autolesão ("quero morrer", "não quero mais viver").
+- NÃO diagnostique doenças.`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            sintomas: { type: Type.ARRAY, items: { type: Type.STRING } },
+            sinais_alerta: { type: Type.ARRAY, items: { type: Type.STRING } },
+            relato_sobre_terceiro: { type: Type.BOOLEAN },
+            pessoa: { type: Type.STRING },
+            idade_grupo: { type: Type.STRING, enum: ['bebe','crianca','adolescente','adulto','idoso','nao_informado'] },
+            idade_numerica: { type: Type.NUMBER },
+            gestante: { type: Type.STRING, enum: ['sim','nao','nao_informado'] },
+            pos_parto: { type: Type.STRING, enum: ['sim','nao','nao_informado'] },
+            risco_mental: { type: Type.STRING, enum: ['iminente','sem_risco_imediato','nao_mencionado'] },
+            falta_de_ar: { type: Type.BOOLEAN },
+            dor_no_peito: { type: Type.BOOLEAN },
+            desmaio: { type: Type.BOOLEAN },
+            confusao: { type: Type.BOOLEAN },
+            sangramento: { type: Type.BOOLEAN },
+            febre: { type: Type.BOOLEAN },
+            vomitos: { type: Type.BOOLEAN },
+            trauma: { type: Type.BOOLEAN },
+            exposicao_intoxicacao: { type: Type.BOOLEAN },
+            duracao: { type: Type.STRING },
+            piora: { type: Type.STRING, enum: ['sim','nao','nao_informado'] },
+            intensidade: { type: Type.STRING, enum: ['leve','moderada','intensa','nao_informado'] },
+            informacao_insuficiente: { type: Type.BOOLEAN },
+          },
+          required: ['sintomas', 'sinais_alerta', 'relato_sobre_terceiro'],
+        },
+      },
+    });
+
+    const timeout = new Promise<never>((_, rej) =>
+      setTimeout(() => rej(new Error('timeout gemini audio')), 20000),
+    );
+    const response = (await Promise.race([promessa, timeout])) as any;
+    const parsed = JSON.parse(response.text || '{}');
+
+    const validado = validarRelato({
+      ...parsed,
+      texto_original_acumulado: '[áudio]',
+    });
+
+    if (!validado.ok) console.warn('⚠️ Relato do áudio fora do formato:', parsed);
+    return validado.relato;
+  } catch (error) {
+    console.error('❌ Gemini falhou ao interpretar áudio:', error);
+    return { ...RELATO_VAZIO };
   }
 }
