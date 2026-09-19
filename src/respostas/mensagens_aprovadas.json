@@ -1,6 +1,51 @@
 {
   "versao": "1.1.0",
   "mensagens": [
+        {
+      "id": "violencia_001",
+      "destino": ["SAMU 192", "Hospital de referência", "Ligue 180"],
+      "texto": "Sinto muito que você esteja passando por isso. Sua segurança é prioridade. Se houver risco imediato, acione o SAMU 192 agora ou procure o Pronto-Socorro mais próximo. Você também pode ligar para o 180 (Central de Atendimento à Mulher) — a ligação é gratuita, sigilosa e funciona 24h."
+    },
+    {
+      "id": "dengue_001",
+      "destino": ["UPA 24h"],
+      "texto": "Os sinais que você descreveu podem ser compatíveis com dengue. Procure uma UPA 24h para avaliação e exames. Beba bastante líquido no caminho. Se surgirem dor abdominal intensa, vômitos persistentes, sangramento, tontura ao levantar ou sonolência excessiva, acione o SAMU 192 imediatamente."
+    },
+    {
+      "id": "intoxicacao_001",
+      "destino": ["UPA 24h", "Disque-Intoxicação 0800 722 6001"],
+      "texto": "Procure imediatamente uma UPA 24h ou Pronto-Socorro para avaliação. Leve a embalagem ou o produto envolvido, se possível. Você também pode ligar para o Disque-Intoxicação: 0800 722 6001 (24h, gratuito). Se houver desmaio, convulsão, dificuldade para respirar ou piora rápida, acione o SAMU 192."
+    },
+    {
+      "id": "desidratacao_001",
+      "destino": ["UPA 24h"],
+      "texto": "Os sinais descritos podem indicar desidratação. Procure uma UPA 24h para avaliação e, se possível, ofereça pequenas quantidades de líquido (água, soro caseiro) com frequência. Se houver sonolência excessiva, ausência de urina, olhos fundos ou piora do estado geral, acione o SAMU 192."
+    },
+    {
+      "id": "odontologia_001",
+      "destino": ["UBS ou Clínica da Família"],
+      "texto": "Para dor de dente, procure a UBS ou Clínica da Família mais próxima — muitas têm atendimento odontológico. Se houver febre, inchaço no rosto ou dificuldade para engolir ou respirar, procure uma UPA 24h imediatamente."
+    },
+    {
+      "id": "foto_sem_legenda_001",
+      "destino": ["Direciona SUS"],
+      "texto": "📷 Recebi sua imagem, mas preciso que você me conte em palavras o que está acontecendo. Descreva os sintomas — por exemplo: onde dói, há quanto tempo, se há febre. Assim consigo te orientar melhor."
+    },
+    {
+      "id": "novo_caso_001",
+      "destino": ["Direciona SUS"],
+      "texto": "Vamos começar um novo caso. Me conte do zero: o que está acontecendo ou o que está sentindo?"
+    },
+    {
+      "id": "encerramento_001",
+      "destino": ["Direciona SUS"],
+      "texto": "Fico à disposição 💛 Se precisar de algo mais, é só chamar."
+    },
+    {
+      "id": "privacidade_001",
+      "destino": ["Direciona SUS"],
+      "texto": "🔒 *Sua privacidade é importante.* Não envie CPF, endereço completo, senha ou dados de cartão. Esta conversa é uma orientação inicial e não substitui avaliação médica presencial."
+    } , 
     {
       "id": "emergencia_001",
       "destino": ["SAMU 192", "Pronto-Socorro"],

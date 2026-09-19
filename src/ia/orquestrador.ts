@@ -11,6 +11,7 @@ import {
   interpretarRespostaCurta, type TemaPergunta,
 } from './perguntas.js';
 import { checarFaq } from './faq.js';
+import { comporResposta } from './compositor_mensagem.js';
 import {
   RELATO_VAZIO, VERSAO_REGRAS,
   type EstadoConversa, type RelatoEstruturado, type TurnoResultado,
@@ -58,7 +59,10 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
 type NivelAlerta = 'critico' | 'alerta' | 'normal';
 
 function classificarNivel(relato: RelatoEstruturado): NivelAlerta {
+  // CRÍTICO
   if (relato.risco_mental === 'iminente') return 'critico';
+  if ((relato.sinais_alerta || []).includes('violencia_sexual')) return 'critico';
+  if ((relato.sinais_alerta || []).includes('violencia_domestica')) return 'critico';
   if ((relato.sinais_neurologicos || []).length > 0) return 'critico';
   if ((relato.sinais_trauma || []).includes('ferimento_perfurante')) return 'critico';
   if (relato.autodiagnostico_grave) return 'critico';
@@ -68,7 +72,9 @@ function classificarNivel(relato: RelatoEstruturado): NivelAlerta {
   if (relato.desmaio === true && relato.confusao === true) return 'critico';
   if ((relato.sinais_obstetricos || []).length > 0) return 'critico';
   if (relato.idade_grupo === 'bebe' && relato.febre === true) return 'critico';
+  if (relato.idade_grupo === 'idoso' && relato.trauma === true && (relato.confusao === true || relato.desmaio === true)) return 'critico';
 
+  // ALERTA — faz 1 pergunta e decide
   if (relato.falta_de_ar === true && relato.fala_frases === 'nao_informado' && relato.labios_roxos === 'nao_informado') return 'alerta';
   if ((relato.sinais_trauma || []).some((s) => ['trauma_automobilistico', 'queda_altura', 'trauma_craniano'].includes(s))) return 'alerta';
   if (relato.dor_no_peito === true && relato.falta_de_ar !== true) return 'alerta';
@@ -93,15 +99,40 @@ export async function processarTurno(
     ? ({ ...RELATO_VAZIO, ...respostaCurta, texto_original_acumulado: '' } as RelatoEstruturado)
     : await interpretarRelato(textoUsuario);
 
+  // ============================================================
+  // 1. Detecção de novo caso (zera o contexto)
+  // ============================================================
+  const textoNorm = normalizarTexto(textoUsuario);
+  const ehNovoCaso = /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
+
+  if (fase === 'orientado' && ehNovoCaso) {
+    const msg = mensagemPorId('novo_caso_001');
+    return {
+      estado: { ...ESTADO_INICIAL },
+      resultado: {
+        tipo: 'orientacao',
+        texto: msg.texto,
+        decisao: {
+          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+          resposta_id: 'novo_caso_001', regra_acionada: 'novo_caso',
+          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['novo caso'],
+        },
+      },
+    };
+  }
+
+  // ============================================================
+  // 2. Agradecimento em fase orientado → encerramento
+  // ============================================================
   if (fase === 'orientado' && ehAgradecimento(textoUsuario) && !temSintomaClinico(extraido)) {
     return {
       estado: { ...estado, fase: 'orientado' },
       resultado: {
         tipo: 'orientacao',
-        texto: 'Fico à disposição 💛 Se precisar de algo mais, é só chamar.',
+        texto: mensagemPorId('encerramento_001').texto,
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento', regra_acionada: 'agradecimento',
+          resposta_id: 'encerramento_001', regra_acionada: 'agradecimento',
           versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['encerramento'],
         },
       },
@@ -111,6 +142,9 @@ export async function processarTurno(
   const nivel = classificarNivel(extraido);
   const sinalCritico = nivel === 'critico';
 
+  // ============================================================
+  // 3. FAQ — só se não tem sintoma clínico
+  // ============================================================
   if (!temSintomaClinico(extraido) && !respostaCurta) {
     const faqEncontrada = checarFaq(textoUsuario);
     if (faqEncontrada) {
@@ -129,6 +163,9 @@ export async function processarTurno(
     }
   }
 
+  // ============================================================
+  // 4. Bloqueios de escopo (só se não for crítico)
+  // ============================================================
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -158,6 +195,9 @@ export async function processarTurno(
     };
   }
 
+  // ============================================================
+  // 5. Saudação inicial SEM sintoma
+  // ============================================================
   if (
     estado.relatos.length === 0 &&
     ehSaudacao(textoUsuario) &&
@@ -189,6 +229,9 @@ export async function processarTurno(
     };
   }
 
+  // ============================================================
+  // 6. Fora de escopo
+  // ============================================================
   if (
     !temSintomaClinico(extraido) &&
     estado.relatos.length === 0 &&
@@ -208,6 +251,9 @@ export async function processarTurno(
     };
   }
 
+  // ============================================================
+  // 7. Consolida relato
+  // ============================================================
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -218,6 +264,9 @@ export async function processarTurno(
 
   const MAX_RODADAS = 2;
 
+  // ============================================================
+  // 8. Refinamento (nível normal)
+  // ============================================================
   if (nivelAtual === 'normal' && estado.rodadasPerguntas < MAX_RODADAS) {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
@@ -241,6 +290,9 @@ export async function processarTurno(
     }
   }
 
+  // ============================================================
+  // 9. Alerta — uma pergunta crítica se faltar
+  // ============================================================
   if (nivelAtual === 'alerta') {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
@@ -264,6 +316,9 @@ export async function processarTurno(
     }
   }
 
+  // ============================================================
+  // 10. Decisão pelo motor
+  // ============================================================
   const decisao = aplicarMotor(atual, textoAcumulado);
 
   if (decisao.categoria_interna === 'informacao_insuficiente') {
@@ -284,7 +339,9 @@ export async function processarTurno(
     }
   }
 
-  const mensagem = mensagemPorId(decisao.resposta_id).texto;
+  // [NOVO] Compositor de resposta em blocos
+  const mensagemAprovada = mensagemPorId(decisao.resposta_id).texto;
+  const mensagem = comporResposta({ relato: atual, decisao, mensagemAprovada });
   registrarDecisao(decisao);
 
   return {
@@ -312,21 +369,23 @@ export async function processarTurnoComRelato(
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const fase = estado.fase ?? 'inicio';
 
+  // Agradecimento
   if (fase === 'orientado' && ehAgradecimento(textoRepresentativo) && !temSintomaClinico(relatoPronto)) {
     return {
       estado: { ...estado, fase: 'orientado' },
       resultado: {
         tipo: 'orientacao',
-        texto: 'Fico à disposição 💛 Se precisar de algo mais, é só chamar.',
+        texto: mensagemPorId('encerramento_001').texto,
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento', regra_acionada: 'agradecimento',
+          resposta_id: 'encerramento_001', regra_acionada: 'agradecimento',
           versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['encerramento'],
         },
       },
     };
   }
 
+  // Áudio vazio / sem sintoma
   if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0) {
     return {
       estado,
@@ -346,6 +405,7 @@ export async function processarTurnoComRelato(
 
   const sinalCritico = classificarNivel(relatoPronto) === 'critico';
 
+  // FAQ — só se não tem sintoma
   if (!temSintomaClinico(relatoPronto)) {
     const faq = checarFaq(textoRepresentativo);
     if (faq) {
@@ -363,6 +423,7 @@ export async function processarTurnoComRelato(
     }
   }
 
+  // Bloqueios
   if (!sinalCritico && ehPedidoMedicamento(textoRepresentativo)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -400,6 +461,7 @@ export async function processarTurnoComRelato(
   const nivelAtual = classificarNivel(atual);
 
   const MAX_RODADAS = 2;
+
   if (nivelAtual === 'normal' && estado.rodadasPerguntas < MAX_RODADAS) {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
@@ -459,7 +521,8 @@ export async function processarTurnoComRelato(
     }
   }
 
-  const mensagem = mensagemPorId(decisao.resposta_id).texto;
+  const mensagemAprovada = mensagemPorId(decisao.resposta_id).texto;
+  const mensagem = comporResposta({ relato: atual, decisao, mensagemAprovada });
   registrarDecisao(decisao);
 
   return {

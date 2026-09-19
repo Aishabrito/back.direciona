@@ -28,41 +28,37 @@ function decisao(
   };
 }
 
-// [RESTAURADO] Trauma grave com mecanismo + queimadura extensa + intoxicação grave
+// ────────────────────────────────────────────────────────────
+// TRAUMA GRAVE (penetrante, TCE, mecanismo, intoxicação, queimadura)
+// ────────────────────────────────────────────────────────────
 function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegras | null {
   const sinais = R.sinais_trauma || [];
 
-  // Ferimento penetrante (faca/tiro)
   if (sinais.includes('ferimento_perfurante')) {
     return decisao('trauma_penetrante', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['ferimento por arma']);
   }
 
-  // Trauma crânio-encefálico com sinal
   if (sinais.includes('trauma_craniano') &&
       (R.idade_grupo === 'idoso' || R.confusao === true || (R.sinais_neurologicos || []).length > 0)) {
     return decisao('trauma_craniano_grave', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['trauma craniano com sinal']);
   }
 
-  // Mecanismo de trauma grave
   if (sinais.includes('trauma_automobilistico') || sinais.includes('queda_altura') ||
       contemAlgum(texto, ['atropelamento', 'acidente de carro', 'colisao', 'capotamento', 'queda de altura'])) {
     return decisao('trauma_grave_mecanismo', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['mecanismo de trauma grave']);
   }
 
-  // [RESTAURADO] Intoxicação grave com qualificador
   if (R.exposicao_intoxicacao === true &&
       contemAlgum(texto, ['grave', 'intenso', 'forte', 'perigo', 'urgente', 'muito'])) {
     return decisao('intoxicacao_grave', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['intoxicação grave']);
   }
 
-  // [RESTAURADO] Queimadura extensa/grave
   if (R.sintomas.includes('queimadura') &&
-      contemAlgum(texto, ['extensa', 'grande', 'grave', '2 grau', '3 grau', 'muito']))
-  {
+      contemAlgum(texto, ['extensa', 'grande', 'grave', '2 grau', '3 grau', 'muito'])) {
     return decisao('queimadura_grave', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['queimadura grave']);
   }
@@ -70,7 +66,9 @@ function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegra
   return null;
 }
 
-// [RESTAURADO] Emergência obstétrica específica
+// ────────────────────────────────────────────────────────────
+// EMERGÊNCIA OBSTÉTRICA
+// ────────────────────────────────────────────────────────────
 function verificarEmergenciaObstetrica(R: RelatoEstruturado, texto: string): DecisaoRegras | null {
   if (R.gestante !== 'sim' && R.pos_parto !== 'sim') return null;
 
@@ -90,6 +88,9 @@ function verificarEmergenciaObstetrica(R: RelatoEstruturado, texto: string): Dec
   return null;
 }
 
+// ────────────────────────────────────────────────────────────
+// MOTOR PRINCIPAL
+// ────────────────────────────────────────────────────────────
 export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string): DecisaoRegras {
   const R = relato;
   const texto = normalizarTexto([
@@ -99,7 +100,9 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     ...R.sinais_alerta,
   ].join(' '));
 
-  // ══════════════ NÍVEL 1 — CRÍTICO (SAMU) ══════════════
+  // ════════════════════════════════════════════════════════
+  // NÍVEL 1 — CRÍTICO (SAMU AGORA)
+  // ════════════════════════════════════════════════════════
 
   // 1. Risco mental iminente
   if (R.risco_mental === 'iminente') {
@@ -107,47 +110,54 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'mental_emergencia_001', 'SAMU_AGORA', ['risco de autoagressão']);
   }
 
-  // 2-5. Trauma grave (penetrante, TCE, mecanismo, intoxicação, queimadura)
+  // 2. Violência sexual/doméstica
+  if ((R.sinais_alerta || []).includes('violencia_sexual') ||
+      (R.sinais_alerta || []).includes('violencia_domestica')) {
+    return decisao('violencia', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
+      'violencia_001', 'SAMU_AGORA', ['situação de violência']);
+  }
+
+  // 3-7. Trauma grave
   const trauma = verificarTraumaGrave(R, texto);
   if (trauma) return trauma;
 
-  // 6. AVC
+  // 8. AVC
   if ((R.sinais_neurologicos || []).length > 0) {
     return decisao('avc_suspeito', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['sinais neurológicos súbitos']);
   }
 
-  // 7. Anafilaxia
+  // 9. Anafilaxia
   if (R.alergia_grave === true) {
     return decisao('anafilaxia', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['reação alérgica grave']);
   }
 
-  // 8. Falta de ar crítica (não fala frases / lábios roxos)
+  // 10. Falta de ar crítica
   if (R.falta_de_ar === true && (flagFalse(R.fala_frases) || flag(R.labios_roxos))) {
     return decisao('resp_grave', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['falta de ar com critério']);
   }
 
-  // 9. Dor torácica com sinal associado
+  // 11. Dor torácica com sinal associado
   if (R.dor_no_peito === true && (R.falta_de_ar === true || R.desmaio === true || R.confusao === true)) {
     return decisao('dor_toracica_com_sinais', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['dor torácica com sinais']);
   }
 
-  // 10. Autodiagnóstico grave
+  // 12. Autodiagnóstico grave ("acho que é infarto")
   if (R.autodiagnostico_grave) {
     return decisao(`autodiag_${R.autodiagnostico_grave}`, 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', [`relato de ${R.autodiagnostico_grave}`]);
   }
 
-  // 11. Inconsciência
+  // 13. Inconsciência
   if (R.desmaio === true && R.confusao === true) {
     return decisao('inconsciencia', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['alteração grave de consciência']);
   }
 
-  // [RESTAURADO] Hipertensão com sinal grave
+  // 14. Hipertensão com sinal grave
   const temPressao = contemAlgum(texto, ['pressao alta', 'pressao subiu', 'pressao elevada', 'hipertensao']);
   if (temPressao &&
       contemAlgum(texto, ['dor de cabeca', 'cabeca explodindo', 'visao turva', 'visao embacada', 'dor no peito', 'falta de ar', 'vomito'])) {
@@ -155,11 +165,18 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'emergencia_001', 'SAMU_AGORA', ['pressão alta com sinal']);
   }
 
-  // 12. Obstétrica crítica
+  // 15. Obstétrica crítica
   const obst = verificarEmergenciaObstetrica(R, texto);
   if (obst) return obst;
 
-  // 13. Emergências do JSON
+  // 16. Idoso com queda e confusão
+  if (R.idade_grupo === 'idoso' && R.trauma === true &&
+      (R.confusao === true || R.desmaio === true)) {
+    return decisao('idoso_queda_confusao', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
+      'emergencia_001', 'SAMU_AGORA', ['idoso com queda e alteração de consciência']);
+  }
+
+  // 17. Emergências do JSON
   for (const regra of (emergencias as RegrasContainer).regras) {
     if (regra.quando.some((p) => contemAlgum(texto, [p]))) {
       return decisao(regra.id, 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
@@ -167,79 +184,95 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     }
   }
 
-  // 14. Bebê com febre
+  // 18. Bebê com febre
   if (R.idade_grupo === 'bebe' && R.febre === true) {
     return decisao('pediatria_bebe_febre', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'pediatria_emergencia_001', 'SAMU_AGORA', ['bebê com febre']);
   }
 
-  // ══════════════ NÍVEL 2 — UPA AGORA ══════════════
+  // ════════════════════════════════════════════════════════
+  // NÍVEL 2 — UPA AGORA
+  // ════════════════════════════════════════════════════════
 
-  // Criança que não bebe
+  // 19. Criança que não bebe
   if ((R.idade_grupo === 'bebe' || R.idade_grupo === 'crianca') && flagFalse(R.consegue_beber)) {
     return decisao('pediatria_desidratacao', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['criança que não bebe']);
   }
 
-  // Falta de ar isolada (sem gravidade)
+  // 20. Falta de ar isolada
   if (R.falta_de_ar === true) {
     return decisao('falta_de_ar_isolada', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['falta de ar']);
   }
 
-  // Sinal de alarme isolado
+  // 21. Sinal de alarme isolado
   if (R.dor_no_peito === true || R.desmaio === true || R.confusao === true || R.sangramento === true) {
     return decisao('sinal_alarme_isolado', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['sinal de alarme']);
   }
 
-  // Trauma mecânico (auto / queda altura) sem gravidade
+  // 22. Trauma mecânico (auto/queda de altura) sem gravidade
   if ((R.sinais_trauma || []).some((s) => ['trauma_automobilistico', 'queda_altura'].includes(s))) {
     return decisao('trauma_mecanismo', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['trauma com mecanismo de risco']);
   }
 
-  // Animal peçonhento
+  // 23. Animal peçonhento
   if (R.sintomas.some((s) => /picada de animal peçonhento/.test(s))) {
     return decisao('animal_peconhento', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['picada de animal peçonhento']);
   }
 
-  // Sintoma urinário com alarme
+  // 24. Sintoma urinário com alarme
   if (R.sintomas.some((s) => /sintoma urinário/.test(s)) &&
       (R.febre === true || contemAlgum(texto, ['dor nas costas', 'dor lombar', 'dor nos rins']))) {
     return decisao('urinario_com_febre', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['sintoma urinário com alarme']);
   }
 
-  // Queimadura não-grave
+  // 25. Queimadura não-grave
   if (R.sintomas.includes('queimadura')) {
     return decisao('queimadura', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['queimadura']);
   }
 
-  // Intoxicação sem qualificador grave
-  if (R.exposicao_intoxicacao === true) {
-    return decisao('intoxicacao', 'urgencia', 'UPA_24H',
-      'upa_001', 'UPA_AGORA', ['intoxicação']);
+  // 26. Suspeita de dengue
+  if (R.sintomas.includes('suspeita de dengue')) {
+    return decisao('dengue', 'urgencia', 'UPA_24H',
+      'dengue_001', 'UPA_AGORA', ['suspeita de dengue']);
   }
 
-  // Urgências do JSON
+  // 27. Desidratação
+  if (R.sintomas.includes('sinais de desidratação')) {
+    return decisao('desidratacao', 'urgencia', 'UPA_24H',
+      'desidratacao_001', 'UPA_AGORA', ['sinais de desidratação']);
+  }
+
+  // 28. Intoxicação
+  if (R.exposicao_intoxicacao === true) {
+    return decisao('intoxicacao', 'urgencia', 'UPA_24H',
+      'intoxicacao_001', 'UPA_AGORA', ['exposição a intoxicação']);
+  }
+
+  // 29. Urgências do JSON
   for (const regra of (urgencias as RegrasContainer).regras) {
     if (regra.quando.some((p) => contemAlgum(texto, [p]))) {
       return decisao(regra.id, 'urgencia', 'UPA_24H', 'upa_001', 'UPA_AGORA', [regra.id]);
     }
   }
 
-  // Intensidade / piora
+  // 30. Intensidade / piora
   if (R.sintomas.length > 0 && (R.intensidade === 'intensa' || R.piora === 'sim')) {
     return decisao('queixa_intensa_ou_piora', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['intensidade ou piora']);
   }
 
-  // ══════════════ NÍVEL 3 — HOJE ══════════════
+  // ════════════════════════════════════════════════════════
+  // NÍVEL 3 — HOJE
+  // ════════════════════════════════════════════════════════
 
-  // Febre prolongada
+  // 31. Febre prolongada (≥3 dias)
   const durNum = parseInt(R.duracao.match(/\d+/)?.[0] || '0', 10);
   const durLonga = durNum >= 3 || /tres|quatro|cinco|seis|sete|oito|nove|dez/.test(normalizarTexto(R.duracao));
   if (R.febre === true && durLonga) {
@@ -247,7 +280,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'upa_001', 'HOJE', ['febre prolongada']);
   }
 
-  // Saúde mental sem risco
+  // 32. Saúde mental sem risco
   if (R.risco_mental === 'sem_risco_imediato') {
     return decisao('mental_sem_risco_imediato', 'saude_mental_sem_risco_imediato',
       'CAPS_OU_SERVICO_DE_SAUDE_MENTAL', 'mental_caps_001', 'HOJE', ['sofrimento psíquico']);
@@ -260,14 +293,25 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     }
   }
 
-  // ══════════════ NÍVEL 4 — AGENDAR ══════════════
+  // ════════════════════════════════════════════════════════
+  // NÍVEL 4 — AGENDAR (UBS)
+  // ════════════════════════════════════════════════════════
 
+  // 33. Dor de dente
+  if (R.sintomas.includes('dor de dente')) {
+    return decisao('odontologia', 'baixa_gravidade', 'UBS_CLINICA_DA_FAMILIA',
+      'odontologia_001', 'AGENDAR', ['dor de dente']);
+  }
+
+  // 34. Grupos vulneráveis
   for (const regra of (gruposVulneraveis as RegrasContainer).regras) {
     if (regra.quando.some((p) => contemAlgum(texto, [p]))) {
       return decisao(regra.id, 'baixa_gravidade', 'UBS_CLINICA_DA_FAMILIA',
         'ubs_001', 'AGENDAR', [regra.id]);
     }
   }
+
+  // 35. Baixa gravidade (JSON)
   for (const regra of (baixaGravidade as RegrasContainer).regras) {
     if (regra.quando.some((p) => contemAlgum(texto, [p]))) {
       return decisao(regra.id, 'baixa_gravidade', 'UBS_CLINICA_DA_FAMILIA',
@@ -275,11 +319,13 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
     }
   }
 
+  // 36. Queixa estável
   if (R.sintomas.length > 0 && !R.informacao_insuficiente) {
     return decisao('baixa_padrao', 'baixa_gravidade', 'UBS_CLINICA_DA_FAMILIA',
       'ubs_001', 'AGENDAR', ['queixa estável']);
   }
 
+  // 37. Fallback
   return decisao('informacao_insuficiente', 'informacao_insuficiente', 'FALLBACK',
     'fallback_001', 'HOJE', ['informação insuficiente']);
 }

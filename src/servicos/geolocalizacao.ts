@@ -1,16 +1,6 @@
 // src/servicos/geolocalizacao.ts
-//
-// Busca de unidades de saúde próximas via OpenStreetMap (Overpass API).
-// Diferencia três categorias:
-//   - UPA        → UPA 24h, Unidade de Pronto Atendimento, Pronto Atendimento (PA), CER (Rio)...
-//   - EMERGENCIA → Hospital, Pronto-Socorro (PS), Santa Casa, serviço de emergência/urgência...
-//   - UBS        → UBS, Clínica da Família, Posto/Centro de Saúde, Policlínica...
-// Regra de ouro: para urgência, a DISTÂNCIA manda. O tipo só define o que entra na lista.
-
-// ─────────────────────────────── Tipos ───────────────────────────────
 
 export type CategoriaUnidade = 'UPA' | 'EMERGENCIA' | 'UBS';
-// 'HOSPITAL' é aceito como apelido de 'EMERGENCIA' (compatibilidade com o bot.ts antigo)
 export type TipoBusca = 'UPA' | 'EMERGENCIA' | 'HOSPITAL' | 'UBS' | 'TODOS';
 
 export type UnidadeSaude = {
@@ -18,11 +8,11 @@ export type UnidadeSaude = {
   categoria: CategoriaUnidade;
   endereco: string;
   telefone: string | null;
-  distancia: number; // metros, em linha reta
+  distancia: number;
   lat: number;
   lng: number;
-  publica: boolean | null; // null = não sei
-  especializada: boolean; // ex.: hospital oftalmológico, maternidade, infantil
+  publica: boolean | null;
+  especializada: boolean;
   semNome: boolean;
   linkGoogleMaps: string;
 };
@@ -35,57 +25,34 @@ type ElementoOsm = {
   tags?: Tags;
 };
 
-// ───────────────────────────── Configuração ──────────────────────────
-
-const RAIOS_M = [10_000, 30_000, 60_000]; // cascata de raios
+const RAIOS_M = [10_000, 30_000, 60_000];
 const TIMEOUT_MS = 14_000;
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ];
-
 const USER_AGENT = 'DirecionaSUSBot/1.0 (contato: aisha.paola14@gmail.com)';
 
-// Ajustes de ranking, em "metros equivalentes" somados à distância real
-const PENALIDADE_ESPECIALIZADA_M = 10_000; // hospital só de olhos/maternidade etc. sem emergência
-const PENALIDADE_SEM_NOME_M = 3_000; // sem nome cadastrado = menos confiável
-const BONUS_PUBLICA_M = 1_000; // desempate leve a favor de unidade pública
-
+const PENALIDADE_ESPECIALIZADA_M = 10_000;
+const PENALIDADE_SEM_NOME_M = 3_000;
+const BONUS_PUBLICA_M = 1_000;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
-// ─────────────────────── Classificação por nome/tags ──────────────────
-
-// Remove acentos e pontos ("U.P.A." → "upa", "Hosp." → "hosp"), minúsculas
 const norm = (s: string): string =>
-  s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\./g, '')
-    .toLowerCase()
-    .trim();
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '').toLowerCase().trim();
 
-// UPA "forte": nome inequívoco
 const UPA_FORTE_RE =
   /\bupa\b|\bupa ?24|\bupae\b|unidade de pronto ?atendimento|unidade de pronto ?socorro|coordenacao de emergencia regional/;
-// "CER" é ambíguo: no Rio = Coordenação de Emergência Regional (UPA); no SUS em geral = Centro Especializado em Reabilitação
 const CER_RE = /\bcer\b/;
-// UPA "fraca": termo genérico de pronto atendimento (só vale se o nome NÃO tiver "hospital")
 const UPA_FRACA_RE = /pronto ?atendimento|servico de pronto|\bpa\b/;
-
 const HOSPITAL_RE = /\bhosp(ital)?\b|santa casa|\bhps\b/;
 const PRONTO_SOCORRO_RE = /pronto ?socorro|\bps\b|\bpsm\b|emergencia|urgencia/;
-
 const UBS_RE =
   /\bubs\b|\bubsf\b|\busf\b|unidade basica|unidade de saude|clinica da familia|saude da familia|posto de saude|centro municipal de saude|centro de saude|\bcms\b|modulo do medico de familia|\bpsf\b|policlinica|atencao primaria/;
-
-// Nunca são indicação de urgência
 const EXCLUIR_RE =
   /odonto|dentist|estetic|veterinar|\bvet\b|laborator|fisioterap|psicolog|nutric|otica|fonoaudi|cosmet|\bpet\b|reabilit|centro especializado|\bcaps\b|hemodialise|dialise|radiolog|diagnostic|imagem|vacina|farmacia|drogaria|hemocentro|banco de sangue|acupuntura|pilates|academia|estacionamento|funeraria|cemiterio|\bspa\b/;
-
-// Hospitais que atendem público restrito (só vale como penalidade, não exclui)
 const ESPECIALIZADA_RE =
   /oftalm|olhos|psiquiatr|saude mental|oncolog|cancer|\binca\b|ortoped|traumato|maternidade|materno|infantil|pediatri|crianc|cardiol|geriatr|idosos|hospital dia|queimad|otorrino/;
-
 const PUBLICA_RE =
   /municipal|estadual|federal|\bsus\b|prefeitura|secretaria|\bupa\b|\bcer\b|\bubs\b|clinica da familia|\bcms\b|universitario/;
 
@@ -93,46 +60,37 @@ function classificar(tags: Tags, nomeNorm: string): CategoriaUnidade | null {
   const amenity = tags.amenity ?? '';
   const healthcare = tags.healthcare ?? '';
 
-  // Tags que descartam de cara
   if (['dentist', 'veterinary', 'pharmacy'].includes(amenity)) return null;
   if (['dentist', 'veterinary', 'pharmacy', 'laboratory', 'alternative', 'rehabilitation'].includes(healthcare))
     return null;
   if (nomeNorm && EXCLUIR_RE.test(nomeNorm)) return null;
-
-  // Tem amenity de outro tipo (restaurante, estacionamento, escola...) e nenhuma tag de saúde: descarta
-  if (amenity !== '' && healthcare === '' && !['hospital', 'clinic', 'doctors', 'social_facility'].includes(amenity))
-    return null;
 
   const temTagSaude = ['hospital', 'clinic', 'doctors'].includes(amenity) || healthcare !== '';
   const ehHospitalTag = amenity === 'hospital' || healthcare === 'hospital' || tags.building === 'hospital';
   const urgencia24h =
     tags.emergency === 'yes' || tags.opening_hours === '24/7' || tags['healthcare:speciality'] === 'emergency';
 
-  const cerEhUpa = CER_RE.test(nomeNorm); // já passou pelo EXCLUIR (reabilitação)
+  const cerEhUpa = CER_RE.test(nomeNorm);
   const upaForte = UPA_FORTE_RE.test(nomeNorm) || cerEhUpa;
 
-  // Elemento sem nenhuma tag de saúde só passa se o NOME for inequivocamente UPA
   if (!temTagSaude && !ehHospitalTag && !upaForte) return null;
 
   if (nomeNorm) {
     if (upaForte) return 'UPA';
-    if (HOSPITAL_RE.test(nomeNorm)) return 'EMERGENCIA'; // "Pronto Atendimento do Hospital X" = hospital
+    if (HOSPITAL_RE.test(nomeNorm)) return 'EMERGENCIA';
     if (UPA_FRACA_RE.test(nomeNorm)) return 'UPA';
     if (PRONTO_SOCORRO_RE.test(nomeNorm)) return 'EMERGENCIA';
     if (UBS_RE.test(nomeNorm)) return 'UBS';
   }
 
-  if (ehHospitalTag) return 'EMERGENCIA'; // hospital sem nome reconhecível
-  if (amenity === 'clinic' && urgencia24h) return 'UPA'; // clínica 24h/emergência: heurística
+  if (ehHospitalTag) return 'EMERGENCIA';
+  if (amenity === 'clinic' && urgencia24h) return 'UPA';
   return null;
 }
 
-/** Exposta para testes rápidos: classifica só pelo nome. */
 export function classificarPorNome(nome: string, tags: Tags = { amenity: 'clinic' }): CategoriaUnidade | null {
   return classificar(tags, norm(nome));
 }
-
-// ──────────────────────────── Overpass ───────────────────────────────
 
 function montarQuery(lat: number, lng: number, raio: number): string {
   const a = `(around:${raio},${lat},${lng})`;
@@ -152,7 +110,6 @@ function montarQuery(lat: number, lng: number, raio: number): string {
     'Unidade (B.sica|de Sa.de)',
     'Policl.nica',
   ].join('|');
-  // Evita ruas, pontos de ônibus, lojas etc. que só têm "Hospital" no nome
   const semRuido = '[!"highway"][!"railway"][!"public_transport"][!"shop"][!"leisure"][!"tourism"][!"landuse"][!"barrier"]';
 
   return `[out:json][timeout:12];
@@ -181,7 +138,6 @@ async function consultarMirror(url: string, query: string, sinal: AbortSignal): 
   return data.elements;
 }
 
-// Primeira promise que der certo (equivalente a Promise.any, sem exigir lib ES2021)
 function primeiroSucesso<T>(promessas: Promise<T>[]): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let falhas = 0;
@@ -199,17 +155,15 @@ async function consultarOverpass(lat: number, lng: number, raio: number): Promis
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    // Dispara nos espelhos em paralelo; o mais rápido vence
     return await primeiroSucesso(MIRRORS.map((u) => consultarMirror(u, query, controller.signal)));
   } finally {
     clearTimeout(timer);
-    controller.abort(); // cancela os espelhos que ficaram para trás
+    controller.abort();
   }
 }
 
 const cache = new Map<string, { em: number; elementos: ElementoOsm[] }>();
 
-// Retorna null se a consulta falhou (diferente de [] = consulta ok, mas sem resultados)
 async function obterElementos(lat: number, lng: number, raio: number): Promise<ElementoOsm[] | null> {
   const chave = `${lat.toFixed(2)}|${lng.toFixed(2)}|${raio}`;
   const hit = cache.get(chave);
@@ -229,8 +183,6 @@ async function obterElementos(lat: number, lng: number, raio: number): Promise<E
   }
 }
 
-// ─────────────────────── Processamento e ranking ─────────────────────
-
 function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -247,7 +199,6 @@ const NOME_GENERICO: Record<CategoriaUnidade, string> = {
   UBS: 'Unidade Básica de Saúde (sem nome cadastrado)',
 };
 
-// Distância "efetiva" usada só para ordenar. Quanto menor, melhor.
 function distanciaEfetiva(u: UnidadeSaude): number {
   let d = u.distancia;
   if (u.especializada) d += PENALIDADE_ESPECIALIZADA_M;
@@ -256,7 +207,6 @@ function distanciaEfetiva(u: UnidadeSaude): number {
   return Math.max(0, d);
 }
 
-/** Exposta para testes: transforma elementos crus do OSM em unidades classificadas e ordenadas. */
 export function processarElementos(elementos: ElementoOsm[], lat: number, lng: number): UnidadeSaude[] {
   const unidades: UnidadeSaude[] = [];
 
@@ -314,7 +264,6 @@ export function processarElementos(elementos: ElementoOsm[], lat: number, lng: n
 
   unidades.sort((a, b) => distanciaEfetiva(a) - distanciaEfetiva(b));
 
-  // Deduplica o mesmo lugar mapeado como node + way (mesmo nome a menos de 200 m)
   const unicas: UnidadeSaude[] = [];
   for (const u of unidades) {
     const repetida = unicas.some(
@@ -328,28 +277,18 @@ export function processarElementos(elementos: ElementoOsm[], lat: number, lng: n
   return unicas;
 }
 
-// Cascata de raios: para assim que achar ao menos uma unidade das categorias desejadas
 async function buscarPorCategorias(lat: number, lng: number, desejadas: CategoriaUnidade[]): Promise<UnidadeSaude[]> {
   let ultimas: UnidadeSaude[] = [];
   for (const raio of RAIOS_M) {
     console.log(`🔍 Buscando ${desejadas.join('/')} em ${raio / 1000} km...`);
     const elementos = await obterElementos(lat, lng, raio);
-    if (elementos === null) continue; // falha de rede: tenta o próximo raio
+    if (elementos === null) continue;
     ultimas = processarElementos(elementos, lat, lng);
     if (ultimas.some((u) => desejadas.includes(u.categoria))) break;
   }
   return ultimas;
 }
 
-// ─────────────────────────── API pública ─────────────────────────────
-
-/**
- * Compatível com a assinatura antiga. O 4º parâmetro (raio) é ignorado: a cascata cuida disso.
- * - 'UPA'                → UPAs; se não houver nenhuma nos raios, cai para hospitais/PS
- * - 'EMERGENCIA'/'HOSPITAL' → hospitais/PS; se não houver, cai para UPAs
- * - 'UBS'                → só unidades básicas
- * - 'TODOS'              → UPAs e emergências misturadas, da mais próxima para a mais distante
- */
 export async function buscarUnidadesProximas(
   lat: number,
   lng: number,
@@ -373,7 +312,6 @@ export async function buscarUnidadesProximas(
   return urgencia.slice(0, 5);
 }
 
-/** Uma única busca que devolve as duas listas separadas (top 2 de cada). */
 export async function buscarUpaEEmergencia(
   lat: number,
   lng: number,
@@ -384,8 +322,6 @@ export async function buscarUpaEEmergencia(
     emergencias: todas.filter((u) => u.categoria === 'EMERGENCIA').slice(0, 2),
   };
 }
-
-// ───────────────────────── Formatação (WhatsApp) ─────────────────────
 
 function formatarDistancia(metros: number): string {
   if (metros < 1000) return `${Math.max(10, Math.round(metros / 10) * 10)} m`;
@@ -398,19 +334,53 @@ const TITULO: Record<CategoriaUnidade, string> = {
   UBS: '🩺 *Unidade Básica de Saúde*',
 };
 
-export function linkBuscaGoogleMaps(lat: number, lng: number, termo = 'UPA 24h'): string {
+// [FIX] Agora aceita o termo de busca, para que o link do Google Maps seja coerente
+export function linkBuscaGoogleMaps(
+  lat: number,
+  lng: number,
+  termo: string = 'UBS UPA hospital',
+): string {
   return `https://www.google.com/maps/search/${encodeURIComponent(termo)}/@${lat},${lng},14z`;
 }
 
-/** Monta o texto pronto para enviar, agrupado por categoria. */
-export function formatarUnidades(unidades: UnidadeSaude[], lat: number, lng: number): string {
+// [FIX] Recebe tipoBusca para escolher texto e link corretos no fallback
+export function formatarUnidades(
+  unidades: UnidadeSaude[],
+  lat: number,
+  lng: number,
+  tipoBusca?: TipoBusca,
+): string {
   if (unidades.length === 0) {
+    const termo =
+      tipoBusca === 'UBS'
+        ? 'UBS posto de saúde'
+        : tipoBusca === 'UPA'
+        ? 'UPA 24h'
+        : tipoBusca === 'HOSPITAL'
+        ? 'hospital pronto socorro'
+        : 'UBS UPA hospital';
+
+    const instrucao =
+      tipoBusca === 'UBS'
+        ? 'Não achei a lista automática, mas você pode ver no mapa as UBS próximas:'
+        : tipoBusca === 'UPA'
+        ? 'Não achei a lista automática, mas você pode ver no mapa as UPAs próximas:'
+        : tipoBusca === 'HOSPITAL'
+        ? 'Não achei a lista automática, mas você pode ver no mapa os hospitais próximos:'
+        : 'Não achei a lista automática, mas você pode ver no mapa as unidades próximas:';
+
+    const rodape =
+      tipoBusca === 'UBS'
+        ? '🚨 Em caso de urgência, ligue *192* (SAMU) ou procure uma UPA 24h.'
+        : '🚨 Em caso de urgência, ligue *192* (SAMU).';
+
     return [
-      '⚠️ Não consegui localizar unidades pelo mapa agora.',
+      '⚠️ Não consegui localizar unidades pelo mapa automático agora.',
       '',
-      `🗺️ Abra a busca no Google Maps:\n${linkBuscaGoogleMaps(lat, lng)}`,
+      `🗺️ ${instrucao}`,
+      linkBuscaGoogleMaps(lat, lng, termo),
       '',
-      '🚨 Em caso de urgência, ligue *192* (SAMU).',
+      rodape,
     ].join('\n');
   }
 
