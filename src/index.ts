@@ -1,4 +1,4 @@
-
+// src/index.ts
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -59,13 +59,14 @@ app.get('/health', (_req, res) => {
 // ============================================================
 app.use('/api', rotasApi);
 
-const PORTA = process.env.PORT || 3000;
-app.listen(PORTA, () => {
+const PORTA = Number(process.env.PORT) || 3000;
+
+
+app.listen(PORTA, '0.0.0.0', () => {
   console.log(`🚀 API do Direciona SUS rodando na porta ${PORTA}`);
   console.log(`📡 Health check: http://localhost:${PORTA}/health`);
   console.log(`📲 QR Code: http://localhost:${PORTA}/qr`);
 });
-
 // ============================================================
 // Inicia o bot do WhatsApp
 // ============================================================
