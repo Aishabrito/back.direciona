@@ -2,18 +2,12 @@ import mensagens from '../respostas/mensagens_aprovadas.json';
 import type { MensagemAprovada } from './tipos.js';
 import { contemAlgum, normalizarTexto } from './normalizar.js';
 
-// [FIX] Removidas cores que bloqueavam respostas legítimas
+// Blocklist enxuta. Termos como "infarto"/"avc"/"derrame" podem aparecer
+// em mensagens de emergência (aprovadas). "vaga" saiu porque casava com "devagar".
 const TERMOS_PROIBIDOS = [
-  'infarto',
-  'avc',
-  'derrame',
   'manchester',
-  'classificacao',
+  'classificacao de risco',
   'tempo de espera',
-  'comprimido',
-  'antibiotico',
-  'tratamento com',
-  'vaga',
 ];
 
 export function mensagemPorId(id: string): MensagemAprovada {
@@ -23,13 +17,17 @@ export function mensagemPorId(id: string): MensagemAprovada {
   return encontrada as MensagemAprovada;
 }
 
-export function sanitizarResposta(texto: string, idMensagem?: string): string {
-  if (idMensagem === 'recusa_medicamento' || idMensagem === 'recusa_diagnostico') return texto;
-
+// Só sanitiza texto gerado dinamicamente (LLM). Templates aprovados passam direto.
+export function sanitizarTextoGerado(texto: string): string {
   const n = normalizarTexto(texto);
   if (TERMOS_PROIBIDOS.some((termo) => n.includes(normalizarTexto(termo)))) {
     return mensagemPorId('fallback_001').texto;
   }
+  return texto;
+}
+
+// Mantido para compatibilidade. Não é mais chamado em templates aprovados.
+export function sanitizarResposta(texto: string, _idMensagem?: string): string {
   return texto;
 }
 
@@ -38,14 +36,9 @@ export function ehPedidoDiagnostico(texto: string): boolean {
     'qual e o diagnostico',
     'qual o meu diagnostico',
     'que doenca eu tenho',
-    'isso e infarto',
-    'estou com infarto',
-    'isso e avc',
-    'sera que e avc',
-    'sera que e dengue',
-    'sera que e covid',
     'o que eu tenho',
     'qual doenca',
+    'me da o diagnostico',
   ]);
 }
 

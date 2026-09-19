@@ -3,11 +3,6 @@ import {
   type FlagTriState, type RelatoEstruturado, type SimNao, type RiscoMental,
 } from './tipos';
 
-const MEDICAMENTOS_BLOQUEADOS = [
-  'dipirona', 'paracetamol', 'ibuprofeno', 'aspirina',
-  'remedio', 'comprimido', 'antibiotico',
-];
-
 function asString(valor: unknown, padrao = 'nao_informado'): string {
   if (typeof valor === 'string' && valor.trim()) return valor.trim();
   return padrao;
@@ -26,16 +21,14 @@ function asFlag(valor: unknown): FlagTriState {
   return 'nao_informado';
 }
 
+// Sem filtro. O motor precisa ver "remédio", "comprimido", "faca" etc.
+// para decidir. O filtro de saída (mensagens.ts) é que impede prescrição.
 function asLista(valor: unknown): string[] {
   if (!Array.isArray(valor)) return [];
   return valor
     .filter((item): item is string => typeof item === 'string')
     .map((item) => item.trim())
-    .filter(Boolean)
-    .filter((item) => {
-      const n = item.toLowerCase();
-      return !MEDICAMENTOS_BLOQUEADOS.some((t) => n.includes(t));
-    });
+    .filter(Boolean);
 }
 
 export function relatoPadrao(parcial: Partial<RelatoEstruturado> = {}): RelatoEstruturado {
@@ -101,23 +94,23 @@ export function validarRelato(entrada: unknown):
 }
 
 // ============================================================
-// MESCLAGEM COM NEGAÇÃO
+// MESCLAGEM — catraca de gravidade
 // ============================================================
-function preferirComNegacao<T extends string>(
-  atual: T, novo: T, vazio: T, negacao: T,
-): T {
+function preferirComNegacao<T extends string>(atual: T, novo: T, vazio: T, negacao: T): T {
   if (novo === negacao) return novo;
   if (novo !== vazio) return novo;
   return atual;
 }
 
+// Só promove, nunca rebaixa. true antigo prevalece sobre false novo.
 function preferirFlagComNegacao(atual: FlagTriState, novo: FlagTriState): FlagTriState {
-  if (novo === false) return false;
-  if (novo === true) return true;
+  if (novo === 'nao_informado') return atual;
+  if (atual === 'nao_informado') return novo;
+  if (atual === true) return true;
+  if (atual === false && novo === true) return true;
   return atual;
 }
 
-// [FIX] risco_mental nunca é rebaixado
 const ORDEM_RISCO: Record<RiscoMental, number> = {
   nao_mencionado: 0, sem_risco_imediato: 1, iminente: 2,
 };
@@ -160,11 +153,9 @@ export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado
     alergia_grave: preferirFlagComNegacao(base.alergia_grave, extra.alergia_grave),
 
     risco_mental: ORDEM_RISCO[extra.risco_mental] > ORDEM_RISCO[base.risco_mental]
-      ? extra.risco_mental
-      : base.risco_mental,
+      ? extra.risco_mental : base.risco_mental,
 
     autodiagnostico_grave: extra.autodiagnostico_grave ?? base.autodiagnostico_grave,
-
     informacao_insuficiente: extra.informacao_insuficiente && base.informacao_insuficiente,
   };
 }

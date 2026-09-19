@@ -78,26 +78,47 @@ export function escolherProximaPergunta(
   return null;
 }
 
-/** [FIX] Interpreta respostas curtas ("sim"/"não") com base na última pergunta. */
+// Só trata como resposta curta se a mensagem for MESMO curta.
+// "não, mas estou com dor" tem mais de 5 palavras → não é resposta curta.
+const SO_CURTA =
+  /^\s*(sim|s|nao|n|não|ok|isso|claro|positivo|negativo|afirmativo|talvez|nao sei|não sei|nao tenho certeza|consigo|nao consigo|nao posso|não posso|acabei de falar|ja falei|já falei)\s*$/i;
+
 export function interpretarRespostaCurta(
   texto: string,
   ultima: UltimaPergunta | undefined,
 ): Partial<RelatoEstruturado> | null {
   if (!ultima?.campoAlvo) return null;
-  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  if (n.split(/\s+/).length > 4) return null;
+  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 
-  const sim = /^(sim|s|ok|isso|positivo|tenho|estou|consigo|afirmativo|claro)\b/.test(n);
-  const nao = /^(nao|n|nunca|negativo|nao tenho|nao estou|nao consigo)\b/.test(n);
-  if (!sim && !nao) return null;
+  if (!SO_CURTA.test(n)) return null;
+
+  const sim = /^(sim|s|ok|isso|claro|positivo|afirmativo|consigo|tenho|estou)$/.test(n);
+  const nao = /^(nao|n|nunca|negativo|nao tenho|nao estou|nao consigo|nao posso)$/.test(n);
 
   const campo = ultima.campoAlvo;
-  const flagsBooleanas: (keyof RelatoEstruturado)[] = [
+
+  const flags: (keyof RelatoEstruturado)[] = [
     'falta_de_ar', 'dor_no_peito', 'desmaio', 'confusao', 'sangramento',
     'febre', 'vomitos', 'trauma', 'fala_frases', 'labios_roxos',
     'consegue_beber', 'alergia_grave',
   ];
-  if (!flagsBooleanas.includes(campo)) return null;
+  if (flags.includes(campo)) {
+    if (sim) return { [campo]: true } as Partial<RelatoEstruturado>;
+    if (nao) return { [campo]: false } as Partial<RelatoEstruturado>;
+    return null;
+  }
 
-  return { [campo]: sim ? true : false } as Partial<RelatoEstruturado>;
+  if (campo === 'gestante' || campo === 'pos_parto') {
+    if (sim) return { [campo]: 'sim' } as Partial<RelatoEstruturado>;
+    if (nao) return { [campo]: 'nao' } as Partial<RelatoEstruturado>;
+    return null;
+  }
+
+  if (campo === 'risco_mental') {
+    if (sim) return { risco_mental: 'iminente' };
+    if (nao) return { risco_mental: 'sem_risco_imediato' };
+    return null;
+  }
+
+  return null;
 }

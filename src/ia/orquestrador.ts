@@ -1,8 +1,9 @@
 import { registrarDecisao } from './auditoria.js';
 import { interpretarRelato } from './extrator_de_informacoes.js';
 import {
-  sanitizarResposta, mensagemPorId,
-  ehPedidoDiagnostico, ehPedidoMedicamento,
+  mensagemPorId,
+  ehPedidoDiagnostico,
+  ehPedidoMedicamento,
 } from './mensagens.js';
 import { aplicarMotor } from './motor_de_regras.js';
 import {
@@ -283,7 +284,7 @@ export async function processarTurno(
     }
   }
 
-  const mensagem = sanitizarResposta(mensagemPorId(decisao.resposta_id).texto, decisao.resposta_id);
+  const mensagem = mensagemPorId(decisao.resposta_id).texto;
   registrarDecisao(decisao);
 
   return {
@@ -458,7 +459,7 @@ export async function processarTurnoComRelato(
     }
   }
 
-  const mensagem = sanitizarResposta(mensagemPorId(decisao.resposta_id).texto, decisao.resposta_id);
+  const mensagem = mensagemPorId(decisao.resposta_id).texto;
   registrarDecisao(decisao);
 
   return {

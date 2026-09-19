@@ -28,6 +28,21 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
 
+// [FIX 2] Limpeza periódica de sessões inativas (antes o Map crescia infinito)
+setInterval(() => {
+  // Como não temos timestamp por sessão, limpamos só sessões já "orientado"
+  // (o estado terminal) e que já foram respondidas há mais de 30 min.
+  // Simplificação conservadora: mantém só as 1000 sessões mais recentes.
+  if (sessions.size > 1000) {
+    const excesso = sessions.size - 1000;
+    const chaves = sessions.keys();
+    for (let i = 0; i < excesso; i++) {
+      const k = chaves.next().value;
+      if (k) sessions.delete(k);
+    }
+  }
+}, 5 * 60 * 1000).unref?.();
+
 const MENSAGEM_BOAS_VINDAS =
   "Olá! Sou o assistente virtual do *Direciona SUS* 🏥\n\n" +
   "Meu papel é orientar qual serviço do SUS você deve procurar (UBS, UPA, Pronto-Socorro ou SAMU 192).\n\n" +
@@ -103,6 +118,10 @@ function oferecerLocalizacao(
   return texto;
 }
 
+// [FIX 1] Backoff entre reconexões (antes era recursão direta sem delay)
+let tentativasReconexao = 0;
+const MAX_BACKOFF_MS = 60_000;
+
 // ============================================================
 // BOT
 // ============================================================
@@ -139,9 +158,15 @@ export async function startWhatsAppBot() {
 
     if (connection === "close") {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-      if (statusCode !== DisconnectReason.loggedOut && statusCode !== 401 && statusCode !== 403) {
-        console.log("🔄 Reconectando...");
-        startWhatsAppBot();
+      const permanente =
+        statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403;
+
+      if (!permanente) {
+        // [FIX 1] Espera crescente antes de tentar de novo
+        const espera = Math.min(MAX_BACKOFF_MS, 1000 * Math.pow(2, tentativasReconexao));
+        tentativasReconexao++;
+        console.log(`🔄 Reconectando em ${espera / 1000}s (tentativa ${tentativasReconexao})...`);
+        setTimeout(() => startWhatsAppBot().catch(console.error), espera);
       } else {
         console.log("❌ Desconectado permanentemente.");
       }
@@ -149,6 +174,7 @@ export async function startWhatsAppBot() {
 
     if (connection === "open") {
       setQrCode(null);
+      tentativasReconexao = 0;
       console.log("✅ Bot do WhatsApp conectado com sucesso!");
     }
   });
@@ -254,7 +280,7 @@ export async function startWhatsAppBot() {
       } catch (err) {
         console.error('❌ Erro ao processar áudio:', err);
         await sock.sendMessage(sender, {
-          text: '🎤 Não consegui entender esse áudio. Pode repetir ou escrever?',
+          text: '🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.',
         });
         await sock.sendPresenceUpdate("paused", sender);
         return;
@@ -277,22 +303,38 @@ export async function startWhatsAppBot() {
       return;
     }
 
-    // SIM/NÃO QUANDO AGUARDA LOCALIZAÇÃO
+    // ============================================================
+    // [FIX 3] SIM/NÃO quando aguarda localização
+    // Antes: qualquer "sim" ou "não" era capturado, mesmo que viesse
+    // acompanhado de sintoma grave ("não, agora estou com falta de ar").
+    // Agora: só intercepta se for curto E sem palavra clínica.
+    // ============================================================
     const estadoAtualSimNao = sessions.get(sender);
     if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
       const decisao = matchSimNao(textoLimpo);
-      if (decisao === "sim") {
-        await sock.sendMessage(sender, {
-          text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco a unidade mais próxima.`,
-        });
-        return;
+      const palavras = textoLimpo.split(/\s+/).filter(Boolean);
+      const temPalavraClinica = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto)\b/.test(textoLimpo);
+      const podeSerSimNao = decisao !== null && palavras.length <= 4 && !temPalavraClinica;
+
+      if (podeSerSimNao) {
+        if (decisao === "sim") {
+          await sock.sendMessage(sender, {
+            text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco a unidade mais próxima.`,
+          });
+          return;
+        }
+        if (decisao === "nao") {
+          estadoAtualSimNao.aguardandoLocalizacao = undefined;
+          sessions.set(sender, estadoAtualSimNao);
+          await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
+          return;
+        }
       }
-      if (decisao === "nao") {
-        estadoAtualSimNao.aguardandoLocalizacao = undefined;
-        sessions.set(sender, estadoAtualSimNao);
-        await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
-        return;
-      }
+
+      // Se veio sintoma ou texto longo, cancela a espera de localização
+      // e deixa a mensagem seguir para a triagem normal.
+      estadoAtualSimNao.aguardandoLocalizacao = undefined;
+      sessions.set(sender, estadoAtualSimNao);
     }
 
     // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO

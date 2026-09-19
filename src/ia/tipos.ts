@@ -24,7 +24,6 @@ export const DESTINOS = [
   'FALLBACK',
 ] as const;
 
-
 export const NIVEIS = ['SAMU_AGORA', 'UPA_AGORA', 'HOJE', 'AGENDAR'] as const;
 
 export type IdadeGrupo = (typeof IDADE_GRUPOS)[number];
@@ -60,7 +59,6 @@ export type RelatoEstruturado = {
   risco_mental: RiscoMental;
   informacao_insuficiente: boolean;
   informacoes_contraditorias: string[];
-  // Listas especializadas
   sinais_obstetricos: string[];
   sinais_trauma: string[];
   sinais_neurologicos: string[];
@@ -78,7 +76,6 @@ export type DecisaoRegras = {
   resposta_id: string;
   regra_acionada: string;
   versao_regras: string;
-  
   nivel: Nivel;
   motivos: string[];
 };
@@ -93,7 +90,6 @@ export type TurnoResultado =
   | { tipo: 'orientacao'; texto: string; decisao: DecisaoRegras }
   | { tipo: 'perguntas'; texto: string; perguntas: string[]; tema: string };
 
-// [NOVO] Última pergunta feita — para interpretar respostas curtas
 export type UltimaPergunta = {
   id: string;
   campoAlvo?: keyof RelatoEstruturado;
@@ -107,11 +103,9 @@ export type EstadoConversa = {
   rodadasPerguntas: number;
   temaPergunta?: string;
   texto_original_acumulado: string;
-  // [NOVO]
   fase: FaseConversa;
   perguntasJaFeitas: string[];
   ultimaPergunta?: UltimaPergunta;
-  // Já existia
   aguardandoLocalizacao?: {
     ativo: boolean;
     tipo: 'UPA' | 'HOSPITAL' | 'UBS';
