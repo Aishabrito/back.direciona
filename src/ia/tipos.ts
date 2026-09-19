@@ -106,10 +106,11 @@ export type EstadoConversa = {
   fase: FaseConversa;
   perguntasJaFeitas: string[];
   ultimaPergunta?: UltimaPergunta;
-  aguardandoLocalizacao?: {
+    aguardandoLocalizacao?: {
     ativo: boolean;
     tipo: 'UPA' | 'HOSPITAL' | 'UBS';
     mensagemOriginal: string;
+    aguardandoTexto?: boolean;
   };
 };
 
