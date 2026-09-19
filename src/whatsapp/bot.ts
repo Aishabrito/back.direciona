@@ -7,32 +7,24 @@ import makeWASocket, {
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import dotenv from "dotenv";
-import fs from "fs";
 import path from "path";
 
 import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import type { EstadoConversa } from "../ia/tipos.js";
 import { buscarUnidadesProximas, type UnidadeSaude } from "../servicos/geolocalizacao.js";
 import { setQrCode } from "../index.js";
+import {
+  criarClienteDb,
+  baixarSessaoParaDisco,
+  iniciarSyncPeriodico,
+  registrarSyncNoShutdown,
+  type Sql,
+} from "./persistencia_sessao.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
-
-function restaurarSessaoSeNecessario() {
-  const credsBase64 = process.env.WHATSAPP_CREDS;
-  if (!credsBase64) return;
-
-  if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true });
-
-  const credsPath = path.join(AUTH_DIR, "creds.json");
-  if (!fs.existsSync(credsPath)) {
-    const credsJson = Buffer.from(credsBase64, "base64").toString("utf-8");
-    fs.writeFileSync(credsPath, credsJson);
-    console.log("🔑 Credenciais restauradas!");
-  }
-}
 
 const MENSAGEM_BOAS_VINDAS =
   "Olá! Sou o assistente virtual do *Direciona SUS* 🏥\n\n" +
@@ -46,7 +38,9 @@ const comandosReset = [
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
 
-// Detecta pedido explícito de localização ("onde tem uma UPA?")
+// ============================================================
+// DETECTA PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
+// ============================================================
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -60,7 +54,9 @@ function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | 
   return null;
 }
 
-// Detecta sim/não por token (não substring)
+// ============================================================
+// DETECTA SIM/NÃO POR TOKEN (não por substring)
+// ============================================================
 function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   const norm = textoLimpo.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
   if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor|pfv|pf)\b/.test(norm)) return "sim";
@@ -68,6 +64,9 @@ function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   return null;
 }
 
+// ============================================================
+// FORMATA LISTA DE UNIDADES
+// ============================================================
 function formatarUnidades(
   unidades: UnidadeSaude[],
   tipo: 'UPA' | 'HOSPITAL' | 'UBS',
@@ -94,9 +93,21 @@ function formatarUnidades(
   return resposta;
 }
 
+// ============================================================
+// INICIALIZA O BOT
+// ============================================================
 export async function startWhatsAppBot() {
-  restaurarSessaoSeNecessario();
+  // 1. Conecta ao banco (ou null se DATABASE_URL não estiver setada)
+  const sql: Sql | null = await criarClienteDb();
 
+  // 2. Baixa a sessão do banco para o disco local (antes do Baileys ler)
+  await baixarSessaoParaDisco(sql);
+
+  // 3. Agenda sync periódico (30s) e no shutdown
+  iniciarSyncPeriodico(sql);
+  registrarSyncNoShutdown(sql);
+
+  // 4. Inicializa o Baileys normalmente
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version } = await fetchLatestBaileysVersion();
 
@@ -112,13 +123,16 @@ export async function startWhatsAppBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
+  // ============================================================
+  // CONEXÃO
+  // ============================================================
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
       setQrCode(qr);
       console.log("\n📲 *NOVO QR CODE GERADO!*");
-      console.log("👉 Abra no navegador: <sua-url-do-render>/qr");
+      console.log("👉 Abra no navegador: https://back-direciona.onrender.com/qr");
       console.log("⏳ Escaneie em até 20 segundos!\n");
     }
 
@@ -138,6 +152,9 @@ export async function startWhatsAppBot() {
     }
   });
 
+  // ============================================================
+  // MENSAGENS
+  // ============================================================
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type !== "notify") return;
 
@@ -195,19 +212,30 @@ export async function startWhatsAppBot() {
 
     console.log(`\n📩 [${sender}] ${cleanText}`);
 
-    const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const textoLimpo = cleanText
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
+    // ============================================================
     // RESET
-    if (comandosReset.some((cmd) => {
-      const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      return textoLimpo === cmdLimpo;
-    })) {
+    // ============================================================
+    if (
+      comandosReset.some((cmd) => {
+        const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return textoLimpo === cmdLimpo;
+      })
+    ) {
       sessions.delete(sender);
-      await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
+      await sock.sendMessage(sender, {
+        text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}`,
+      });
       return;
     }
 
+    // ============================================================
     // RESPONDE SIM/NÃO QUANDO AGUARDA LOCALIZAÇÃO
+    // ============================================================
     const estadoAtualSimNao = sessions.get(sender);
     if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
       const decisao = matchSimNao(textoLimpo);
@@ -225,11 +253,17 @@ export async function startWhatsAppBot() {
       }
     }
 
+    // ============================================================
     // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
+    // ============================================================
     const pedidoLoc = detectarPedidoLocalizacao(cleanText);
     if (pedidoLoc) {
       const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-      estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText };
+      estado.aguardandoLocalizacao = {
+        ativo: true,
+        tipo: pedidoLoc,
+        mensagemOriginal: cleanText,
+      };
       sessions.set(sender, estado);
       const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
       await sock.sendMessage(sender, {
@@ -238,7 +272,9 @@ export async function startWhatsAppBot() {
       return;
     }
 
+    // ============================================================
     // PROCESSA TURNO
+    // ============================================================
     try {
       await sock.sendPresenceUpdate("composing", sender);
 
@@ -256,13 +292,15 @@ export async function startWhatsAppBot() {
         mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${mensagemFinal}`;
       }
 
-      // OFERECE LOCALIZAÇÃO
+      // OFERECE LOCALIZAÇÃO PARA RESPOSTAS DE ORIENTAÇÃO
       if (resultado.tipo === "orientacao") {
         const respostaId = resultado.decisao?.resposta_id;
         let tipoLocalizacao: "UPA" | "HOSPITAL" | "UBS" | null = null;
 
         if (respostaId === "upa_001") tipoLocalizacao = "UPA";
-        else if (["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId))
+        else if (
+          ["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId)
+        )
           tipoLocalizacao = "HOSPITAL";
         else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
 
