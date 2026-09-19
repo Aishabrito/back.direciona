@@ -60,24 +60,51 @@ export async function baixarSessaoParaDisco(sql: Sql | null): Promise<void> {
   console.log(`✅ Sessão restaurada do banco: ${linhas.length} arquivos.`);
 }
 
+// Só envia arquivos que mudaram (o Baileys gera centenas de arquivos pequenos)
+// e nunca deixa dois syncs rodarem ao mesmo tempo.
+const jaEnviado = new Map<string, string>();
+let sincronizando = false;
+
 export async function subirSessaoParaBanco(sql: Sql | null): Promise<void> {
   if (!sql) return;
   if (!fs.existsSync(AUTH_DIR)) return;
+  if (sincronizando) return;
+  sincronizando = true;
 
-  const arquivos = fs.readdirSync(AUTH_DIR).filter((a) => a.endsWith('.json'));
+  try {
+    const arquivos = fs.readdirSync(AUTH_DIR).filter((a) => a.endsWith('.json'));
 
-  for (const arq of arquivos) {
-    try {
-      const conteudo = fs.readFileSync(path.join(AUTH_DIR, arq), 'utf-8');
-      await sql`
-        INSERT INTO bot_sessions (session_id, file_name, content)
-        VALUES (${SESSION_ID}, ${arq}, ${conteudo})
-        ON CONFLICT (session_id, file_name)
-        DO UPDATE SET content = ${conteudo}, updated_at = NOW()
-      `;
-    } catch (err) {
-      console.error(`❌ Erro ao salvar ${arq}:`, err);
+    for (const arq of arquivos) {
+      try {
+        const conteudo = fs.readFileSync(path.join(AUTH_DIR, arq), 'utf-8');
+        if (jaEnviado.get(arq) === conteudo) continue;
+        await sql`
+          INSERT INTO bot_sessions (session_id, file_name, content)
+          VALUES (${SESSION_ID}, ${arq}, ${conteudo})
+          ON CONFLICT (session_id, file_name)
+          DO UPDATE SET content = ${conteudo}, updated_at = NOW()
+        `;
+        jaEnviado.set(arq, conteudo);
+      } catch (err) {
+        console.error(`❌ Erro ao salvar ${arq}:`, err);
+      }
     }
+
+    // Arquivos apagados localmente (chaves rotacionadas) não podem voltar do banco depois.
+    // Trava de segurança: se a pasta local estiver vazia/sem creds.json, NÃO apaga nada do banco.
+    const locais = new Set(arquivos);
+    if (!locais.has('creds.json')) return;
+    const remotos = (await sql`
+      SELECT file_name FROM bot_sessions WHERE session_id = ${SESSION_ID}
+    `) as Array<{ file_name: string }>;
+    for (const { file_name } of remotos) {
+      if (!locais.has(file_name)) {
+        await sql`DELETE FROM bot_sessions WHERE session_id = ${SESSION_ID} AND file_name = ${file_name}`;
+        jaEnviado.delete(file_name);
+      }
+    }
+  } finally {
+    sincronizando = false;
   }
 }
 
@@ -90,6 +117,8 @@ export function iniciarSyncPeriodico(sql: Sql | null): NodeJS.Timeout | null {
   }, 30_000);
 }
 
+// [FIX] Não chama process.exit(0) — deixa o Node terminar naturalmente.
+// Se matarmos aqui, podemos cortar uma mensagem sendo processada no meio.
 export function registrarSyncNoShutdown(sql: Sql | null): void {
   if (!sql) return;
   const handler = async (signal: string) => {
@@ -100,7 +129,7 @@ export function registrarSyncNoShutdown(sql: Sql | null): void {
     } catch (err) {
       console.error('❌ Erro ao salvar sessão no shutdown:', err);
     }
-    process.exit(0);
+    // Sem process.exit(0) — o Render mata depois de um timeout.
   };
   process.on('SIGTERM', () => handler('SIGTERM'));
   process.on('SIGINT', () => handler('SIGINT'));

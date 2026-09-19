@@ -1,5 +1,3 @@
-
-
 import type { DecisaoRegras, RelatoEstruturado } from './tipos.js';
 
 const ABERTURAS: Record<string, string[]> = {
@@ -21,6 +19,34 @@ function sortear<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// [FIX] Dicionário expandido — antes só tinha 15 palavras; agora cobre
+// sintomas comuns (náusea, vômito, convulsão) e partes do corpo.
+const ACENTOS: Record<string, string> = {
+  cabeca: 'cabeça', estomago: 'estômago', coracao: 'coração', pescoco: 'pescoço',
+  musculo: 'músculo', garganta: 'garganta', barriga: 'barriga',
+  ombro: 'ombro', joelho: 'joelho', pe: 'pé', braco: 'braço', coxa: 'coxa',
+  olho: 'olho', olhos: 'olhos', ouvido: 'ouvido', dente: 'dente', dentes: 'dentes',
+  coluna: 'coluna', tornozelo: 'tornozelo', punho: 'punho', mao: 'mão', maos: 'mãos',
+  intestino: 'intestino', figado: 'fígado', rim: 'rim', rins: 'rins',
+  pulmao: 'pulmão', pulmoes: 'pulmões', osso: 'osso', ossos: 'ossos',
+  nausea: 'náusea', vomito: 'vômito', vomitos: 'vômitos',
+  convulsao: 'convulsão', desidratacao: 'desidratação',
+  hemorragia: 'hemorragia', tontura: 'tontura', tonturas: 'tonturas',
+  infeccao: 'infecção', intoxicacao: 'intoxicação',
+  queimacao: 'queimação', inchaco: 'inchaço', inchada: 'inchada', inchado: 'inchado',
+  dor: 'dor', dores: 'dores', febre: 'febre', tosse: 'tosse',
+  falta: 'falta', falta_de_ar: 'falta de ar',
+  sangramento: 'sangramento', desmaio: 'desmaio', confusao: 'confusão',
+  alergia: 'alergia', coceira: 'coceira', mancha: 'mancha', manchas: 'manchas',
+  pressao: 'pressão', hipertensao: 'hipertensão',
+  diarreia: 'diarreia', enjoo: 'enjoo',
+  ardor: 'ardor', urinar: 'urinar',
+};
+
+function acentuar(texto: string): string {
+  return texto.replace(/[a-z_]+/gi, (p) => ACENTOS[p.toLowerCase()] ?? p);
+}
+
 function espelhar(relato: RelatoEstruturado): string | null {
   const itens: string[] = [];
   if (relato.falta_de_ar === true) itens.push('falta de ar');
@@ -31,7 +57,11 @@ function espelhar(relato: RelatoEstruturado): string | null {
   if (relato.febre === true) itens.push('febre');
   if (relato.vomitos === true) itens.push('vômitos');
 
-  const primeiros = relato.sintomas.slice(0, 3).filter((s) => !/queixa inespec/i.test(s));
+  const temDorEspecifica = relato.sintomas.some((s) => /^dor\s+\S+/.test(s));
+  const primeiros = relato.sintomas
+    .filter((s) => !/queixa inespec/i.test(s) && !(temDorEspecifica && s === 'dor'))
+    .map(acentuar)
+    .slice(0, 3);
   const combinados = [...new Set([...itens, ...primeiros])].slice(0, 3);
   if (combinados.length === 0) return null;
 

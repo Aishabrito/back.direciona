@@ -1,4 +1,6 @@
 // src/servicos/geolocalizacao.ts
+import fs from 'fs';
+import path from 'path';
 
 export type CategoriaUnidade = 'UPA' | 'EMERGENCIA' | 'UBS';
 export type TipoBusca = 'UPA' | 'EMERGENCIA' | 'HOSPITAL' | 'UBS' | 'TODOS';
@@ -25,11 +27,13 @@ type ElementoOsm = {
   tags?: Tags;
 };
 
-const RAIOS_M = [10_000, 30_000, 60_000];
-const TIMEOUT_MS = 14_000;
+const RAIOS_M = [8_000, 20_000, 40_000];
+const TIMEOUT_MS = 22_000;
+const ORCAMENTO_TOTAL_MS = 45_000;
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
 ];
 const USER_AGENT = 'DirecionaSUSBot/1.0 (contato: aisha.paola14@gmail.com)';
 
@@ -48,7 +52,7 @@ const UPA_FRACA_RE = /pronto ?atendimento|servico de pronto|\bpa\b/;
 const HOSPITAL_RE = /\bhosp(ital)?\b|santa casa|\bhps\b/;
 const PRONTO_SOCORRO_RE = /pronto ?socorro|\bps\b|\bpsm\b|emergencia|urgencia/;
 const UBS_RE =
-  /\bubs\b|\bubsf\b|\busf\b|unidade basica|unidade de saude|clinica da familia|saude da familia|posto de saude|centro municipal de saude|centro de saude|\bcms\b|modulo do medico de familia|\bpsf\b|policlinica|atencao primaria/;
+  /\bubs\b|\bubsf\b|\busf\b|unidade basica|unidade de saude|clinica da familia|saude da familia|posto de saude|centro municipal de saude|centro de saude|\bcms\b|modulo do medico de familia|\bpsf\b|policlinica|atencao primaria|modulo (do )?(programa )?medico|programa medico de familia|medico de familia|\bpmf\b/;
 const EXCLUIR_RE =
   /odonto|dentist|estetic|veterinar|\bvet\b|laborator|fisioterap|psicolog|nutric|otica|fonoaudi|cosmet|\bpet\b|reabilit|centro especializado|\bcaps\b|hemodialise|dialise|radiolog|diagnostic|imagem|vacina|farmacia|drogaria|hemocentro|banco de sangue|acupuntura|pilates|academia|estacionamento|funeraria|cemiterio|\bspa\b/;
 const ESPECIALIZADA_RE =
@@ -109,10 +113,14 @@ function montarQuery(lat: number, lng: number, raio: number): string {
     'Centro (Municipal )?de Sa.de',
     'Unidade (B.sica|de Sa.de)',
     'Policl.nica',
+    '(^|[ -])CMS([ -]|$)',
+    '(^|[ -])PMF([ -]|$)',
+    'M.dulo (do )?(Programa )?M.dico',
+    'M.dico de Fam.lia',
   ].join('|');
   const semRuido = '[!"highway"][!"railway"][!"public_transport"][!"shop"][!"leisure"][!"tourism"][!"landuse"][!"barrier"]';
 
-  return `[out:json][timeout:12];
+  return `[out:json][timeout:20];
 (
   nwr["amenity"="hospital"]${a};
   nwr["healthcare"="hospital"]${a};
@@ -277,49 +285,173 @@ export function processarElementos(elementos: ElementoOsm[], lat: number, lng: n
   return unicas;
 }
 
-async function buscarPorCategorias(lat: number, lng: number, desejadas: CategoriaUnidade[]): Promise<UnidadeSaude[]> {
-  let ultimas: UnidadeSaude[] = [];
+type BuscaOsm = { unidades: UnidadeSaude[]; sucessos: number; falhas: number };
+
+async function buscarOsm(lat: number, lng: number, primarias: CategoriaUnidade[]): Promise<BuscaOsm> {
+  const inicio = Date.now();
+  let unidades: UnidadeSaude[] = [];
+  let sucessos = 0;
+  let falhas = 0;
   for (const raio of RAIOS_M) {
-    console.log(`🔍 Buscando ${desejadas.join('/')} em ${raio / 1000} km...`);
+    if (Date.now() - inicio > ORCAMENTO_TOTAL_MS) break;
+    console.log(`🔍 Overpass ${primarias.join('/')} em ${raio / 1000} km...`);
     const elementos = await obterElementos(lat, lng, raio);
-    if (elementos === null) continue;
-    ultimas = processarElementos(elementos, lat, lng);
-    if (ultimas.some((u) => desejadas.includes(u.categoria))) break;
+    if (elementos === null) { falhas++; continue; }
+    sucessos++;
+    unidades = processarElementos(elementos, lat, lng);
+    if (unidades.some((u) => primarias.includes(u.categoria))) break;
   }
-  return ultimas;
+  return { unidades, sucessos, falhas };
+}
+
+type UnidadeLocal = {
+  nome: string; categoria: CategoriaUnidade; endereco?: string;
+  telefone?: string | null; lat: number; lng: number; publica?: boolean | null;
+};
+let baseLocal: UnidadeLocal[] | null = null;
+
+function carregarBaseLocal(): UnidadeLocal[] {
+  if (baseLocal) return baseLocal;
+  try {
+    const caminho = process.env.UNIDADES_JSON ?? path.resolve(process.cwd(), 'dados', 'unidades_saude.json');
+    if (!fs.existsSync(caminho)) return (baseLocal = []);
+    const bruto = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
+    baseLocal = Array.isArray(bruto)
+      ? bruto.filter((u: any) => u && Number.isFinite(u.lat) && Number.isFinite(u.lng) &&
+          ['UPA', 'EMERGENCIA', 'UBS'].includes(u.categoria) && typeof u.nome === 'string')
+      : [];
+    console.log(`📚 Base local de unidades: ${baseLocal.length} registros.`);
+  } catch (err) {
+    console.error('❌ Erro lendo base local de unidades:', err);
+    baseLocal = [];
+  }
+  return baseLocal;
+}
+
+function buscarLocal(lat: number, lng: number, raioMax = 30_000): UnidadeSaude[] {
+  return carregarBaseLocal()
+    .map((u): UnidadeSaude => ({
+      nome: u.nome, categoria: u.categoria, endereco: u.endereco || 'Endereço não informado',
+      telefone: u.telefone ?? null, distancia: calcularDistancia(lat, lng, u.lat, u.lng),
+      lat: u.lat, lng: u.lng, publica: u.publica ?? null, especializada: false, semNome: false,
+      linkGoogleMaps: `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${u.lat},${u.lng}`,
+    }))
+    .filter((u) => u.distancia <= raioMax)
+    .sort((a, b) => a.distancia - b.distancia);
+}
+
+export type TipoUsuario = 'UPA' | 'HOSPITAL' | 'UBS';
+
+async function buscarGoogle(lat: number, lng: number, tipo: TipoUsuario): Promise<UnidadeSaude[] | null> {
+  const chave = process.env.GOOGLE_PLACES_API_KEY;
+  if (!chave) return null;
+  const consulta =
+    tipo === 'UBS' ? 'UBS posto de saúde clínica da família'
+    : tipo === 'UPA' ? 'UPA 24 horas pronto atendimento'
+    : 'hospital pronto socorro emergência';
+  const padrao: CategoriaUnidade = tipo === 'UBS' ? 'UBS' : tipo === 'UPA' ? 'UPA' : 'EMERGENCIA';
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': chave,
+        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.googleMapsUri',
+      },
+      body: JSON.stringify({
+        textQuery: consulta, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: 8,
+        locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: 20_000 } },
+      }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = (await resp.json()) as { places?: any[] };
+    const lista: UnidadeSaude[] = [];
+    for (const p of data.places ?? []) {
+      const nome: string = p.displayName?.text ?? '';
+      const pLat: number | undefined = p.location?.latitude;
+      const pLng: number | undefined = p.location?.longitude;
+      if (!nome || pLat == null || pLng == null) continue;
+      if (EXCLUIR_RE.test(norm(nome))) continue;
+      lista.push({
+        nome, categoria: classificarPorNome(nome) ?? padrao,
+        endereco: p.formattedAddress ?? 'Endereço não informado', telefone: null,
+        distancia: calcularDistancia(lat, lng, pLat, pLng), lat: pLat, lng: pLng,
+        publica: PUBLICA_RE.test(norm(nome)) ? true : null, especializada: false, semNome: false,
+        linkGoogleMaps: p.googleMapsUri ?? `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${pLat},${pLng}`,
+      });
+    }
+    return lista.sort((a, b) => a.distancia - b.distancia);
+  } catch (err) {
+    console.error('❌ Google Places falhou:', err);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export type ResultadoBusca = {
+  unidades: UnidadeSaude[];
+  origem: 'local' | 'osm' | 'google' | 'nenhuma';
+  falhaServico: boolean;
+};
+
+function selecionar(todas: UnidadeSaude[], tipo: TipoUsuario): UnidadeSaude[] {
+  const por = (c: CategoriaUnidade) => todas.filter((u) => u.categoria === c);
+  if (tipo === 'UBS') return por('UBS').slice(0, 5);
+  if (tipo === 'UPA') {
+    const upas = por('UPA');
+    return (upas.length > 0 ? upas : por('EMERGENCIA')).slice(0, 5);
+  }
+  return [...por('EMERGENCIA').slice(0, 3), ...por('UPA').slice(0, 2)];
+}
+
+export async function buscarUnidades(lat: number, lng: number, tipo: TipoUsuario): Promise<ResultadoBusca> {
+  const primarias: CategoriaUnidade[] =
+    tipo === 'UBS' ? ['UBS'] : tipo === 'UPA' ? ['UPA'] : ['EMERGENCIA'];
+
+  const local = selecionar(buscarLocal(lat, lng), tipo);
+  if (local.some((u) => primarias.includes(u.categoria))) {
+    return { unidades: local, origem: 'local', falhaServico: false };
+  }
+
+  const osm = await buscarOsm(lat, lng, primarias);
+  const doOsm = selecionar(osm.unidades, tipo);
+  if (doOsm.some((u) => primarias.includes(u.categoria))) {
+    return { unidades: doOsm, origem: 'osm', falhaServico: false };
+  }
+
+  const google = await buscarGoogle(lat, lng, tipo);
+  if (google && google.length > 0) {
+    return { unidades: selecionar(google, tipo).length ? selecionar(google, tipo) : google.slice(0, 5), origem: 'google', falhaServico: false };
+  }
+
+  const sobra = doOsm.length ? doOsm : local;
+  const todasFalharam = osm.sucessos === 0 && google === null;
+  return {
+    unidades: sobra,
+    origem: sobra.length ? (doOsm.length ? 'osm' : 'local') : 'nenhuma',
+    falhaServico: sobra.length === 0 && todasFalharam,
+  };
 }
 
 export async function buscarUnidadesProximas(
-  lat: number,
-  lng: number,
-  tipo: TipoBusca = 'TODOS',
-  _raioIgnorado?: number,
+  lat: number, lng: number, tipo: TipoBusca = 'TODOS', _raioIgnorado?: number,
 ): Promise<UnidadeSaude[]> {
-  const cat: CategoriaUnidade | 'TODOS' = tipo === 'HOSPITAL' ? 'EMERGENCIA' : tipo;
-
-  if (cat === 'UBS') {
-    const todas = await buscarPorCategorias(lat, lng, ['UBS']);
-    return todas.filter((u) => u.categoria === 'UBS').slice(0, 5);
-  }
-
-  const todas = await buscarPorCategorias(lat, lng, ['UPA', 'EMERGENCIA']);
-  const urgencia = todas.filter((u) => u.categoria !== 'UBS');
-
-  if (cat === 'UPA' || cat === 'EMERGENCIA') {
-    const principais = urgencia.filter((u) => u.categoria === cat);
-    return (principais.length > 0 ? principais : urgencia).slice(0, 5);
-  }
-  return urgencia.slice(0, 5);
+  const t: TipoUsuario = tipo === 'UBS' ? 'UBS' : tipo === 'UPA' ? 'UPA' : 'HOSPITAL';
+  return (await buscarUnidades(lat, lng, t)).unidades;
 }
 
 export async function buscarUpaEEmergencia(
-  lat: number,
-  lng: number,
+  lat: number, lng: number,
 ): Promise<{ upas: UnidadeSaude[]; emergencias: UnidadeSaude[] }> {
-  const todas = await buscarPorCategorias(lat, lng, ['UPA', 'EMERGENCIA']);
+  const { unidades } = await buscarUnidades(lat, lng, 'HOSPITAL');
   return {
-    upas: todas.filter((u) => u.categoria === 'UPA').slice(0, 2),
-    emergencias: todas.filter((u) => u.categoria === 'EMERGENCIA').slice(0, 2),
+    upas: unidades.filter((u) => u.categoria === 'UPA'),
+    emergencias: unidades.filter((u) => u.categoria === 'EMERGENCIA'),
   };
 }
 
@@ -334,7 +466,6 @@ const TITULO: Record<CategoriaUnidade, string> = {
   UBS: '🩺 *Unidade Básica de Saúde*',
 };
 
-// [FIX] Agora aceita o termo de busca, para que o link do Google Maps seja coerente
 export function linkBuscaGoogleMaps(
   lat: number,
   lng: number,
@@ -343,12 +474,12 @@ export function linkBuscaGoogleMaps(
   return `https://www.google.com/maps/search/${encodeURIComponent(termo)}/@${lat},${lng},14z`;
 }
 
-// [FIX] Recebe tipoBusca para escolher texto e link corretos no fallback
 export function formatarUnidades(
   unidades: UnidadeSaude[],
   lat: number,
   lng: number,
   tipoBusca?: TipoBusca,
+  opcoes: { falhaServico?: boolean } = {},
 ): string {
   if (unidades.length === 0) {
     const termo =
@@ -374,8 +505,11 @@ export function formatarUnidades(
         ? '🚨 Em caso de urgência, ligue *192* (SAMU) ou procure uma UPA 24h.'
         : '🚨 Em caso de urgência, ligue *192* (SAMU).';
 
+    const aviso = opcoes.falhaServico
+      ? '⚠️ O serviço de mapas está instável agora e não consegui montar a lista.'
+      : '⚠️ Não encontrei unidades cadastradas perto desse ponto.';
     return [
-      '⚠️ Não consegui localizar unidades pelo mapa automático agora.',
+      aviso,
       '',
       `🗺️ ${instrucao}`,
       linkBuscaGoogleMaps(lat, lng, termo),

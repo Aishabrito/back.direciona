@@ -34,8 +34,6 @@ function extrairSinaisObstetricos(n: string, gestante: string, posParto: string)
   return sinais;
 }
 
-// Trauma: "faca" sozinha NÃO é ferimento perfurante (corte cozinhando).
-// Só conta quando há contexto de agressão.
 function extrairSinaisTrauma(n: string): string[] {
   const sinais: string[] = [];
   const temAcidente = /\b(atropel|acidente|colis[aã]o|capot|batida|bati|bateu|colidiu)\b/.test(n);
@@ -56,8 +54,12 @@ function extrairNeurologicos(n: string): string[] {
   return sinais;
 }
 
-// fala_frases: true = CONSEGUE falar frases; false = NÃO consegue.
+// [FIX] "não consigo respirar" É o próprio critério de gravidade respiratória.
+// Antes só marcava false se a pessoa falasse de fala; agora também para respiração.
 function extrairFalaFrases(n: string): boolean | 'nao_informado' {
+  if (/\bnao consigo respirar\b|\bnao estou conseguindo respirar\b|\bsem conseguir respirar\b/.test(n)) {
+    return false;
+  }
   if (/\bnao consigo falar\b|\bnao falo\b|\bnao consigo terminar\b|\bnao consigo completar\b|\bnao consigo formar frase\b|\bnao fala frases\b/.test(n)) {
     return false;
   }
@@ -67,7 +69,6 @@ function extrairFalaFrases(n: string): boolean | 'nao_informado' {
   return 'nao_informado';
 }
 
-// "bebe" só conta como bebê com contexto explícito (evita verbo "beber")
 function ehBebe(n: string, idadeNumerica: number | null): boolean {
   if (idadeNumerica !== null && idadeNumerica < 2) return true;
   if (/\brecem nascid/.test(n)) return true;
@@ -76,12 +77,25 @@ function ehBebe(n: string, idadeNumerica: number | null): boolean {
   return false;
 }
 
+function acharIdade(n: string): { valor: number; unidade: string } | null {
+  const re = /\b(\d{1,3})\s*(anos?|meses|mes)\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(n)) !== null) {
+    const antes = n.slice(0, m.index).trim().split(/\s+/).slice(-3).join(' ');
+    const depois = n.slice(m.index + m[0].length).trim().split(/\s+/).slice(0, 1).join(' ');
+    const ehDuracao =
+      /\b(ha|faz|desde|por|durante|ultimos|ultimas|mais de|quase|uns|umas)$/.test(antes) ||
+      /^(atras|de doenca|de tratamento)$/.test(depois);
+    if (!ehDuracao) return { valor: parseInt(m[1], 10), unidade: m[2] };
+  }
+  return null;
+}
+
 function extrairIdade(n: string): { grupo: RelatoEstruturado['idade_grupo']; numerica: number | null } {
-  const m = n.match(/\b(\d{1,3})\s*(anos?|meses?)\b/);
+  const achada = acharIdade(n);
   let numerica: number | null = null;
-  if (m) {
-    const val = parseInt(m[1], 10);
-    numerica = m[2].startsWith('mes') ? Math.max(0, Math.round(val / 12)) : val;
+  if (achada) {
+    numerica = achada.unidade.startsWith('mes') ? Math.max(0, Math.round(achada.valor / 12)) : achada.valor;
   }
   const bebe = ehBebe(n, numerica);
   const crianca = !bebe && (contemAlgum(n, ['crianca', 'menino', 'menina']) || (numerica !== null && numerica < 12));
@@ -98,18 +112,31 @@ function extrairIdade(n: string): { grupo: RelatoEstruturado['idade_grupo']; num
   return { grupo, numerica };
 }
 
+const NUM_PALAVRA = '\\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez';
+
 function extrairDuracao(n: string): string {
-  const num = n.match(
-    /\b(?:ha|faz|desde)\s+(\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s+(dia|dias|hora|horas|semana|semanas|mes|meses)\b/,
+  const comPrefixo = n.match(
+    new RegExp(`\\b(?:ha|faz|desde)\\s+(${NUM_PALAVRA})\\s+(dia|dias|hora|horas|semana|semanas|mes|meses)\\b`),
   );
-  if (num) return num[0].replace(/^(ha|faz|desde)\s+/, '');
-  if (/\bdesde ontem\b/.test(n)) return '1 dia';
-  if (/\bhoje\b/.test(n)) return 'horas';
+  if (comPrefixo) return comPrefixo[0].replace(/^(ha|faz|desde)\s+/, '');
+
+  const solta = n.match(
+    new RegExp(`\\b(${NUM_PALAVRA})\\s+(dia|dias|hora|horas|semana|semanas)\\b(?!\\s+atras)`),
+  );
+  if (solta) return solta[0];
+
+  if (/\banteontem\b/.test(n)) return '2 dias';
+  if (/\bontem\b/.test(n)) return '1 dia';
+  if (/\bhoje\b|\bagora ha pouco\b|\bhoje cedo\b/.test(n)) return 'horas';
   return 'nao_informado';
 }
 
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
+  const nc = texto
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s,;.!?]/gu, ' ')
+    .replace(/[ \t]+/g, ' ').trim();
   const sintomas: string[] = [];
   const sinais: string[] = [];
 
@@ -120,27 +147,28 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   if (ehSaudacao) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
-  const falta_de_ar = afirmadoTri(n, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
-  const dor_no_peito = afirmadoTri(n, /\bdor (no|do) peito\b|\baperto no peito\b|\bpressao no peito\b/);
-  const desmaio = afirmadoTri(n, /\bdesmaio\b|\bdesmaiei\b|\bapaguei\b|\bapagou\b|\binconsciente\b/);
-  const confusao = afirmadoTri(n, /\bconfus[aã]o\b|\bconfuso\b|\bdesorientad/);
-  const sangramento = afirmadoTri(n, /\bsangramento\b|\bsangrando\b|\bsangrou\b/);
-  const febre = afirmadoTri(n, /\bfebre\b|\bfebril\b/);
-  const vomitos = afirmadoTri(n, /\bvomito\b|\bvomitando\b|\bvomitei\b|\benjoo\b|\bnausea\b/);
-  const trauma = afirmadoTri(n, /\btrauma\b|\bacidente\b|\bbatida\b|\bqueda\b|\bcaiu\b|\bcai\b|\batropel/);
-  const exposicao_intoxicacao = afirmadoTri(n, /intoxica[cç][aã]o|envenenamento|overdose/);
+  const falta_de_ar = afirmadoTri(nc, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
+  const dor_no_peito = afirmadoTri(nc, /\bdor (no|do) peito\b|\baperto no peito\b|\bpressao no peito\b/);
+  const desmaio = afirmadoTri(nc, /\bdesmaio\b|\bdesmaiei\b|\bapaguei\b|\bapagou\b|\binconsciente\b/);
+  const confusao = afirmadoTri(nc, /\bconfus[aã]o\b|\bconfuso\b|\bdesorientad/);
+  const sangramento = afirmadoTri(nc, /\bsangramento\b|\bsangrando\b|\bsangrou\b/);
+  const febre = afirmadoTri(nc, /\bfebre\b|\bfebril\b/);
+  const vomitos = afirmadoTri(nc, /\bvomito\b|\bvomitando\b|\bvomitei\b|\benjoo\b|\bnausea\b/);
+  const trauma = afirmadoTri(nc, /\btrauma\b|\bacidente\b|\bbatida\b|\bqueda\b|\bcaiu\b|\bcai\b|\batropel/);
+  const exposicao_intoxicacao = afirmadoTri(nc, /intoxica[cç][aã]o|envenenamento|overdose/);
 
-  const labios_roxos = afirmadoTri(n, /\blabios (roxos|arroxeados|azuis)\b/);
+  const labios_roxos = afirmadoTri(nc, /\blabios (roxos|arroxeados|azuis)\b/);
   const fala_frases = extrairFalaFrases(n);
-  const alergia_grave = afirmadoTri(n, /\bgarganta (fechando|fechou)\b|\bnao consigo engolir\b|\banafilaxia\b|\balergia grave\b/);
+  const alergia_grave = afirmadoTri(nc, /\bgarganta (fechando|fechou)\b|\bnao consigo engolir\b|\banafilaxia\b|\balergia grave\b/);
 
   let autodiagnostico: string | null = null;
   for (const [re, label] of AUTODIAGNOSTICO) {
-    if (re.test(n)) { autodiagnostico = label; break; }
+    if (afirmado(nc, re) === true) { autodiagnostico = label; break; }
   }
 
   const neuro = extrairNeurologicos(n);
-    // ========== DENGUE ==========
+
+  // DENGUE
   const temFebre = febre === true;
   const temDorCorpo = /\bdor (no |na )?(corpo|muscular|nas costas|atras dos olhos|nos olhos)\b|\bcorpo doendo\b|\bcarne tremendo\b/.test(n);
   const temMancha = /mancha[s]? (vermelha|na pele|no corpo)|exantema|pontinhos vermelhos/.test(n);
@@ -149,7 +177,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     if (!sintomas.includes('suspeita de dengue')) sintomas.push('suspeita de dengue');
   }
 
-  // ========== VIOLÊNCIA ==========
+  // VIOLÊNCIA
   let violencia: 'domestica' | 'sexual' | null = null;
   if (/\b(me bateu|me agrediu|me empurrou|me machucou|violencia domestica|meu marido me|meu companheiro me|apanhei do|apanhei de)\b/.test(n)) {
     violencia = 'domestica';
@@ -158,16 +186,17 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     violencia = 'sexual';
   }
 
-  // ========== ODONTOLOGIA ==========
+  // ODONTOLOGIA
   if (/\bdor de dente\b|\bdente doendo\b|\bdente quebrado\b|\bdente inflamado\b|\babscesso dental\b/.test(n)) {
     if (!sintomas.includes('dor de dente')) sintomas.push('dor de dente');
   }
 
-  // ========== DESIDRATAÇÃO ==========
+  // DESIDRATAÇÃO
   if (/\bboca seca\b|\bolhos fundos\b|\bmoleira funda\b|\bsem urinar\b|\bnao faz xixi\b|\bnao esta urinando\b|\bchora sem lagrima\b/.test(n)) {
     if (!sintomas.includes('sinais de desidratação')) sintomas.push('sinais de desidratação');
   }
 
+  // RISCO MENTAL
   let risco_mental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/\bquero me matar\b|\bvou me matar\b|\bn[aã]o quero mais viver\b|\bquero morrer\b|\bacabar com tudo\b|\btentativa de suic[ií]dio\b|\bme machucar\b/.test(n)) {
     risco_mental = 'iminente';
@@ -175,8 +204,9 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     risco_mental = 'sem_risco_imediato';
   }
 
+  // GESTANTE
   let gestante: RelatoEstruturado['gestante'] = 'nao_informado';
-  const gest = afirmado(n, /\bgravida\b|\bgestante\b/);
+  const gest = afirmado(nc, /\bgravida\b|\bgestante\b/);
   if (gest === true) gestante = 'sim';
   else if (gest === false) gestante = 'nao';
 
@@ -191,6 +221,8 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   if (autodiagnostico) sinais.push(`autodiagnostico_${autodiagnostico}`);
   if (labios_roxos === true) sinais.push('labios_roxos');
   if (alergia_grave === true) sinais.push('anafilaxia');
+  if (violencia === 'domestica') sinais.push('violencia_domestica');
+  if (violencia === 'sexual') sinais.push('violencia_sexual');
   if (/falta de ar|respirar|labios roxos/.test(n)) sinais.push('falta_de_ar');
   if (/desmaio|apagou|inconsciente|desmaiei/.test(n)) sinais.push('alteração da consciência');
   if (/confus[aã]o|desorientad/.test(n)) sinais.push('alteração da consciência');
@@ -214,9 +246,9 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     [/desmaio|apaguei|apagou|inconsciente/, 'desmaio'],
     [/confus[aã]o|desorientad/, 'confusão'],
     [/ferida|corte|lacera[cç][aã]o|machucad/, 'ferida'],
-    [/picada|escorpi[aã]o|aranha|cobra|peconhento/, 'picada de animal peçonhento'],
+    [/\bpicad[ao]s? (de|por) (cobra|aranha|escorpi[aã]o|animal)|\bescorpi[aã]o\b|\baranha\b|\bcobra\b|peconhento/, 'picada de animal peçonhento'],
     [/intoxica[cç][aã]o|envenenamento|ingeri|tomei (uma )?cartela|overdose/, 'intoxicação'],
-    [/ansiedade|p[aâ]nico|depress[aã]o|caps|crise de choro/, 'sofrimento psíquico'],
+    [/ansiedade|p[aâ]nico|depress[aã]o|\bcaps\b|crise de choro/, 'sofrimento psíquico'],
     [/press[aã]o alta|hipertens[aã]o/, 'pressão alta'],
     [/convuls[aã]o/, 'convulsão'],
     [/alergia|coceira|mancha|vermelhid/, 'alergia/coceira'],
@@ -225,11 +257,11 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     [/ardor|queima[cç][aã]o ao urinar|dor ao urinar|infeccao urinaria/, 'sintoma urinário'],
   ];
   for (const [re, label] of sintomasMap) {
-    const r = afirmado(n, re);
+    const r = afirmado(nc, re);
     if (r === true && !sintomas.includes(label)) sintomas.push(label);
   }
 
-  const dor = afirmado(n, /\bdor\b/);
+  const dor = afirmado(nc, /\bdor\b/);
   if (dor === true) {
     const m = n.match(/dor (no|na|nos|nas|de)\s+([a-z]{3,})/);
     if (m) {
@@ -313,9 +345,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   return validado.relato;
 }
 
-// ============================================================
-// GEMINI TEXTO
-// ============================================================
 const SYSTEM_INSTRUCTION = `Você é um médico regulador e triador do SUS (SAMU 192, UBS, UPA).
 Interprete a gravidade e o contexto por trás da mensagem — gírias, erros ortográficos, relatos sobre terceiros.
 Extraia apenas o que está explícito, não invente informações.
@@ -419,9 +448,6 @@ export async function interpretarRelato(texto: string): Promise<RelatoEstruturad
   }
 }
 
-// ============================================================
-// ÁUDIO — Gemini transcreve, pipeline LOCAL roda em cima da transcrição
-// ============================================================
 export async function interpretarAudio(
   audioBuffer: Buffer,
   mimeType: string = 'audio/ogg; codecs=opus',

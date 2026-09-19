@@ -31,7 +31,7 @@ const NEGACOES = /^(nao|sem|nunca|nem|nenhum|nenhuma|nenhuns|nenhumas|jamais)$/;
 // Impede que "sem febre mas com dor no peito" aplique a negação de "febre"
 // em "dor no peito".
 const SEPARADOR_CLAUSULAS =
-  /\b(mas|por[eé]m|contudo|entretanto|todavia|no entanto|s[oó] que)\b|[,;.!?]|\n/g;
+  /\b(?:mas|por[eé]m|contudo|entretanto|todavia|no entanto|s[oó] que)\b|[,;.!?]|\n/g;
 
 export function dividirClausulas(texto: string): string[] {
   return texto

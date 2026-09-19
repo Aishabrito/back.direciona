@@ -81,14 +81,50 @@ export function escolherProximaPergunta(
 // Só trata como resposta curta se a mensagem for MESMO curta.
 // "não, mas estou com dor" tem mais de 5 palavras → não é resposta curta.
 const SO_CURTA =
-  /^\s*(sim|s|nao|n|não|ok|isso|claro|positivo|negativo|afirmativo|talvez|nao sei|não sei|nao tenho certeza|consigo|nao consigo|nao posso|não posso|acabei de falar|ja falei|já falei)\s*$/i;
+  /^\s*(sim|s|nao|n|não|ok|isso|claro|positivo|negativo|afirmativo|talvez|nao sei|não sei|nao tenho certeza|consigo|nao consigo|nao posso|não posso|tenho|estou|nao tenho|nao estou|acabei de falar|ja falei|já falei)\s*$/i;
+
+const NUM_PALAVRA = '\\d+|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez';
+const RE_DURACAO_CURTA = new RegExp(
+  `^(?:ha |faz |desde |uns |umas |quase )?(${NUM_PALAVRA})\\s*(dia|dias|hora|horas|semana|semanas|mes|meses)(?: atras)?$`,
+);
+
+function grupoPorIdade(anos: number): RelatoEstruturado['idade_grupo'] {
+  if (anos < 2) return 'bebe';
+  if (anos < 12) return 'crianca';
+  if (anos < 18) return 'adolescente';
+  if (anos >= 65) return 'idoso';
+  return 'adulto';
+}
 
 export function interpretarRespostaCurta(
   texto: string,
   ultima: UltimaPergunta | undefined,
 ): Partial<RelatoEstruturado> | null {
   if (!ultima?.campoAlvo) return null;
-  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.!?,;]+$/g, '').trim();
+
+  // Resposta a "há quantos dias?" → "3 dias", "uma semana", "desde ontem", "ontem"
+  if (ultima.campoAlvo === 'duracao') {
+    const m = n.match(RE_DURACAO_CURTA);
+    if (m) return { duracao: `${m[1]} ${m[2]}` };
+    if (/^(desde )?ontem$/.test(n)) return { duracao: '1 dia' };
+    if (/^(desde )?anteontem$/.test(n)) return { duracao: '2 dias' };
+    if (/^(hoje|hoje cedo|agora|agorinha|faz pouco|ha pouco tempo)$/.test(n)) return { duracao: 'horas' };
+    if (/^(so )?(um|1) dia$/.test(n)) return { duracao: '1 dia' };
+    return null;
+  }
+
+  // Resposta a "qual a idade?" → "5", "5 anos", "8 meses"
+  if (ultima.campoAlvo === 'idade_numerica') {
+    const m = n.match(/^(\d{1,3})\s*(anos?|meses|mes)?$/);
+    if (m) {
+      const val = parseInt(m[1], 10);
+      const anos = m[2]?.startsWith('mes') ? Math.round(val / 12) : val;
+      return { idade_numerica: anos, idade_grupo: grupoPorIdade(anos) };
+    }
+    return null;
+  }
 
   if (!SO_CURTA.test(n)) return null;
 

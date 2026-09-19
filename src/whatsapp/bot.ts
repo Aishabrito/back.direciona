@@ -13,10 +13,10 @@ import path from "path";
 import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import { interpretarAudio } from "../ia/extrator_de_informacoes.js";
 import { mensagemPorId } from "../ia/mensagens.js";
+import { reformularPergunta } from "../ia/reformulador_pergunta.js";
 import type { EstadoConversa } from "../ia/tipos.js";
 import {
-  buscarUnidadesProximas, buscarUpaEEmergencia,
-  formatarUnidades, type UnidadeSaude, type TipoBusca,
+  buscarUnidades, formatarUnidades, type TipoUsuario,
 } from "../servicos/geolocalizacao.js";
 import { buscarCoordenadasPorTexto } from "../servicos/nominatim.js";
 import { setQrCode } from "../index.js";
@@ -27,6 +27,20 @@ import {
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const sessions = new Map<string, EstadoConversa>();
+
+// Conversas antigas não podem contaminar um caso novo (o relato acumula sinais de gravidade).
+const ultimaAtividade = new Map<string, number>();
+const TTL_SESSAO_MS = 6 * 60 * 60 * 1000;
+const LOCALIZACAO_VALIDA_MS = 30 * 60 * 1000;
+
+// Uma mensagem por vez por pessoa: evita corrida de estado quando ela manda várias seguidas.
+const filas = new Map<string, Promise<void>>();
+
+function expirarSessaoSeVelha(sender: string): void {
+  const ultima = ultimaAtividade.get(sender);
+  if (ultima && Date.now() - ultima > TTL_SESSAO_MS) sessions.delete(sender);
+  ultimaAtividade.set(sender, Date.now());
+}
 const AUTH_DIR = "auth_info_baileys";
 
 // ────────────────────────────────────────────────────────────
@@ -64,7 +78,7 @@ function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | 
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   // [FIX] Pergunta de FAQ / institucional NÃO é pedido de localização
-  if (/\b(diferenca|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) {
+  if (/\b(dif[a-z]{3,}|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) {
     return null;
   }
 
@@ -80,19 +94,46 @@ function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | 
 
 function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   const norm = textoLimpo.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
-  if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor|pfv|pf)$/.test(norm)) return "sim";
-  if (/^(nao|dispensa|depois|agora nao|n)$/.test(norm)) return "nao";
+  const [primeira = "", segunda = ""] = norm.split(" ");
+  if (/^(nao|n|dispensa|depois)$/.test(primeira)) return "nao";
+  if (primeira === "por") return segunda === "favor" ? "sim" : null;
+  if (/^(sim|s|quero|ok|claro|bora|manda|pode|vamos|aceito|pfv|pf)$/.test(primeira)) return "sim";
   return null;
 }
 
-async function buscarParaTipo(
-  lat: number, lng: number, tipo: 'UPA' | 'HOSPITAL' | 'UBS',
-): Promise<UnidadeSaude[]> {
-  if (tipo === 'HOSPITAL') {
-    const { upas, emergencias } = await buscarUpaEEmergencia(lat, lng);
-    return [...emergencias, ...upas];
+// UPA e UBS são femininas; "hospital" é masculino.
+function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: string; nome: string } {
+  if (tipo === 'HOSPITAL') return { art: 'o', prox: 'próximo', nome: 'hospital' };
+  return { art: 'a', prox: 'próxima', nome: tipo };
+}
+
+type Sock = ReturnType<typeof makeWASocket>;
+
+// Único ponto que faz a busca e responde (usado por GPS, texto e localização guardada).
+async function executarBusca(
+  sock: Sock, sender: string, estado: EstadoConversa,
+  lat: number, lng: number, tipo: TipoUsuario,
+): Promise<void> {
+  estado.ultimaLocalizacao = { lat, lng, em: Date.now() };
+  estado.aguardandoLocalizacao = undefined;
+  sessions.set(sender, estado);
+
+  await sock.sendMessage(sender, { text: "🔎 Buscando as unidades mais próximas, um instante..." });
+  await sock.sendPresenceUpdate("composing", sender);
+  try {
+    console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
+    const r = await buscarUnidades(lat, lng, tipo);
+    console.log(`📦 ${r.unidades.length} unidades (origem: ${r.origem}, falhaServico: ${r.falhaServico})`);
+    await sock.sendMessage(sender, {
+      text: formatarUnidades(r.unidades, lat, lng, tipo, { falhaServico: r.falhaServico }),
+    });
+  } catch (err) {
+    console.error("❌ Erro ao buscar unidades:", err);
+    await sock.sendMessage(sender, {
+      text: "❌ Erro ao buscar unidades próximas. Se for emergência, ligue 192 agora.",
+    });
   }
-  return buscarUnidadesProximas(lat, lng, tipo);
+  await sock.sendPresenceUpdate("paused", sender);
 }
 
 function oferecerLocalizacao(
@@ -112,11 +153,11 @@ function oferecerLocalizacao(
 
   if (!tipoLocalizacao) return mensagemBase;
 
-  const nome = tipoLocalizacao === 'UPA' ? 'UPA' : tipoLocalizacao === 'HOSPITAL' ? 'hospital' : 'UBS';
+  const { art, prox, nome } = artigoUnidade(tipoLocalizacao);
   const texto =
     mensagemBase +
-    `\n\n📍 *Quer saber ${tipoLocalizacao === 'UBS' ? 'a' : 'o'} ${nome} mais ${tipoLocalizacao === 'UBS' ? 'próxima' : 'próximo'}?* 🙋\n` +
-    `Responda *"sim"* e depois compartilhe sua localização.`;
+    `\n\n📍 *Quer saber ${art} ${nome} mais ${prox}?* 🙋\n` +
+    `Responda *"sim"* e me mande sua localização (📎 → Localização) ou escreva seu *bairro e cidade*.`;
 
   const estadoApos = sessions.get(sender)!;
   estadoApos.aguardandoLocalizacao = { ativo: true, tipo: tipoLocalizacao, mensagemOriginal: texto };
@@ -228,225 +269,288 @@ export async function startWhatsAppBot(): Promise<void> {
   });
 
   // ──────────────────────────────────────────────────────────
-  // MENSAGENS
+  // [FIX] Deduplica mensagens por msg.key.id — o Baileys pode reenviar em retry
   // ──────────────────────────────────────────────────────────
+  const idsProcessados = new Set<string>();
+
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type !== "notify") return;
-    const msg = messages[0];
-    if (!msg.message || msg.key.fromMe) return;
 
-    const sender = msg.key.remoteJid;
-    if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast") return;
+    for (const msg of messages) {
+      if (!msg.message || msg.key.fromMe) continue;
+      const sender = msg.key.remoteJid;
+      if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast") continue;
 
-    try {
-      const text =
-        msg.message.conversation ||
-        msg.message.extendedTextMessage?.text ||
-        msg.message.imageMessage?.caption ||
-        "";
-      const cleanText = text.trim();
-
-      // LOCALIZAÇÃO RECEBIDA
-      const location = msg.message.locationMessage;
-      if (location) {
-        const lat = location.degreesLatitude;
-        const lng = location.degreesLongitude;
-        if (lat == null || lng == null) {
-          await sock.sendMessage(sender, { text: "📍 Localização inválida. Tente novamente." });
-          return;
+      // [FIX] Ignora se já processou esse id
+      if (msg.key.id) {
+        if (idsProcessados.has(msg.key.id)) {
+          console.log(`⏭️ Ignorando mensagem duplicada (id ${msg.key.id})`);
+          continue;
         }
-
-        const estadoAtual = sessions.get(sender);
-        if (estadoAtual?.aguardandoLocalizacao?.ativo) {
-          const tipo = estadoAtual.aguardandoLocalizacao.tipo;
-          try {
-            await sock.sendPresenceUpdate("composing", sender);
-            console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
-            const unidades = await buscarParaTipo(lat, lng, tipo);
-            console.log(`📦 ${unidades.length} unidades retornadas`);
-            const resposta = formatarUnidades(unidades, lat, lng, tipo as TipoBusca);
-
-            estadoAtual.aguardandoLocalizacao = undefined;
-            sessions.set(sender, estadoAtual);
-            await sock.sendMessage(sender, { text: resposta });
-          } catch (err) {
-            console.error("❌ Erro ao buscar unidades:", err);
-            await sock.sendMessage(sender, {
-              text: "❌ Erro ao buscar unidades próximas. Se for emergência, ligue 192 agora.",
-            });
-          }
-          return;
-        }
-        await sock.sendMessage(sender, {
-          text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* que eu busco.`,
-        });
-        return;
-      }
-
-      // ÁUDIO
-      const audioMessage = msg.message.audioMessage;
-      if (audioMessage) {
-        try {
-          await sock.sendPresenceUpdate("composing", sender);
-
-          const buffer = (await downloadMediaMessage(
-            msg, 'buffer', {},
-            { logger: pino({ level: 'silent' }) as any, reuploadRequest: sock.updateMediaMessage },
-          )) as Buffer;
-
-          if (!buffer || buffer.length === 0) throw new Error('Buffer de áudio vazio');
-
-          const mime = audioMessage.mimetype || 'audio/ogg; codecs=opus';
-          console.log(`🎤 [${sender}] Áudio recebido (${(buffer.length / 1024).toFixed(1)} KB)`);
-
-          const relatoDoAudio = await interpretarAudio(buffer, mime);
-
-          const primeiraMensagemAudio = !sessions.has(sender);
-          if (primeiraMensagemAudio) {
-            sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-          }
-          const estadoAtualAudio = sessions.get(sender)!;
-
-          const { resultado, estado: novoEstado } = await processarTurnoComRelato(
-            '[áudio]', relatoDoAudio, estadoAtualAudio,
-          );
-          sessions.set(sender, novoEstado);
-
-          let respostaAudio = resultado.texto;
-          if (primeiraMensagemAudio) {
-            respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
-          }
-
-          respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
-
-          await sock.sendMessage(sender, { text: respostaAudio });
-          await sock.sendPresenceUpdate("paused", sender);
-          return;
-        } catch (err) {
-          console.error('❌ Erro ao processar áudio:', err);
-          await sock.sendMessage(sender, {
-            text: '🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.',
-          });
-          await sock.sendPresenceUpdate("paused", sender);
-          return;
+        idsProcessados.add(msg.key.id);
+        if (idsProcessados.size > 500) {
+          const primeiros = [...idsProcessados].slice(0, 200);
+          for (const id of primeiros) idsProcessados.delete(id);
         }
       }
 
-      // FOTO / STICKER / DOCUMENTO SEM LEGENDA
-      const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
-      if (temImagem && !cleanText) {
-        await sock.sendMessage(sender, { text: mensagemPorId('foto_sem_legenda_001').texto });
-        return;
-      }
-
-      if (!cleanText) return;
-
-      console.log(`\n📩 [${sender}] ${cleanText}`);
-
-      const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-      // RESET
-      if (comandosReset.some((cmd) => {
-        const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return textoLimpo === cmdLimpo;
-      })) {
-        sessions.delete(sender);
-        await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
-        return;
-      }
-
-      // SIM/NÃO + LOCALIZAÇÃO POR TEXTO
-      const estadoAtualSimNao = sessions.get(sender);
-      if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
-        const decisao = matchSimNao(textoLimpo);
-        const palavras = textoLimpo.split(/\s+/).filter(Boolean);
-        const temPalavraClinica = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto)\b/.test(textoLimpo);
-        const podeSerSimNao = decisao !== null && palavras.length <= 4 && !temPalavraClinica;
-
-        if (podeSerSimNao) {
-          if (decisao === "sim") {
-            await sock.sendMessage(sender, {
-              text: `📍 Me mande sua localização pelo 📎 → *Localização*.\n\nOu, se preferir, escreva seu *bairro e cidade* (ex: "Icaraí, Niterói") que eu busco pra você.`,
-            });
-            estadoAtualSimNao.aguardandoLocalizacao!.aguardandoTexto = true;
-            sessions.set(sender, estadoAtualSimNao);
-            return;
-          }
-          if (decisao === "nao") {
-            estadoAtualSimNao.aguardandoLocalizacao = undefined;
-            sessions.set(sender, estadoAtualSimNao);
-            await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
-            return;
-          }
-        }
-
-        if (estadoAtualSimNao.aguardandoLocalizacao.aguardandoTexto && palavras.length >= 2 && !temPalavraClinica) {
-          try {
-            await sock.sendPresenceUpdate("composing", sender);
-            const coords = await buscarCoordenadasPorTexto(cleanText);
-            if (coords) {
-              const tipo = estadoAtualSimNao.aguardandoLocalizacao.tipo;
-              const unidades = await buscarParaTipo(coords.lat, coords.lng, tipo);
-              const resposta = formatarUnidades(unidades, coords.lat, coords.lng, tipo as TipoBusca);
-              estadoAtualSimNao.aguardandoLocalizacao = undefined;
-              sessions.set(sender, estadoAtualSimNao);
-              await sock.sendMessage(sender, { text: resposta });
-              return;
-            } else {
-              await sock.sendMessage(sender, {
-                text: "Não consegui localizar esse endereço. Tente ser mais específico (bairro + cidade) ou compartilhe pelo 📎 → Localização.",
-              });
-              return;
-            }
-          } catch (err) {
-            console.error("❌ Erro no Nominatim:", err);
-          }
-        }
-
-        estadoAtualSimNao.aguardandoLocalizacao = undefined;
-        sessions.set(sender, estadoAtualSimNao);
-      }
-
-      // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
-      const pedidoLoc = detectarPedidoLocalizacao(cleanText);
-      if (pedidoLoc) {
-        const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-        estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText };
-        sessions.set(sender, estado);
-        const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
-        await sock.sendMessage(sender, {
-          text: `📍 Compartilhe sua localização (📎 → Localização) ou escreva seu *bairro e cidade* que eu busco ${pedidoLoc === 'UBS' ? 'a' : 'o'} ${nome} mais ${pedidoLoc === 'UBS' ? 'próxima' : 'próximo'}.`,
-        });
-        return;
-      }
-
-      // PROCESSA TURNO TEXTO
-      await sock.sendPresenceUpdate("composing", sender);
-
-      const primeiraMensagem = !sessions.has(sender);
-      if (primeiraMensagem) {
-        sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-      }
-
-      const estadoAtualProcesso = sessions.get(sender)!;
-      const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
-      sessions.set(sender, novoEstado);
-
-      let mensagemFinal = resultado.texto;
-      if (primeiraMensagem) {
-        const privacidade = mensagemPorId('privacidade_001').texto;
-        mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}\n\n---\n\n${mensagemFinal}`;
-      }
-
-      mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
-
-      await sock.sendMessage(sender, { text: mensagemFinal });
-      await sock.sendPresenceUpdate("paused", sender);
-    } catch (err) {
-      // [FIX] Não deixa o erro derrubar o processo
-      console.error('❌ Erro no handler de mensagem:', err);
+      const anterior = filas.get(sender) ?? Promise.resolve();
+      const atual = anterior
+        .then(() => tratarMensagem(sock, msg, sender))
+        .catch((err) => console.error("❌ Erro no handler de mensagem:", err));
+      filas.set(sender, atual);
+      atual.finally(() => { if (filas.get(sender) === atual) filas.delete(sender); });
     }
   });
+}
+
+// ────────────────────────────────────────────────────────────
+// TRATAMENTO DE UMA MENSAGEM
+// ────────────────────────────────────────────────────────────
+const CLINICA_RE = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto|tosse|barriga|cabeca)\b/;
+
+const CONVERSA_RE = /^(oi|ola|obrigad[oa]|valeu|vlw|tchau|ate mais|blz|beleza|tudo bem|bom dia|boa tarde|boa noite|nao sei|talvez|hm+|kkk+)$/;
+const PERGUNTA_RE = /\?|\b(qual|quais|como|quando|porque|por que|o que|onde|dif[a-z]{3,})\b/;
+
+function pareceLocal(textoLimpo: string): boolean {
+  const palavras = textoLimpo.split(/\s+/).filter(Boolean);
+  return (
+    palavras.length >= 1 && palavras.length <= 7 &&
+    !CLINICA_RE.test(textoLimpo) && !PERGUNTA_RE.test(textoLimpo) &&
+    !CONVERSA_RE.test(textoLimpo) && !matchSimNao(textoLimpo)
+  );
+}
+
+// Reformula perguntas de acompanhamento para soar natural (desligue com REFORMULAR_PERGUNTAS=0).
+async function comTomNatural(pergunta: string, contexto: string): Promise<string> {
+  if (process.env.REFORMULAR_PERGUNTAS === "0") return pergunta;
+  return reformularPergunta(pergunta, contexto);
+}
+
+async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<void> {
+  const text =
+    msg.message.conversation ||
+    msg.message.extendedTextMessage?.text ||
+    msg.message.imageMessage?.caption ||
+    "";
+  const cleanText = String(text).trim();
+
+  expirarSessaoSeVelha(sender);
+
+  // ── LOCALIZAÇÃO (GPS) ──
+  const location = msg.message.locationMessage;
+  if (location) {
+    const lat = location.degreesLatitude;
+    const lng = location.degreesLongitude;
+    if (lat == null || lng == null) {
+      await sock.sendMessage(sender, { text: "📍 Localização inválida. Tente novamente." });
+      return;
+    }
+
+    const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    const aguardando = estado.aguardandoLocalizacao;
+    if (aguardando?.ativo) {
+      await executarBusca(sock, sender, estado, lat, lng, aguardando.tipo);
+      return;
+    }
+
+    // Mandou a localização sem ninguém pedir: guarda e pergunta o que ela quer achar.
+    estado.ultimaLocalizacao = { lat, lng, em: Date.now() };
+    sessions.set(sender, estado);
+    await sock.sendMessage(sender, {
+      text: "📍 Localização recebida! O que você quer encontrar perto de você?\n\nResponda: *UPA*, *UBS* ou *hospital*.",
+    });
+    return;
+  }
+
+  // ── ÁUDIO ──
+  const audioMessage = msg.message.audioMessage;
+  if (audioMessage) {
+    try {
+      await sock.sendPresenceUpdate("composing", sender);
+
+      const buffer = (await downloadMediaMessage(
+        msg, "buffer", {},
+        { logger: pino({ level: "silent" }) as any, reuploadRequest: sock.updateMediaMessage },
+      )) as Buffer;
+      if (!buffer || buffer.length === 0) throw new Error("Buffer de áudio vazio");
+
+      const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
+      console.log(`🎤 [${sender}] Áudio recebido (${(buffer.length / 1024).toFixed(1)} KB)`);
+
+      const relatoDoAudio = await interpretarAudio(buffer, mime);
+
+      const primeiraMensagemAudio = !sessions.has(sender);
+      if (primeiraMensagemAudio) {
+        sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+      }
+      const estadoAtualAudio = sessions.get(sender)!;
+
+      // A TRANSCRIÇÃO precisa chegar ao orquestrador (regras por frase, bloqueio de
+      // remédio/diagnóstico e FAQ dependem do texto).
+      const transcricao = (relatoDoAudio.texto_original_acumulado || "").replace(/^\[áudio\]\s*/i, "").trim();
+      const textoRepresentativo = transcricao || "[áudio]";
+
+      const { resultado, estado: novoEstado } = await processarTurnoComRelato(
+        textoRepresentativo, relatoDoAudio, estadoAtualAudio,
+      );
+      sessions.set(sender, novoEstado);
+
+      let respostaAudio = resultado.texto;
+      if (resultado.tipo === "perguntas") {
+        respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
+      }
+      if (primeiraMensagemAudio) {
+        respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
+      }
+      respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
+
+      await sock.sendMessage(sender, { text: respostaAudio });
+    } catch (err) {
+      console.error("❌ Erro ao processar áudio:", err);
+      await sock.sendMessage(sender, {
+        text: "🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.",
+      });
+    }
+    await sock.sendPresenceUpdate("paused", sender);
+    return;
+  }
+
+  // ── FOTO / STICKER / DOCUMENTO SEM LEGENDA ──
+  const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
+  if (temImagem && !cleanText) {
+    await sock.sendMessage(sender, { text: mensagemPorId("foto_sem_legenda_001").texto });
+    return;
+  }
+
+  if (!cleanText) return;
+
+  console.log(`\n📩 [${sender}] ${cleanText}`);
+  const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // ── RESET ──
+  if (comandosReset.some((cmd) => textoLimpo === cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
+    sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
+    return;
+  }
+
+  // ── FLUXO DE LOCALIZAÇÃO POR TEXTO ──
+  const estadoLoc = sessions.get(sender);
+  if (estadoLoc?.aguardandoLocalizacao?.ativo) {
+    const decisao = matchSimNao(textoLimpo);
+    const palavras = textoLimpo.split(/\s+/).filter(Boolean);
+    const temPalavraClinica = CLINICA_RE.test(textoLimpo);
+    const tipo = estadoLoc.aguardandoLocalizacao.tipo;
+    const locRecente = estadoLoc.ultimaLocalizacao && Date.now() - estadoLoc.ultimaLocalizacao.em < LOCALIZACAO_VALIDA_MS
+      ? estadoLoc.ultimaLocalizacao : null;
+
+    if (decisao === "nao" && palavras.length <= 4 && !temPalavraClinica) {
+      estadoLoc.aguardandoLocalizacao = undefined;
+      sessions.set(sender, estadoLoc);
+      await sock.sendMessage(sender, { text: "Tudo bem! Se precisar, é só me chamar. 💙" });
+      return;
+    }
+
+    if (decisao === "sim" && palavras.length <= 4 && !temPalavraClinica) {
+      // Já mandou a localização há pouco? Não pede de novo.
+      if (locRecente) {
+        await executarBusca(sock, sender, estadoLoc, locRecente.lat, locRecente.lng, tipo);
+        return;
+      }
+      estadoLoc.aguardandoLocalizacao.aguardandoTexto = true;
+      sessions.set(sender, estadoLoc);
+      await sock.sendMessage(sender, {
+        text: `📍 Me mande sua localização pelo 📎 → *Localização*.\n\nOu escreva seu *bairro e cidade* (ex: "Icaraí, Niterói") que eu busco pra você.`,
+      });
+      return;
+    }
+
+    // Digitou um endereço/bairro direto (não precisa dizer "sim" antes, nem ter 2+ palavras).
+    if (pareceLocal(textoLimpo)) {
+      await sock.sendPresenceUpdate("composing", sender);
+      const coords = await buscarCoordenadasPorTexto(cleanText);
+      if (coords) {
+        await executarBusca(sock, sender, estadoLoc, coords.lat, coords.lng, tipo);
+      } else {
+        estadoLoc.aguardandoLocalizacao.aguardandoTexto = true;
+        sessions.set(sender, estadoLoc);
+        await sock.sendMessage(sender, {
+          text: "Não consegui localizar esse endereço. Tente *bairro + cidade* (ex: \"Icaraí, Niterói\") ou compartilhe pelo 📎 → Localização.",
+        });
+      }
+      return;
+    }
+
+    // Falou de sintoma ou de outro assunto: abandona a busca e segue o atendimento.
+    estadoLoc.aguardandoLocalizacao = undefined;
+    sessions.set(sender, estadoLoc);
+  }
+
+  // ── PEDIDO EXPLÍCITO DE LOCALIZAÇÃO ("qual a UPA mais próxima", "UPA", "hospital"...) ──
+  const estadoAtual = sessions.get(sender);
+  const locGuardada = estadoAtual?.ultimaLocalizacao && Date.now() - estadoAtual.ultimaLocalizacao.em < LOCALIZACAO_VALIDA_MS
+    ? estadoAtual.ultimaLocalizacao : null;
+
+  // Depois de mandar o GPS sem contexto, "upa" / "ubs" / "hospital" sozinho já basta.
+  let pedidoLoc = detectarPedidoLocalizacao(cleanText);
+  if (!pedidoLoc && locGuardada && !estadoAtual?.aguardandoLocalizacao?.ativo) {
+    if (/^(a |o )?(upa|pronto socorro|pronto atendimento)$/.test(textoLimpo)) pedidoLoc = "UPA";
+    else if (/^(a |o )?(ubs|posto( de saude)?|clinica da familia)$/.test(textoLimpo)) pedidoLoc = "UBS";
+    else if (/^(o |um )?hospital$/.test(textoLimpo)) pedidoLoc = "HOSPITAL";
+  }
+
+  if (pedidoLoc) {
+    const estado = estadoAtual ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    if (locGuardada) {
+      await executarBusca(sock, sender, estado, locGuardada.lat, locGuardada.lng, pedidoLoc);
+      return;
+    }
+    estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText, aguardandoTexto: true };
+    sessions.set(sender, estado);
+    const { art, prox, nome } = artigoUnidade(pedidoLoc);
+    await sock.sendMessage(sender, {
+      text: `📍 Compartilhe sua localização (📎 → Localização) ou escreva seu *bairro e cidade* que eu busco ${art} ${nome} mais ${prox}.`,
+    });
+    return;
+  }
+
+  // ── TRIAGEM (texto) ──
+  await sock.sendPresenceUpdate("composing", sender);
+
+  const primeiraMensagem = !sessions.has(sender);
+  if (primeiraMensagem) {
+    sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+  }
+
+  const estadoAtualProcesso = sessions.get(sender)!;
+  const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
+  // processarTurno devolve estados novos que perdem a localização guardada; preserva.
+  if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
+    novoEstado.ultimaLocalizacao = estadoAtualProcesso.ultimaLocalizacao;
+  }
+  sessions.set(sender, novoEstado);
+
+  let mensagemFinal = resultado.texto;
+
+  // Perguntas de acompanhamento em tom natural (Gemini, com timeout e fallback para a original).
+  const perguntaGenericaDuplicada = primeiraMensagem && resultado.tipo === "perguntas" && resultado.tema === "vago";
+  if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada) {
+    mensagemFinal = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
+  }
+
+  if (primeiraMensagem) {
+    const privacidade = mensagemPorId("privacidade_001").texto;
+    // A boas-vindas já termina perguntando o que a pessoa sente; não repete a pergunta genérica.
+    mensagemFinal = perguntaGenericaDuplicada
+      ? `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}`
+      : `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}\n\n---\n\n${mensagemFinal}`;
+  }
+
+  mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
+
+  await sock.sendMessage(sender, { text: mensagemFinal });
+  await sock.sendPresenceUpdate("paused", sender);
 }
 
 // [FIX] NÃO chama startWhatsAppBot() aqui. O index.ts é quem chama.
