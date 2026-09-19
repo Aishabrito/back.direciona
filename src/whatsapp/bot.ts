@@ -13,7 +13,7 @@ import path from "path";
 import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import { interpretarAudio } from "../ia/extrator_de_informacoes.js";
 import type { EstadoConversa } from "../ia/tipos.js";
-import { buscarUnidadesProximas, buscarUpaEEmergencia, formatarUnidades, type UnidadeSaude } from "../servicos/geolocalizacao.js";
+import { buscarUnidadesProximas, buscarUpaEEmergencia, formatarUnidades, TipoBusca, type UnidadeSaude } from "../servicos/geolocalizacao.js";
 import { setQrCode } from "../index.js";
 import {
   criarClienteDb,
@@ -60,9 +60,17 @@ const comandosReset = [
 // ============================================================
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const temPalavraLocal =
-    /\b(onde|qual|perto|proxim|endereco|localiza|fica|me manda|me passa|tem algum|existe|quero|preciso)\b/.test(n);
-  if (!temPalavraLocal) return null;
+
+  // [FIX] Pergunta de FAQ / institucional NÃO é pedido de localização
+  if (/\b(diferenca|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar|precisa de|preciso de encaminhamento)\b/.test(n)) {
+    return null;
+  }
+
+  // [FIX] Precisa ser claramente pedido de localização (verbo direto)
+  const temVerboLocal =
+    /\b(onde (tem|fica|e|eh|esta)|me manda|me passa|me indica|qual (a|o) (upa|ubs|hospital|posto)|qual (upa|ubs|hospital)|quero (ir|saber)|preciso (ir|saber)|tem (uma|um|algum)|existe (uma|um|algum))\b/.test(n);
+  if (!temVerboLocal) return null;
+
   if (/\b(upa|pronto\s*socorro|pronto-socorro|emergencia)\b/.test(n)) return 'UPA';
   if (/\b(hospital|hospitalar)\b/.test(n)) return 'HOSPITAL';
   if (/\b(ubs|posto\s*de\s*saude|posto|clinica|clinica\s*da\s*familia)\b/.test(n)) return 'UBS';
@@ -214,7 +222,7 @@ export async function startWhatsAppBot() {
           console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
           const unidades = await buscarParaTipo(lat, lng, tipo);
           console.log(`📦 ${unidades.length} unidades retornadas`);
-          const resposta = formatarUnidades(unidades, lat, lng);
+         const resposta = formatarUnidades(unidades, lat, lng, tipo as TipoBusca);
 
           estadoAtual.aguardandoLocalizacao = undefined;
           sessions.set(sender, estadoAtual);
