@@ -13,32 +13,29 @@ const STOP_WORDS = new Set([
 function extrairTokens(texto: string): string[] {
   return normalizarTexto(texto)
     .split(/\s+/)
-    .filter((palavra) => palavra.length > 2 && !STOP_WORDS.has(palavra));
+    .filter((p) => p.length > 2 && !STOP_WORDS.has(p));
 }
 
-// [FIX] Removido `includes` bidirecional — ele fazia "dor" casar com "adorei"
-function palavrasSemelhantes(tokenUsuario: string, tokenGatilho: string): boolean {
-  if (tokenUsuario === tokenGatilho) return true;
-
-  if (tokenUsuario.length >= 5 && tokenGatilho.length >= 5) {
-    if (tokenUsuario.startsWith(tokenGatilho) || tokenGatilho.startsWith(tokenUsuario)) {
-      return true;
-    }
-  }
-
-  const distancia = levenshtein.get(tokenUsuario, tokenGatilho);
-  const tamanhoMaximo = Math.max(tokenUsuario.length, tokenGatilho.length);
-
-  if (tamanhoMaximo <= 5) return distancia <= 1;
-  return distancia <= 2;
+function palavrasSemelhantes(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (a.length >= 5 && b.length >= 5 && (a.startsWith(b) || b.startsWith(a))) return true;
+  const d = levenshtein.get(a, b);
+  const max = Math.max(a.length, b.length);
+  return max <= 5 ? d <= 1 : d <= 2;
 }
+
+const SINTOMA_PRIMEIRA_PESSOA =
+  /\b(estou|to|tenho|sinto|senti|meu|minha|estamos|dor|febre|tosse|falta de ar|sangramento|vomito|vomitei|desmaiei|ca[ií]|bati|bateu)\b/;
 
 export function checarFaq(texto: string): ItemFaq | null {
+  const n = normalizarTexto(texto);
+  if (SINTOMA_PRIMEIRA_PESSOA.test(n)) return null;
+
   const tokensUsuario = extrairTokens(texto);
   if (tokensUsuario.length === 0) return null;
 
   let melhorItem: ItemFaq | null = null;
-  let maiorPontuacao = 0;
+  let melhorScore = 0;
 
   for (const item of faqDados.duvidas) {
     for (const gatilho of item.gatilhos) {
@@ -46,17 +43,18 @@ export function checarFaq(texto: string): ItemFaq | null {
       if (tokensGatilho.length === 0) continue;
 
       let acertos = 0;
-      for (const tokenU of tokensUsuario) {
-        if (tokensGatilho.some((tG) => palavrasSemelhantes(tokenU, tG))) acertos++;
+      for (const tU of tokensUsuario) {
+        if (tokensGatilho.some((tG) => palavrasSemelhantes(tU, tG))) acertos++;
       }
 
-      const pontuacao = acertos / Math.min(tokensUsuario.length, tokensGatilho.length);
-      if (pontuacao > maiorPontuacao) {
-        maiorPontuacao = pontuacao;
+      const cobertura = acertos / tokensGatilho.length;
+      const score = cobertura * acertos;
+
+      if (cobertura >= 0.75 && acertos >= 2 && score > melhorScore) {
+        melhorScore = score;
         melhorItem = item;
       }
     }
   }
-
-  return maiorPontuacao >= 0.6 ? melhorItem : null;
+  return melhorItem;
 }
