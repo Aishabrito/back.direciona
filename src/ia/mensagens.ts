@@ -2,7 +2,7 @@ import mensagens from '../respostas/mensagens_aprovadas.json';
 import type { MensagemAprovada } from './tipos.js';
 import { contemAlgum, normalizarTexto } from './normalizar.js';
 
-// [FIX 11] removidos "vermelho", "laranja", "amarelo" e duplicata "classificação"
+// [FIX] Removidas cores que bloqueavam respostas legítimas
 const TERMOS_PROIBIDOS = [
   'infarto',
   'avc',

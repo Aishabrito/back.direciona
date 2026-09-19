@@ -15,7 +15,6 @@ export async function buscarUnidadesProximas(
   tipo: 'UPA' | 'HOSPITAL' | 'UBS' | 'TODOS' = 'TODOS',
   raioEmMetros: number = 5000,
 ): Promise<UnidadeSaude[]> {
-  // [FIX 14] regex Overpass agora é case-insensitive com `,i`
   let filtros = '';
 
   if (tipo === 'UPA') {

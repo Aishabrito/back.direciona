@@ -5,10 +5,9 @@ import type { EstadoConversa } from '../ia/tipos.js';
 
 export const rotasApi = Router();
 
-// [FIX 8] sessões com timestamp + limpeza periódica (antes o Map crescia infinito)
 type SessaoArmazenada = { estado: EstadoConversa; atualizadoEm: number };
 const sessoesApp = new Map<string, SessaoArmazenada>();
-const TTL_MS = 30 * 60 * 1000; // 30 min
+const TTL_MS = 30 * 60 * 1000;
 
 const limpeza = setInterval(() => {
   const agora = Date.now();

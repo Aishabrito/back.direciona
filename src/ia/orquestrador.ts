@@ -1,4 +1,3 @@
-
 import { registrarDecisao } from './auditoria.js';
 import { interpretarRelato } from './extrator_de_informacoes.js';
 import {
@@ -26,8 +25,8 @@ export const ESTADO_INICIAL: EstadoConversa = {
   texto_original_acumulado: '',
 };
 
-// [FIX 12] detecta saudação inicial para não responder "fora do escopo"
-const SAUDACOES_INICIAIS = ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'opa', 'tudo bem'];
+const SAUDACOES_INICIAIS = ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'opa', 'tudo bem', 'eae'];
+
 function ehSaudacaoInicial(texto: string): boolean {
   const n = normalizarTexto(texto);
   const palavras = n.split(/\s+/).filter(Boolean);
@@ -40,21 +39,40 @@ function consolidar(estado: EstadoConversa): RelatoEstruturado {
   return { ...base, texto_original_acumulado: estado.texto_original_acumulado || '' };
 }
 
-function precisaPerguntar(relato: RelatoEstruturado): boolean {
-  if (relato.sinais_alerta.length > 0) return false;
-  if (relato.sinais_obstetricos && relato.sinais_obstetricos.length > 0) return false;
-  if (relato.sinais_trauma && relato.sinais_trauma.length > 0) return false;
-  if (relato.risco_mental === 'iminente') return false;
+// [MELHORIA] Detecção de sinal vermelho mais completa
+function temSinalVermelho(relato: RelatoEstruturado): boolean {
+  return (
+    relato.sinais_alerta.length > 0 ||
+    relato.falta_de_ar === true ||
+    relato.dor_no_peito === true ||
+    relato.desmaio === true ||
+    relato.confusao === true ||
+    relato.risco_mental === 'iminente' ||
+    (relato.sinais_obstetricos && relato.sinais_obstetricos.length > 0) ||
+    (relato.sinais_trauma && relato.sinais_trauma.length > 0) ||
+    (relato.idade_grupo === 'bebe' && relato.febre === true)
+  );
+}
+
+// [MELHORIA] Precisa perguntar com mais nuances
+function precisaPerguntar(relato: RelatoEstruturado, rodadas: number): boolean {
+  if (rodadas >= 2) return false; // máximo 2 rodadas
+  if (temSinalVermelho(relato)) return false;
+
   if (relato.informacao_insuficiente) return true;
 
   if (relato.sintomas.length > 0) {
     const semDuracao = relato.duracao === 'nao_informado';
+    const semIntensidade = relato.intensidade === 'nao_informado';
     const temQueixaIntermediaria =
       relato.febre === true ||
       relato.vomitos === true ||
-      relato.sintomas.some((s) => /dor|febre|tosse|resfriado|enjoo|queimadura|queda|ferida/i.test(s));
-    if (semDuracao || temQueixaIntermediaria) return true;
+      relato.sintomas.some((s) => /dor|febre|tosse|resfriado|enjoo|queimadura|queda|ferida|diarreia/i.test(s));
+
+    if (rodadas === 0 && (semDuracao || temQueixaIntermediaria)) return true;
+    if (rodadas === 1 && semIntensidade && semDuracao) return true;
   }
+
   return false;
 }
 
@@ -62,27 +80,39 @@ export async function processarTurno(
   textoUsuario: string,
   estado: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
-  // 1. FAQ institucional
-  const faqEncontrada = checarFaq(textoUsuario);
-  if (faqEncontrada) {
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao',
-        texto: faqEncontrada.resposta,
-        decisao: {
-          categoria_interna: 'fora_do_escopo',
-          destino: 'FALLBACK',
-          resposta_id: faqEncontrada.id,
-          regra_acionada: faqEncontrada.id,
-          versao_regras: VERSAO_REGRAS,
+  // ============================================================
+  // 1. EXTRAÇÃO CLÍNICA PRIMEIRO (antes de qualquer FAQ)
+  // ============================================================
+  const extraido = await interpretarRelato(textoUsuario);
+  const sinalVermelho = temSinalVermelho(extraido);
+
+  // ============================================================
+  // 2. FAQ — só se NÃO houver sinal vermelho
+  // ============================================================
+  if (!sinalVermelho) {
+    const faqEncontrada = checarFaq(textoUsuario);
+    if (faqEncontrada) {
+      return {
+        estado,
+        resultado: {
+          tipo: 'orientacao',
+          texto: faqEncontrada.resposta,
+          decisao: {
+            categoria_interna: 'fora_do_escopo',
+            destino: 'FALLBACK',
+            resposta_id: faqEncontrada.id,
+            regra_acionada: faqEncontrada.id,
+            versao_regras: VERSAO_REGRAS,
+          },
         },
-      },
-    };
+      };
+    }
   }
 
-  // 2. Pedido de medicamento
-  if (ehPedidoMedicamento(textoUsuario)) {
+  // ============================================================
+  // 3. Pedido de medicamento
+  // ============================================================
+  if (!sinalVermelho && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
       estado,
@@ -100,8 +130,10 @@ export async function processarTurno(
     };
   }
 
-  // 3. Pedido de diagnóstico
-  if (ehPedidoDiagnostico(textoUsuario)) {
+  // ============================================================
+  // 4. Pedido de diagnóstico
+  // ============================================================
+  if (!sinalVermelho && ehPedidoDiagnostico(textoUsuario)) {
     const msg = mensagemPorId('recusa_diagnostico');
     return {
       estado,
@@ -119,8 +151,10 @@ export async function processarTurno(
     };
   }
 
-  // [FIX 12] saudação inicial → pergunta de triagem em vez de "fora do escopo"
-  if (estado.relatos.length === 0 && ehSaudacaoInicial(textoUsuario)) {
+  // ============================================================
+  // 5. Saudação inicial — pergunta de triagem
+  // ============================================================
+  if (!sinalVermelho && estado.relatos.length === 0 && ehSaudacaoInicial(textoUsuario)) {
     const perguntas = PERGUNTAS.vago;
     return {
       estado: {
@@ -138,14 +172,9 @@ export async function processarTurno(
     };
   }
 
-  // 4. Extração clínica
-  const textoAcumulado = estado.texto_original_acumulado
-    ? `${estado.texto_original_acumulado} ${textoUsuario}`
-    : textoUsuario;
-
-  const extraido = await interpretarRelato(textoUsuario);
-
-  // 5. Fora de escopo (mensagem sem conteúdo clínico na primeira interação)
+  // ============================================================
+  // 6. Fora de escopo (sem conteúdo clínico na primeira interação)
+  // ============================================================
   const semSintomasOuSinais =
     extraido.informacao_insuficiente === true &&
     extraido.sintomas.length === 0 &&
@@ -170,22 +199,25 @@ export async function processarTurno(
     };
   }
 
+  // ============================================================
+  // 7. Consolida relato
+  // ============================================================
+  const textoAcumulado = estado.texto_original_acumulado
+    ? `${estado.texto_original_acumulado} ${textoUsuario}`
+    : textoUsuario;
+
   const relatos = [...estado.relatos, extraido];
   const atual = consolidar({ ...estado, relatos, texto_original_acumulado: textoAcumulado });
 
-  // 6. Linha vermelha
-  const emergenciaImediata =
-    atual.risco_mental === 'iminente' ||
-    (atual.idade_grupo === 'bebe' && atual.febre === true) ||
-    (atual.trauma === true && (atual.confusao === true || atual.desmaio === true)) ||
-    (atual.dor_no_peito === true &&
-      (atual.falta_de_ar === true || atual.desmaio === true || atual.confusao === true)) ||
-    atual.desmaio === true ||
-    (atual.sinais_obstetricos && atual.sinais_obstetricos.length > 0) ||
-    (atual.sinais_trauma && atual.sinais_trauma.length > 0);
+  // ============================================================
+  // 8. Emergência imediata → sem perguntas
+  // ============================================================
+  const emergenciaImediata = temSinalVermelho(atual);
 
-  // 7. Rodada única de refinamento
-  if (!emergenciaImediata && estado.rodadasPerguntas < 1 && precisaPerguntar(atual)) {
+  // ============================================================
+  // 9. Rodadas de refinamento (máx 2)
+  // ============================================================
+  if (!emergenciaImediata && precisaPerguntar(atual, estado.rodadasPerguntas)) {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas,
       idade_grupo: atual.idade_grupo,
@@ -207,10 +239,12 @@ export async function processarTurno(
     };
   }
 
-  // 8. Motor de regras
+  // ============================================================
+  // 10. Decisão pelo motor de regras
+  // ============================================================
   const decisao = aplicarMotor(atual, textoAcumulado);
 
-  if (decisao.categoria_interna === 'informacao_insuficiente' && estado.rodadasPerguntas < 1) {
+  if (decisao.categoria_interna === 'informacao_insuficiente' && estado.rodadasPerguntas < 2) {
     const perguntas = PERGUNTAS.vago;
     return {
       estado: {

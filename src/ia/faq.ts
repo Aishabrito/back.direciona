@@ -16,11 +16,10 @@ function extrairTokens(texto: string): string[] {
     .filter((palavra) => palavra.length > 2 && !STOP_WORDS.has(palavra));
 }
 
-// [FIX 2] removido `includes` bidirecional (fazia "dor" casar com "adorei" etc.)
+// [FIX] Removido `includes` bidirecional — ele fazia "dor" casar com "adorei"
 function palavrasSemelhantes(tokenUsuario: string, tokenGatilho: string): boolean {
   if (tokenUsuario === tokenGatilho) return true;
 
-  // Prefixo significativo (>=5) apenas quando um é prefixo real do outro
   if (tokenUsuario.length >= 5 && tokenGatilho.length >= 5) {
     if (tokenUsuario.startsWith(tokenGatilho) || tokenGatilho.startsWith(tokenUsuario)) {
       return true;

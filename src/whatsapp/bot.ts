@@ -20,12 +20,6 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 const sessions = new Map<string, EstadoConversa>();
 const AUTH_DIR = "auth_info_baileys";
 
-// [FIX 8] limpeza periódica de sessões inativas (24h)
-setInterval(() => {
-  // não temos timestamp aqui; alternativa simples: descartar sessões vazias
-  // (para TTL real, use Map<string, {estado, ts}>)
-}, 60 * 60 * 1000).unref?.();
-
 function restaurarSessaoSeNecessario() {
   const credsBase64 = process.env.WHATSAPP_CREDS;
   if (!credsBase64) return;
@@ -36,7 +30,7 @@ function restaurarSessaoSeNecessario() {
   if (!fs.existsSync(credsPath)) {
     const credsJson = Buffer.from(credsBase64, "base64").toString("utf-8");
     fs.writeFileSync(credsPath, credsJson);
-    console.log("🔑 Credenciais restauradas a partir da variável de ambiente!");
+    console.log("🔑 Credenciais restauradas!");
   }
 }
 
@@ -52,12 +46,52 @@ const comandosReset = [
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
 
-// [FIX 6] aceita sim/não por token (não por substring)
+// Detecta pedido explícito de localização ("onde tem uma UPA?")
+function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
+  const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const temPalavraLocal = /\b(onde|qual|perto|proxim|endereco|localiza|fica|me manda|me passa|tem algum|existe)\b/.test(n);
+  if (!temPalavraLocal) return null;
+
+  if (/\b(upa|pronto\s*socorro|pronto-socorro|emergencia)\b/.test(n)) return 'UPA';
+  if (/\b(hospital|hospitalar)\b/.test(n)) return 'HOSPITAL';
+  if (/\b(ubs|posto\s*de\s*saude|posto|clinica)\b/.test(n)) return 'UBS';
+
+  return null;
+}
+
+// Detecta sim/não por token (não substring)
 function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   const norm = textoLimpo.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
-  if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor)\b/.test(norm)) return "sim";
-  if (/^(nao|dispensa|depois|agora nao|agora não)\b/.test(norm)) return "nao";
+  if (/^(sim|quero|ok|claro|bora|manda|pode|vamos|aceito|por favor|pfv|pf)\b/.test(norm)) return "sim";
+  if (/^(nao|dispensa|depois|agora nao|n)\b/.test(norm)) return "nao";
   return null;
+}
+
+function formatarUnidades(
+  unidades: UnidadeSaude[],
+  tipo: 'UPA' | 'HOSPITAL' | 'UBS',
+  lat: number,
+  lng: number,
+): string {
+  if (unidades.length === 0) {
+    return (
+      `📍 Não encontrei unidades públicas próximas.\n\n` +
+      `Busque no Google Maps:\n` +
+      `https://www.google.com/maps/search/${tipo}/@${lat},${lng},15z`
+    );
+  }
+
+  let resposta = `📍 *${tipo === "UPA" ? "UPAs" : tipo === "HOSPITAL" ? "Hospitais" : "UBS"} mais próximas:*\n\n`;
+  unidades.forEach((u, i) => {
+    resposta +=
+      `${i + 1}. 🏥 *${u.nome}*\n` +
+      `   📌 ${u.endereco}\n` +
+      `   📏 ${(u.distancia / 1000).toFixed(1)} km\n` +
+      `   🔗 ${u.linkGoogleMaps}\n\n`;
+  });
+  resposta += `_⚠️ Ligue antes para confirmar atendimento._`;
+  return resposta;
 }
 
 export async function startWhatsAppBot() {
@@ -84,7 +118,7 @@ export async function startWhatsAppBot() {
     if (qr) {
       setQrCode(qr);
       console.log("\n📲 *NOVO QR CODE GERADO!*");
-      console.log("👉 Abra no navegador: https://SEU-BACKEND.onrender.com/qr");
+      console.log("👉 Abra no navegador: <sua-url-do-render>/qr");
       console.log("⏳ Escaneie em até 20 segundos!\n");
     }
 
@@ -94,7 +128,7 @@ export async function startWhatsAppBot() {
         console.log("🔄 Reconectando...");
         startWhatsAppBot();
       } else {
-        console.log("❌ Desconectado permanentemente. Delete 'auth_info_baileys' e reinicie.");
+        console.log("❌ Desconectado permanentemente.");
       }
     }
 
@@ -120,7 +154,9 @@ export async function startWhatsAppBot() {
       "";
     const cleanText = text.trim();
 
-    // ---- LOCALIZAÇÃO ----
+    // ============================================================
+    // LOCALIZAÇÃO RECEBIDA
+    // ============================================================
     const location = msg.message.locationMessage;
     if (location) {
       const lat = location.degreesLatitude;
@@ -135,25 +171,9 @@ export async function startWhatsAppBot() {
       if (estadoAtual?.aguardandoLocalizacao?.ativo) {
         const tipo = estadoAtual.aguardandoLocalizacao.tipo;
         try {
+          await sock.sendPresenceUpdate("composing", sender);
           const unidades = await buscarUnidadesProximas(lat, lng, tipo);
-          let resposta = "";
-
-          if (unidades.length === 0) {
-            resposta =
-              `📍 Não encontrei unidades públicas próximas.\n\n` +
-              `Busque no Google Maps:\n` +
-              `https://www.google.com/maps/search/${tipo}/@${lat},${lng},15z`;
-          } else {
-            resposta = `📍 *Unidades (${tipo}) mais próximas:*\n\n`;
-            unidades.forEach((u: UnidadeSaude, i: number) => {
-              resposta +=
-                `${i + 1}. 🏥 *${u.nome}*\n` +
-                `   📌 ${u.endereco}\n` +
-                `   📏 ${(u.distancia / 1000).toFixed(1)} km\n` +
-                `   🔗 ${u.linkGoogleMaps}\n\n`;
-            });
-            resposta += `_⚠️ Ligue antes para confirmar atendimento._`;
-          }
+          const resposta = formatarUnidades(unidades, tipo, lat, lng);
 
           estadoAtual.aguardandoLocalizacao = undefined;
           sessions.set(sender, estadoAtual);
@@ -166,7 +186,7 @@ export async function startWhatsAppBot() {
       }
 
       await sock.sendMessage(sender, {
-        text: `📍 Localização recebida!\n\nDiga "Quero a UPA mais próxima" para eu buscar.`,
+        text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* que eu busco.`,
       });
       return;
     }
@@ -175,50 +195,54 @@ export async function startWhatsAppBot() {
 
     console.log(`\n📩 [${sender}] ${cleanText}`);
 
-    const textoLimpo = cleanText
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+    const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // ---- RESET ----
-    if (
-      comandosReset.some((cmd) => {
-        const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return textoLimpo === cmdLimpo;
-      })
-    ) {
+    // RESET
+    if (comandosReset.some((cmd) => {
+      const cmdLimpo = cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return textoLimpo === cmdLimpo;
+    })) {
       sessions.delete(sender);
-      await sock.sendMessage(sender, {
-        text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}`,
-      });
+      await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
       return;
     }
 
-    // ---- CONFIRMAÇÃO DE LOCALIZAÇÃO ----
-    const estadoAtual = sessions.get(sender);
-    if (estadoAtual?.aguardandoLocalizacao?.ativo) {
+    // RESPONDE SIM/NÃO QUANDO AGUARDA LOCALIZAÇÃO
+    const estadoAtualSimNao = sessions.get(sender);
+    if (estadoAtualSimNao?.aguardandoLocalizacao?.ativo) {
       const decisao = matchSimNao(textoLimpo);
       if (decisao === "sim") {
         await sock.sendMessage(sender, {
-          text: `📍 Compartilhe sua localização (📎 → Localização) para eu buscar a unidade.`,
+          text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco a unidade mais próxima.`,
         });
         return;
       }
       if (decisao === "nao") {
-        estadoAtual.aguardandoLocalizacao = undefined;
-        sessions.set(sender, estadoAtual);
+        estadoAtualSimNao.aguardandoLocalizacao = undefined;
+        sessions.set(sender, estadoAtualSimNao);
         await sock.sendMessage(sender, { text: "Tudo bem! Posso ajudar com mais algo?" });
         return;
       }
     }
 
-    // ---- PROCESSA TURNO ----
+    // PEDIDO EXPLÍCITO DE LOCALIZAÇÃO
+    const pedidoLoc = detectarPedidoLocalizacao(cleanText);
+    if (pedidoLoc) {
+      const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+      estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText };
+      sessions.set(sender, estado);
+      const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
+      await sock.sendMessage(sender, {
+        text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco o ${nome} mais próximo.`,
+      });
+      return;
+    }
+
+    // PROCESSA TURNO
     try {
       await sock.sendPresenceUpdate("composing", sender);
 
       const primeiraMensagem = !sessions.has(sender);
-
-      // [FIX 5] não descarta mais a primeira mensagem do usuário
       if (primeiraMensagem) {
         sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
       }
@@ -232,20 +256,18 @@ export async function startWhatsAppBot() {
         mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${mensagemFinal}`;
       }
 
+      // OFERECE LOCALIZAÇÃO
       if (resultado.tipo === "orientacao") {
         const respostaId = resultado.decisao?.resposta_id;
         let tipoLocalizacao: "UPA" | "HOSPITAL" | "UBS" | null = null;
 
         if (respostaId === "upa_001") tipoLocalizacao = "UPA";
-        else if (
-          ["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId)
-        )
+        else if (["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId))
           tipoLocalizacao = "HOSPITAL";
         else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
 
         if (tipoLocalizacao) {
-          const nome =
-            tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
+          const nome = tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
           mensagemFinal +=
             `\n\n📍 *Quer saber a ${nome} mais próxima?* 🙋\n` +
             `Responda *"sim"* e depois compartilhe sua localização.`;
