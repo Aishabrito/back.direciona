@@ -11,7 +11,12 @@ import path from "path";
 
 import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import type { EstadoConversa } from "../ia/tipos.js";
-import { buscarUnidadesProximas, type UnidadeSaude } from "../servicos/geolocalizacao.js";
+import {
+  buscarUnidadesProximas,
+  buscarUpaEEmergencia,
+  formatarUnidades,
+  type UnidadeSaude,
+} from "../servicos/geolocalizacao.js";
 import { setQrCode } from "../index.js";
 import {
   criarClienteDb,
@@ -44,12 +49,13 @@ const comandosReset = [
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const temPalavraLocal = /\b(onde|qual|perto|proxim|endereco|localiza|fica|me manda|me passa|tem algum|existe)\b/.test(n);
+  const temPalavraLocal =
+    /\b(onde|qual|perto|proxim|endereco|localiza|fica|me manda|me passa|tem algum|existe|quero|preciso)\b/.test(n);
   if (!temPalavraLocal) return null;
 
   if (/\b(upa|pronto\s*socorro|pronto-socorro|emergencia)\b/.test(n)) return 'UPA';
   if (/\b(hospital|hospitalar)\b/.test(n)) return 'HOSPITAL';
-  if (/\b(ubs|posto\s*de\s*saude|posto|clinica)\b/.test(n)) return 'UBS';
+  if (/\b(ubs|posto\s*de\s*saude|posto|clinica|clinica\s*da\s*familia)\b/.test(n)) return 'UBS';
 
   return null;
 }
@@ -65,32 +71,20 @@ function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
 }
 
 // ============================================================
-// FORMATA LISTA DE UNIDADES
+// BUSCA UNIDADES (usa API nova do geolocalizacao.ts)
 // ============================================================
-function formatarUnidades(
-  unidades: UnidadeSaude[],
-  tipo: 'UPA' | 'HOSPITAL' | 'UBS',
+async function buscarParaTipo(
   lat: number,
   lng: number,
-): string {
-  if (unidades.length === 0) {
-    return (
-      `📍 Não encontrei unidades públicas próximas.\n\n` +
-      `Busque no Google Maps:\n` +
-      `https://www.google.com/maps/search/${tipo}/@${lat},${lng},15z`
-    );
+  tipo: 'UPA' | 'HOSPITAL' | 'UBS',
+): Promise<UnidadeSaude[]> {
+  if (tipo === 'HOSPITAL') {
+    // Emergência: mistura hospitais + UPAs ordenados por distância.
+    // Assim, se a UPA mais próxima estiver a 1 km e o hospital a 8 km, a pessoa vê os dois.
+    const { upas, emergencias } = await buscarUpaEEmergencia(lat, lng);
+    return [...emergencias, ...upas];
   }
-
-  let resposta = `📍 *${tipo === "UPA" ? "UPAs" : tipo === "HOSPITAL" ? "Hospitais" : "UBS"} mais próximas:*\n\n`;
-  unidades.forEach((u, i) => {
-    resposta +=
-      `${i + 1}. 🏥 *${u.nome}*\n` +
-      `   📌 ${u.endereco}\n` +
-      `   📏 ${(u.distancia / 1000).toFixed(1)} km\n` +
-      `   🔗 ${u.linkGoogleMaps}\n\n`;
-  });
-  resposta += `_⚠️ Ligue antes para confirmar atendimento._`;
-  return resposta;
+  return buscarUnidadesProximas(lat, lng, tipo);
 }
 
 // ============================================================
@@ -189,21 +183,27 @@ export async function startWhatsAppBot() {
         const tipo = estadoAtual.aguardandoLocalizacao.tipo;
         try {
           await sock.sendPresenceUpdate("composing", sender);
-          const unidades = await buscarUnidadesProximas(lat, lng, tipo);
-          const resposta = formatarUnidades(unidades, tipo, lat, lng);
+
+          console.log(`🔍 Buscando unidades tipo=${tipo} para (${lat}, ${lng})`);
+          const unidades = await buscarParaTipo(lat, lng, tipo);
+          console.log(`📦 ${unidades.length} unidades retornadas`);
+
+          const resposta = formatarUnidades(unidades, lat, lng);
 
           estadoAtual.aguardandoLocalizacao = undefined;
           sessions.set(sender, estadoAtual);
           await sock.sendMessage(sender, { text: resposta });
         } catch (err) {
           console.error("❌ Erro ao buscar unidades:", err);
-          await sock.sendMessage(sender, { text: "❌ Erro ao buscar unidades próximas." });
+          await sock.sendMessage(sender, {
+            text: "❌ Erro ao buscar unidades próximas. Tente novamente em alguns instantes.",
+          });
         }
         return;
       }
 
       await sock.sendMessage(sender, {
-        text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* que eu busco.`,
+        text: `📍 Localização recebida!\n\nDiga *"quero a UPA mais próxima"* ou *"quero o hospital mais próximo"* que eu busco.`,
       });
       return;
     }
@@ -258,22 +258,24 @@ export async function startWhatsAppBot() {
     // ============================================================
     const pedidoLoc = detectarPedidoLocalizacao(cleanText);
     if (pedidoLoc) {
-      const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+      const estado =
+        sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
       estado.aguardandoLocalizacao = {
         ativo: true,
         tipo: pedidoLoc,
         mensagemOriginal: cleanText,
       };
       sessions.set(sender, estado);
-      const nome = pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
+      const nome =
+        pedidoLoc === "UPA" ? "UPA" : pedidoLoc === "HOSPITAL" ? "hospital" : "UBS";
       await sock.sendMessage(sender, {
-        text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco o ${nome} mais próximo.`,
+        text: `📍 Compartilhe sua localização (📎 → Localização) que eu busco ${pedidoLoc === 'UBS' ? 'a' : 'o'} ${nome} mais ${pedidoLoc === 'UBS' ? 'próxima' : 'próximo'}.`,
       });
       return;
     }
 
     // ============================================================
-    // PROCESSA TURNO
+    // PROCESSA TURNO NORMAL
     // ============================================================
     try {
       await sock.sendPresenceUpdate("composing", sender);
@@ -292,22 +294,28 @@ export async function startWhatsAppBot() {
         mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${mensagemFinal}`;
       }
 
+      // ============================================================
       // OFERECE LOCALIZAÇÃO PARA RESPOSTAS DE ORIENTAÇÃO
+      // ============================================================
       if (resultado.tipo === "orientacao") {
         const respostaId = resultado.decisao?.resposta_id;
         let tipoLocalizacao: "UPA" | "HOSPITAL" | "UBS" | null = null;
 
-        if (respostaId === "upa_001") tipoLocalizacao = "UPA";
-        else if (
+        if (respostaId === "upa_001") {
+          tipoLocalizacao = "UPA";
+        } else if (
           ["emergencia_001", "obstetricia_001", "pediatria_emergencia_001", "mental_emergencia_001"].includes(respostaId)
-        )
+        ) {
           tipoLocalizacao = "HOSPITAL";
-        else if (respostaId === "ubs_001") tipoLocalizacao = "UBS";
+        } else if (respostaId === "ubs_001") {
+          tipoLocalizacao = "UBS";
+        }
 
         if (tipoLocalizacao) {
-          const nome = tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
+          const nome =
+            tipoLocalizacao === "UPA" ? "UPA" : tipoLocalizacao === "HOSPITAL" ? "hospital" : "UBS";
           mensagemFinal +=
-            `\n\n📍 *Quer saber a ${nome} mais próxima?* 🙋\n` +
+            `\n\n📍 *Quer saber ${tipoLocalizacao === 'UBS' ? 'a' : 'o'} ${nome} mais ${tipoLocalizacao === 'UBS' ? 'próxima' : 'próximo'}?* 🙋\n` +
             `Responda *"sim"* e depois compartilhe sua localização.`;
 
           const estadoApos = sessions.get(sender)!;
