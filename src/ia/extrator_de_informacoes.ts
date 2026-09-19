@@ -140,6 +140,33 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   }
 
   const neuro = extrairNeurologicos(n);
+    // ========== DENGUE ==========
+  const temFebre = febre === true;
+  const temDorCorpo = /\bdor (no |na )?(corpo|muscular|nas costas|atras dos olhos|nos olhos)\b|\bcorpo doendo\b|\bcarne tremendo\b/.test(n);
+  const temMancha = /mancha[s]? (vermelha|na pele|no corpo)|exantema|pontinhos vermelhos/.test(n);
+  const temDengueMencao = /\bdengue\b/.test(n);
+  if ((temFebre && temDorCorpo) || (temFebre && temMancha) || temDengueMencao) {
+    if (!sintomas.includes('suspeita de dengue')) sintomas.push('suspeita de dengue');
+  }
+
+  // ========== VIOLÊNCIA ==========
+  let violencia: 'domestica' | 'sexual' | null = null;
+  if (/\b(me bateu|me agrediu|me empurrou|me machucou|violencia domestica|meu marido me|meu companheiro me|apanhei do|apanhei de)\b/.test(n)) {
+    violencia = 'domestica';
+  }
+  if (/\b(estupr|abuso sexual|abusada|abusado|violencia sexual|me forcou)\b/.test(n)) {
+    violencia = 'sexual';
+  }
+
+  // ========== ODONTOLOGIA ==========
+  if (/\bdor de dente\b|\bdente doendo\b|\bdente quebrado\b|\bdente inflamado\b|\babscesso dental\b/.test(n)) {
+    if (!sintomas.includes('dor de dente')) sintomas.push('dor de dente');
+  }
+
+  // ========== DESIDRATAÇÃO ==========
+  if (/\bboca seca\b|\bolhos fundos\b|\bmoleira funda\b|\bsem urinar\b|\bnao faz xixi\b|\bnao esta urinando\b|\bchora sem lagrima\b/.test(n)) {
+    if (!sintomas.includes('sinais de desidratação')) sintomas.push('sinais de desidratação');
+  }
 
   let risco_mental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/\bquero me matar\b|\bvou me matar\b|\bn[aã]o quero mais viver\b|\bquero morrer\b|\bacabar com tudo\b|\btentativa de suic[ií]dio\b|\bme machucar\b/.test(n)) {
