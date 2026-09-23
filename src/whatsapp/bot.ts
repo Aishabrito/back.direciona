@@ -9,6 +9,7 @@ import { Boom } from "@hapi/boom";
 import pino from "pino";
 import dotenv from "dotenv";
 import path from "path";
+import { createHash } from "crypto";
 
 import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import { interpretarAudio } from "../ia/extrator_de_informacoes.js";
@@ -19,22 +20,50 @@ import {
   buscarUnidades, formatarUnidades, type TipoUsuario,
 } from "../servicos/geolocalizacao.js";
 import { buscarCoordenadasPorTexto } from "../servicos/nominatim.js";
+import { textoParaAudio } from "../servicos/texto_para_audio.js";
+import { inc } from "../servicos/metricas.js";
 import { setQrCode } from "../index.js";
 import {
   criarClienteDb, baixarSessaoParaDisco, iniciarSyncPeriodico, registrarSyncNoShutdown, type Sql,
 } from "./persistencia_sessao.js";
+import {
+  salvarEstado, carregarEstado, apagarEstado,
+} from "./persistencia_estado.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const sessions = new Map<string, EstadoConversa>();
 
-// Conversas antigas não podem contaminar um caso novo (o relato acumula sinais de gravidade).
 const ultimaAtividade = new Map<string, number>();
 const TTL_SESSAO_MS = 6 * 60 * 60 * 1000;
 const LOCALIZACAO_VALIDA_MS = 30 * 60 * 1000;
 
-// Uma mensagem por vez por pessoa: evita corrida de estado quando ela manda várias seguidas.
 const filas = new Map<string, Promise<void>>();
+
+// [Bloco 2] Rate limit do Gemini por usuário (30 chamadas/hora)
+const contadorGemini = new Map<string, number>();
+const LIMITE_GEMINI_POR_HORA = 30;
+
+function podeChamarGemini(sender: string): boolean {
+  const janela = Math.floor(Date.now() / 3600000);
+  const chave = `${sender}|${janela}`;
+  const atual = contadorGemini.get(chave) ?? 0;
+  if (atual >= LIMITE_GEMINI_POR_HORA) return false;
+  contadorGemini.set(chave, atual + 1);
+
+  if (contadorGemini.size > 5000) {
+    const janelaAtual = janela;
+    for (const k of contadorGemini.keys()) {
+      if (!k.endsWith(`|${janelaAtual}`)) contadorGemini.delete(k);
+    }
+  }
+  return true;
+}
+
+// [Bloco 2] LGPD: hash do remetente para logs
+function hashSender(sender: string): string {
+  return createHash('sha256').update(sender).digest('hex').slice(0, 8);
+}
 
 function expirarSessaoSeVelha(sender: string): void {
   const ultima = ultimaAtividade.get(sender);
@@ -43,9 +72,6 @@ function expirarSessaoSeVelha(sender: string): void {
 }
 const AUTH_DIR = "auth_info_baileys";
 
-// ────────────────────────────────────────────────────────────
-// [FIX] Guarda contra dupla inicialização
-// ────────────────────────────────────────────────────────────
 let botIniciado = false;
 let socketAtual: ReturnType<typeof makeWASocket> | null = null;
 let sqlCliente: Sql | null = null;
@@ -76,11 +102,7 @@ const comandosReset = [
 
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  // [FIX] Pergunta de FAQ / institucional NÃO é pedido de localização
-  if (/\b(dif[a-z]{3,}|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) {
-    return null;
-  }
+  if (/\b(dif[a-z]{3,}|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) return null;
 
   const temVerboLocal =
     /\b(onde (tem|fica|e|eh|esta)|me manda|me passa|me indica|qual (a|o) (upa|ubs|hospital|posto)|qual (upa|ubs|hospital)|quero (ir|saber)|preciso (ir|saber)|tem (uma|um|algum)|existe (uma|um|algum))\b/.test(n);
@@ -101,7 +123,6 @@ function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   return null;
 }
 
-// UPA e UBS são femininas; "hospital" é masculino.
 function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: string; nome: string } {
   if (tipo === 'HOSPITAL') return { art: 'o', prox: 'próximo', nome: 'hospital' };
   return { art: 'a', prox: 'próxima', nome: tipo };
@@ -109,7 +130,6 @@ function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: s
 
 type Sock = ReturnType<typeof makeWASocket>;
 
-// Único ponto que faz a busca e responde (usado por GPS, texto e localização guardada).
 async function executarBusca(
   sock: Sock, sender: string, estado: EstadoConversa,
   lat: number, lng: number, tipo: TipoUsuario,
@@ -121,9 +141,9 @@ async function executarBusca(
   await sock.sendMessage(sender, { text: "🔎 Buscando as unidades mais próximas, um instante..." });
   await sock.sendPresenceUpdate("composing", sender);
   try {
-    console.log(`🔍 Buscando ${tipo} para (${lat}, ${lng})`);
+    console.log(`🔍 [${hashSender(sender)}] Buscando ${tipo}`);
     const r = await buscarUnidades(lat, lng, tipo);
-    console.log(`📦 ${r.unidades.length} unidades (origem: ${r.origem}, falhaServico: ${r.falhaServico})`);
+    console.log(`📦 [${hashSender(sender)}] ${r.unidades.length} unidades (origem: ${r.origem})`);
     await sock.sendMessage(sender, {
       text: formatarUnidades(r.unidades, lat, lng, tipo, { falhaServico: r.falhaServico }),
     });
@@ -166,8 +186,40 @@ function oferecerLocalizacao(
 }
 
 // ────────────────────────────────────────────────────────────
-// [FIX] Backoff + referência única ao socket
+// Responde: se a pessoa mandou áudio, devolve áudio também.
 // ────────────────────────────────────────────────────────────
+async function responder(
+  sock: Sock,
+  sender: string,
+  texto: string,
+  responderComAudio: boolean,
+): Promise<void> {
+  if (!responderComAudio) {
+    await sock.sendMessage(sender, { text: texto });
+    return;
+  }
+
+  try {
+    const audio = await textoParaAudio(texto, 'feminina');
+    if (audio && audio.length > 0) {
+      console.log(`🎤 [${hashSender(sender)}] Resposta em áudio (${(audio.length / 1024).toFixed(1)} KB)`);
+      inc('gemini_tts_ok');
+      await sock.sendMessage(sender, {
+        audio,
+        mimetype: 'audio/ogg; codecs=opus',
+        ptt: true,
+      });
+      return;
+    }
+    inc('gemini_tts_erro');
+  } catch (err) {
+    console.error('❌ Falha ao gerar áudio:', err);
+    inc('gemini_tts_erro');
+  }
+
+  await sock.sendMessage(sender, { text: texto });
+}
+
 let tentativasReconexao = 0;
 const MAX_BACKOFF_MS = 60_000;
 let reconexaoAgendada = false;
@@ -190,28 +242,21 @@ function agendarReconexao() {
   }, espera);
 }
 
-// ────────────────────────────────────────────────────────────
-// START
-// ────────────────────────────────────────────────────────────
 export async function startWhatsAppBot(): Promise<void> {
-  // [FIX] Se já tem socket ativo, não cria outro
   if (socketAtual) {
     console.warn('⚠️ Já existe um socket ativo. Ignorando chamada duplicada.');
     return;
   }
 
-  // [FIX] Cliente Postgres criado UMA vez, reaproveitado entre reconexões
   if (!sqlCliente) {
     sqlCliente = await criarClienteDb();
   }
   const sql = sqlCliente;
 
-  // [FIX] Baixa a sessão do banco apenas na primeira vez
   if (!botIniciado) {
     await baixarSessaoParaDisco(sql);
   }
 
-  // [FIX] Sync periódico iniciado UMA vez
   if (!syncIniciado && sql) {
     iniciarSyncPeriodico(sql);
     registrarSyncNoShutdown(sql);
@@ -250,8 +295,6 @@ export async function startWhatsAppBot(): Promise<void> {
     if (connection === "close") {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
       const permanente = statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403;
-
-      // [FIX] Descarta a referência deste socket para não bloquear a próxima tentativa
       socketAtual = null;
 
       if (!permanente) {
@@ -268,9 +311,6 @@ export async function startWhatsAppBot(): Promise<void> {
     }
   });
 
-  // ──────────────────────────────────────────────────────────
-  // [FIX] Deduplica mensagens por msg.key.id — o Baileys pode reenviar em retry
-  // ──────────────────────────────────────────────────────────
   const idsProcessados = new Set<string>();
 
   sock.ev.on("messages.upsert", async ({ messages, type }) => {
@@ -281,10 +321,9 @@ export async function startWhatsAppBot(): Promise<void> {
       const sender = msg.key.remoteJid;
       if (!sender || sender.endsWith("@g.us") || sender === "status@broadcast") continue;
 
-      // [FIX] Ignora se já processou esse id
       if (msg.key.id) {
         if (idsProcessados.has(msg.key.id)) {
-          console.log(`⏭️ Ignorando mensagem duplicada (id ${msg.key.id})`);
+          console.log(`⏭️ Ignorando duplicada (id ${msg.key.id})`);
           continue;
         }
         idsProcessados.add(msg.key.id);
@@ -297,16 +336,13 @@ export async function startWhatsAppBot(): Promise<void> {
       const anterior = filas.get(sender) ?? Promise.resolve();
       const atual = anterior
         .then(() => tratarMensagem(sock, msg, sender))
-        .catch((err) => console.error("❌ Erro no handler de mensagem:", err));
+        .catch((err) => console.error("❌ Erro no handler:", err));
       filas.set(sender, atual);
       atual.finally(() => { if (filas.get(sender) === atual) filas.delete(sender); });
     }
   });
 }
 
-// ────────────────────────────────────────────────────────────
-// TRATAMENTO DE UMA MENSAGEM
-// ────────────────────────────────────────────────────────────
 const CLINICA_RE = /\b(dor|falta de ar|desmaio|sangramento|febre|vomito|confus|tontura|peito|respir|convuls|acidente|queimad|trauma|pior|piorou|sinto|tosse|barriga|cabeca)\b/;
 
 const CONVERSA_RE = /^(oi|ola|obrigad[oa]|valeu|vlw|tchau|ate mais|blz|beleza|tudo bem|bom dia|boa tarde|boa noite|nao sei|talvez|hm+|kkk+)$/;
@@ -321,7 +357,6 @@ function pareceLocal(textoLimpo: string): boolean {
   );
 }
 
-// Reformula perguntas de acompanhamento para soar natural (desligue com REFORMULAR_PERGUNTAS=0).
 async function comTomNatural(pergunta: string, contexto: string): Promise<string> {
   if (process.env.REFORMULAR_PERGUNTAS === "0") return pergunta;
   return reformularPergunta(pergunta, contexto);
@@ -337,7 +372,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   expirarSessaoSeVelha(sender);
 
-  // ── LOCALIZAÇÃO (GPS) ──
+  // ── LOCALIZAÇÃO ──
   const location = msg.message.locationMessage;
   if (location) {
     const lat = location.degreesLatitude;
@@ -354,7 +389,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       return;
     }
 
-    // Mandou a localização sem ninguém pedir: guarda e pergunta o que ela quer achar.
     estado.ultimaLocalizacao = { lat, lng, em: Date.now() };
     sessions.set(sender, estado);
     await sock.sendMessage(sender, {
@@ -364,22 +398,22 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   // ── ÁUDIO ──
-    const audioMessage = msg.message.audioMessage;
+  const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
+    inc('total_audios');
     try {
       await sock.sendPresenceUpdate("composing", sender);
-      // [FIX Bloco 1] Feedback imediato — transcrição+TTS pode levar >15s.
-      // Sem isso o usuário acha que o bot travou e manda de novo.
+      // [Bloco 2] Aviso imediato — TTS + transcrição podem levar >15s
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
       const buffer = (await downloadMediaMessage(
         msg, "buffer", {},
         { logger: pino({ level: "silent" }) as any, reuploadRequest: sock.updateMediaMessage },
       )) as Buffer;
-      if (!buffer || buffer.length === 0) throw new Error("Buffer de áudio vazio");
+      if (!buffer || buffer.length === 0) throw new Error("Buffer vazio");
 
       const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
-      console.log(`🎤 [${sender}] Áudio recebido (${(buffer.length / 1024).toFixed(1)} KB)`);
+      console.log(`🎤 [${hashSender(sender)}] Áudio (${(buffer.length / 1024).toFixed(1)} KB)`);
 
       const relatoDoAudio = await interpretarAudio(buffer, mime);
 
@@ -389,8 +423,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       const estadoAtualAudio = sessions.get(sender)!;
 
-      // A TRANSCRIÇÃO precisa chegar ao orquestrador (regras por frase, bloqueio de
-      // remédio/diagnóstico e FAQ dependem do texto).
       const transcricao = (relatoDoAudio.texto_original_acumulado || "").replace(/^\[áudio\]\s*/i, "").trim();
       const textoRepresentativo = transcricao || "[áudio]";
 
@@ -398,6 +430,9 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         textoRepresentativo, relatoDoAudio, estadoAtualAudio,
       );
       sessions.set(sender, novoEstado);
+
+      // [Bloco 2] Persiste estado
+      if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
 
       let respostaAudio = resultado.texto;
       if (resultado.tipo === "perguntas") {
@@ -408,7 +443,8 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
 
-      await sock.sendMessage(sender, { text: respostaAudio });
+      // [FIX] Responde em áudio porque a pessoa mandou áudio
+      await responder(sock, sender, respostaAudio, true);
     } catch (err) {
       console.error("❌ Erro ao processar áudio:", err);
       await sock.sendMessage(sender, {
@@ -419,26 +455,28 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-  // ── FOTO / STICKER / DOCUMENTO SEM LEGENDA ──
+  // ── FOTO / STICKER / DOCUMENTO ──
   const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
   if (temImagem && !cleanText) {
+    inc('total_fotos_sem_legenda');
     await sock.sendMessage(sender, { text: mensagemPorId("foto_sem_legenda_001").texto });
     return;
   }
 
   if (!cleanText) return;
 
-  console.log(`\n📩 [${sender}] ${cleanText}`);
+  console.log(`\n📩 [${hashSender(sender)}] ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
   const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   // ── RESET ──
   if (comandosReset.some((cmd) => textoLimpo === cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
     sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    if (sqlCliente) await apagarEstado(sqlCliente, sender);
     await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
     return;
   }
 
-  // ── FLUXO DE LOCALIZAÇÃO POR TEXTO ──
+  // ── LOCALIZAÇÃO POR TEXTO ──
   const estadoLoc = sessions.get(sender);
   if (estadoLoc?.aguardandoLocalizacao?.ativo) {
     const decisao = matchSimNao(textoLimpo);
@@ -456,7 +494,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     }
 
     if (decisao === "sim" && palavras.length <= 4 && !temPalavraClinica) {
-      // Já mandou a localização há pouco? Não pede de novo.
       if (locRecente) {
         await executarBusca(sock, sender, estadoLoc, locRecente.lat, locRecente.lng, tipo);
         return;
@@ -469,7 +506,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       return;
     }
 
-    // Digitou um endereço/bairro direto (não precisa dizer "sim" antes, nem ter 2+ palavras).
     if (pareceLocal(textoLimpo)) {
       await sock.sendPresenceUpdate("composing", sender);
       const coords = await buscarCoordenadasPorTexto(cleanText);
@@ -479,23 +515,21 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         estadoLoc.aguardandoLocalizacao.aguardandoTexto = true;
         sessions.set(sender, estadoLoc);
         await sock.sendMessage(sender, {
-          text: "Não consegui localizar esse endereço. Tente *bairro + cidade* (ex: \"Icaraí, Niterói\") ou compartilhe pelo 📎 → Localização.",
+          text: "Não consegui localizar esse endereço. Tente *bairro + cidade* ou compartilhe pelo 📎 → Localização.",
         });
       }
       return;
     }
 
-    // Falou de sintoma ou de outro assunto: abandona a busca e segue o atendimento.
     estadoLoc.aguardandoLocalizacao = undefined;
     sessions.set(sender, estadoLoc);
   }
 
-  // ── PEDIDO EXPLÍCITO DE LOCALIZAÇÃO ("qual a UPA mais próxima", "UPA", "hospital"...) ──
+  // ── PEDIDO EXPLÍCITO DE LOCALIZAÇÃO ──
   const estadoAtual = sessions.get(sender);
   const locGuardada = estadoAtual?.ultimaLocalizacao && Date.now() - estadoAtual.ultimaLocalizacao.em < LOCALIZACAO_VALIDA_MS
     ? estadoAtual.ultimaLocalizacao : null;
 
-  // Depois de mandar o GPS sem contexto, "upa" / "ubs" / "hospital" sozinho já basta.
   let pedidoLoc = detectarPedidoLocalizacao(cleanText);
   if (!pedidoLoc && locGuardada && !estadoAtual?.aguardandoLocalizacao?.ativo) {
     if (/^(a |o )?(upa|pronto socorro|pronto atendimento)$/.test(textoLimpo)) pedidoLoc = "UPA";
@@ -518,7 +552,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-  // ── TRIAGEM (texto) ──
+  // ── TRIAGEM ──
   await sock.sendPresenceUpdate("composing", sender);
 
   const primeiraMensagem = !sessions.has(sender);
@@ -528,15 +562,16 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   const estadoAtualProcesso = sessions.get(sender)!;
   const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
-  // processarTurno devolve estados novos que perdem a localização guardada; preserva.
   if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
     novoEstado.ultimaLocalizacao = estadoAtualProcesso.ultimaLocalizacao;
   }
   sessions.set(sender, novoEstado);
 
+  // [Bloco 2] Persiste estado
+  if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
+
   let mensagemFinal = resultado.texto;
 
-  // Perguntas de acompanhamento em tom natural (Gemini, com timeout e fallback para a original).
   const perguntaGenericaDuplicada = primeiraMensagem && resultado.tipo === "perguntas" && resultado.tema === "vago";
   if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada) {
     mensagemFinal = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
@@ -544,7 +579,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   if (primeiraMensagem) {
     const privacidade = mensagemPorId("privacidade_001").texto;
-    // A boas-vindas já termina perguntando o que a pessoa sente; não repete a pergunta genérica.
     mensagemFinal = perguntaGenericaDuplicada
       ? `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}`
       : `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}\n\n---\n\n${mensagemFinal}`;
@@ -552,8 +586,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
 
-  await sock.sendMessage(sender, { text: mensagemFinal });
+  // Veio de texto → responde em texto
+  await responder(sock, sender, mensagemFinal, false);
   await sock.sendPresenceUpdate("paused", sender);
 }
-
-// [FIX] NÃO chama startWhatsAppBot() aqui. O index.ts é quem chama.
