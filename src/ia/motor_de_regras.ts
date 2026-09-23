@@ -44,8 +44,8 @@ function decisao(
   };
 }
 
-// [FIX] Intoxicação com QUANTIDADE (2 caixas, 1 vidro...) já é grave por si só
-const QUANTIDADE_INTOX = /\b\d+\s*(caixa|cartela|vidro|garrafa|frasco|comprimido|comprimidos|unidade|unidades)\b/;
+// [FIX] Aceita singular e plural (cartela/cartelas, vidro/vidros...)
+const QUANTIDADE_INTOX = /\b\d+\s*(caixas?|cartelas?|vidros?|garrafas?|frascos?|comprimidos?|unidades?)\b/;
 
 function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegras | null {
   const sinais = R.sinais_trauma || [];
@@ -67,7 +67,7 @@ function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegra
       'emergencia_001', 'SAMU_AGORA', ['mecanismo de trauma grave']);
   }
 
-  // [FIX] Intoxicação grave: por qualificador OU por quantidade
+  // Intoxicação grave: por qualificador OU por quantidade
   if (R.exposicao_intoxicacao === true &&
       (contemAlgum(texto, ['grave', 'intenso', 'forte', 'perigo', 'urgente', 'muito']) ||
        QUANTIDADE_INTOX.test(texto))) {
@@ -138,7 +138,6 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'emergencia_001', 'SAMU_AGORA', ['reação alérgica grave']);
   }
 
-  // [FIX] Convulsão é emergência (antes caía em UBS por falta de regra)
   if ((R.sinais_alerta || []).includes('convulsao')) {
     return decisao('convulsao', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['convulsão']);
@@ -240,6 +239,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'desidratacao_001', 'UPA_AGORA', ['sinais de desidratação']);
   }
 
+  // Intoxicação SEM quantidade/qualificador grave → UPA (cai aqui depois de não passar em verificarTraumaGrave)
   if (R.exposicao_intoxicacao === true) {
     return decisao('intoxicacao', 'urgencia', 'UPA_24H',
       'intoxicacao_001', 'UPA_AGORA', ['exposição a intoxicação']);
