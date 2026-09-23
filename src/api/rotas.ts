@@ -1,7 +1,8 @@
-// src/api/rotas.ts
+
 import { Router } from 'express';
 import { processarTurno, ESTADO_INICIAL } from '../ia/orquestrador.js';
 import type { EstadoConversa } from '../ia/tipos.js';
+import { metricas } from '../servicos/metricas.js';
 
 export const rotasApi = Router();
 
@@ -36,4 +37,14 @@ rotasApi.post('/chat', async (req, res) => {
     console.error('Erro na API de chat:', erro);
     return res.status(500).json({ erro: 'Erro interno ao processar mensagem.' });
   }
+});
+
+// [NOVO Bloco 2] Métricas de qualidade — proteja com token em produção
+rotasApi.get('/metricas', (req, res) => {
+  const token = req.headers['x-metricas-token'];
+  const tokenEsperado = process.env.METRICAS_TOKEN;
+  if (tokenEsperado && token !== tokenEsperado) {
+    return res.status(401).json({ erro: 'Token inválido.' });
+  }
+  return res.json(metricas);
 });
