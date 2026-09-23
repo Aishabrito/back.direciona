@@ -54,8 +54,6 @@ function extrairNeurologicos(n: string): string[] {
   return sinais;
 }
 
-// [FIX] "não consigo respirar" É o próprio critério de gravidade respiratória.
-// Antes só marcava false se a pessoa falasse de fala; agora também para respiração.
 function extrairFalaFrases(n: string): boolean | 'nao_informado' {
   if (/\bnao consigo respirar\b|\bnao estou conseguindo respirar\b|\bsem conseguir respirar\b/.test(n)) {
     return false;
@@ -131,6 +129,26 @@ function extrairDuracao(n: string): string {
   return 'nao_informado';
 }
 
+// [FIX 1+2] Perguntas sobre termos/serviços ("o que é AVC?", "o que é infarto?",
+// "oq e caps", "diferença entre UPA e UBS") são perguntas institucionais, não
+// relato de sintoma. Sem este filtro, citar "avc"/"infarto" já bastava pra
+// disparar SAMU_AGORA (emergência falsa). Frases de autopreocupação continuam
+// passando ("será que é infarto?", "acho que é avc").
+const RE_PERGUNTA_DEFINICAO =
+  /\bo?\s*q(?:ue)?\s*(?:eh|e|sao)\b|\bpra\s*que\s*serve\b|\bpara\s*que\s*serve\b|\bquando\s*(?:ir|devo\s*ir|procurar)\b|\bcomo\s*funciona\b|\bquer\s*dizer\b|\bsignifica\b|\bdif[a-z]{3,}\b/;
+const MARCADORES_PRIMEIRA_PESSOA =
+  /\b(eu|estou|to|tou|tenho|sinto|senti|minha|meu|comigo|nosso|nossa|acho que|sera que|pode ser|isso e|isto e|to com|tô com)\b/;
+
+function pareceDuvidaSobreTermo(n: string): boolean {
+  return RE_PERGUNTA_DEFINICAO.test(n) && !MARCADORES_PRIMEIRA_PESSOA.test(n);
+}
+
+// [FIX 4] Exposição a intoxicação: além dos termos clínicos, cobre quantidade
+// ("tomei 2 cartelas", "bebi um vidro de álcool"). Sem isso, overdose relatada
+// por quantidade não sobe pra SAMU.
+const RE_INTOXICACAO =
+  /intoxica[cç][aã]o|envenenamento|overdose|tomei\s+\d+\s+(caixa|cartela|vidro|garrafa|frasco|comprimido|comprimidos)|bebi\s+\d+\s+(vidro|garrafa|frasco)|ingeri\s+\d+/;
+
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
   const nc = texto
@@ -147,6 +165,9 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   if (ehSaudacao) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
+  // [FIX 1+2] Pergunta institucional → não extrai nada clínico. Quem responde é o FAQ.
+  if (pareceDuvidaSobreTermo(n)) return { ...RELATO_VAZIO, informacao_insuficiente: true };
+
   const falta_de_ar = afirmadoTri(nc, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
   const dor_no_peito = afirmadoTri(nc, /\bdor (no|do) peito\b|\baperto no peito\b|\bpressao no peito\b/);
   const desmaio = afirmadoTri(nc, /\bdesmaio\b|\bdesmaiei\b|\bapaguei\b|\bapagou\b|\binconsciente\b/);
@@ -155,7 +176,8 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   const febre = afirmadoTri(nc, /\bfebre\b|\bfebril\b/);
   const vomitos = afirmadoTri(nc, /\bvomito\b|\bvomitando\b|\bvomitei\b|\benjoo\b|\bnausea\b/);
   const trauma = afirmadoTri(nc, /\btrauma\b|\bacidente\b|\bbatida\b|\bqueda\b|\bcaiu\b|\bcai\b|\batropel/);
-  const exposicao_intoxicacao = afirmadoTri(nc, /intoxica[cç][aã]o|envenenamento|overdose/);
+  // [FIX 4] Usa RE_INTOXICACAO ampliado
+  const exposicao_intoxicacao = afirmadoTri(nc, RE_INTOXICACAO);
 
   const labios_roxos = afirmadoTri(nc, /\blabios (roxos|arroxeados|azuis)\b/);
   const fala_frases = extrairFalaFrases(n);
@@ -197,10 +219,12 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   }
 
   // RISCO MENTAL
+  // [FIX 3] 'caps' SAIU da lista. Perguntar "o que é CAPS" não é sinal de sofrimento
+  // psíquico. O CAPS é só um serviço. Quem responde é o FAQ.
   let risco_mental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/\bquero me matar\b|\bvou me matar\b|\bn[aã]o quero mais viver\b|\bquero morrer\b|\bacabar com tudo\b|\btentativa de suic[ií]dio\b|\bme machucar\b/.test(n)) {
     risco_mental = 'iminente';
-  } else if (contemAlgum(n, ['ansiedade', 'panico', 'depressao', 'crise de choro', 'insonia', 'caps'])) {
+  } else if (contemAlgum(n, ['ansiedade', 'panico', 'depressao', 'crise de choro', 'insonia'])) {
     risco_mental = 'sem_risco_imediato';
   }
 
@@ -235,6 +259,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
+  // [FIX 3+4] sintomasMap: 'caps' removido (não é sintoma), intoxicação ampliada
   const sintomasMap: [RegExp, string][] = [
     [/\bfebre\b/, 'febre'],
     [/\btosse\b/, 'tosse'],
@@ -247,8 +272,8 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     [/confus[aã]o|desorientad/, 'confusão'],
     [/ferida|corte|lacera[cç][aã]o|machucad/, 'ferida'],
     [/\bpicad[ao]s? (de|por) (cobra|aranha|escorpi[aã]o|animal)|\bescorpi[aã]o\b|\baranha\b|\bcobra\b|peconhento/, 'picada de animal peçonhento'],
-    [/intoxica[cç][aã]o|envenenamento|ingeri|tomei (uma )?cartela|overdose/, 'intoxicação'],
-    [/ansiedade|p[aâ]nico|depress[aã]o|\bcaps\b|crise de choro/, 'sofrimento psíquico'],
+    [RE_INTOXICACAO, 'intoxicação'],
+    [/ansiedade|p[aâ]nico|depress[aã]o|crise de choro|insonia/, 'sofrimento psíquico'],
     [/press[aã]o alta|hipertens[aã]o/, 'pressão alta'],
     [/convuls[aã]o/, 'convulsão'],
     [/alergia|coceira|mancha|vermelhid/, 'alergia/coceira'],
@@ -352,6 +377,10 @@ DIRETRIZES:
 - Sintomas: dor, febre, tosse, queimadura, queda.
 - Emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave, AVC (boca torta, fala enrolada).
 - Ideação suicida: "quero morrer", "não quero mais viver".
+- Se a mensagem for uma PERGUNTA sobre o que é um termo/serviço (ex.: "o que é CAPS",
+  "o que é AVC", "diferença entre UPA e UBS", "pra que serve o SAMU") e a pessoa não
+  estiver relatando algo que sente, NÃO marque sintomas, sinais de alerta nem risco_mental.
+  Deixe "informacao_insuficiente": true nesse caso.
 - NÃO diagnostique doenças.`;
 
 const RESPONSE_SCHEMA = {
