@@ -1,7 +1,8 @@
-// src/whatsapp/persistencia_sessao.ts
+
 import postgres from 'postgres';
 import fs from 'fs';
 import path from 'path';
+import { inicializarTabelaEstado } from './persistencia_estado.js';
 
 const AUTH_DIR = 'auth_info_baileys';
 const SESSION_ID = 'direciona-sus-bot';
@@ -15,8 +16,6 @@ export async function criarClienteDb(): Promise<Sql | null> {
     return null;
   }
 
-  // [FIX] Pool pequeno: o Supabase Session Pooler limita a 15 conexões no total.
-  // Com max: 2, sobra espaço para outras ferramentas.
   const sql = postgres(connectionString, {
     ssl: 'require',
     max: 2,
@@ -35,6 +34,10 @@ export async function criarClienteDb(): Promise<Sql | null> {
   `;
 
   console.log('✅ Tabela bot_sessions pronta.');
+
+  // [Bloco 2] Cria a tabela de estado da conversa na mesma conexão
+  await inicializarTabelaEstado(sql);
+
   return sql;
 }
 
@@ -60,8 +63,6 @@ export async function baixarSessaoParaDisco(sql: Sql | null): Promise<void> {
   console.log(`✅ Sessão restaurada do banco: ${linhas.length} arquivos.`);
 }
 
-// Só envia arquivos que mudaram (o Baileys gera centenas de arquivos pequenos)
-// e nunca deixa dois syncs rodarem ao mesmo tempo.
 const jaEnviado = new Map<string, string>();
 let sincronizando = false;
 
@@ -90,8 +91,6 @@ export async function subirSessaoParaBanco(sql: Sql | null): Promise<void> {
       }
     }
 
-    // Arquivos apagados localmente (chaves rotacionadas) não podem voltar do banco depois.
-    // Trava de segurança: se a pasta local estiver vazia/sem creds.json, NÃO apaga nada do banco.
     const locais = new Set(arquivos);
     if (!locais.has('creds.json')) return;
     const remotos = (await sql`
@@ -117,8 +116,6 @@ export function iniciarSyncPeriodico(sql: Sql | null): NodeJS.Timeout | null {
   }, 30_000);
 }
 
-// [FIX] Não chama process.exit(0) — deixa o Node terminar naturalmente.
-// Se matarmos aqui, podemos cortar uma mensagem sendo processada no meio.
 export function registrarSyncNoShutdown(sql: Sql | null): void {
   if (!sql) return;
   const handler = async (signal: string) => {
@@ -129,7 +126,6 @@ export function registrarSyncNoShutdown(sql: Sql | null): void {
     } catch (err) {
       console.error('❌ Erro ao salvar sessão no shutdown:', err);
     }
-    // Sem process.exit(0) — o Render mata depois de um timeout.
   };
   process.on('SIGTERM', () => handler('SIGTERM'));
   process.on('SIGINT', () => handler('SIGINT'));
