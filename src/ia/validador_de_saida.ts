@@ -115,8 +115,32 @@ const ORDEM_RISCO: Record<RiscoMental, number> = {
   nao_mencionado: 0, sem_risco_imediato: 1, iminente: 2,
 };
 
+// Compara os campos que costumam divergir entre extrator local e Gemini.
+// Quando um diz "true" e o outro "false", registramos a contradição para o
+// orquestrador decidir se pergunta ou não.
+function detectarContradicoes(
+  base: RelatoEstruturado,
+  extra: RelatoEstruturado,
+): string[] {
+  const contradicoes: string[] = [];
+  const flagsBooleanas: (keyof RelatoEstruturado)[] = [
+    'falta_de_ar', 'dor_no_peito', 'desmaio', 'confusao',
+    'sangramento', 'febre', 'vomitos', 'trauma',
+  ];
+
+  for (const campo of flagsBooleanas) {
+    const a = base[campo];
+    const b = extra[campo];
+    if ((a === true && b === false) || (a === false && b === true)) {
+      contradicoes.push(String(campo));
+    }
+  }
+  return contradicoes;
+}
+
 export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado): RelatoEstruturado {
   const unir = (a: string[] = [], b: string[] = []) => [...new Set([...a, ...b])];
+  const contradicoes = detectarContradicoes(base, extra);
 
   return {
     relato_sobre_terceiro: extra.relato_sobre_terceiro || base.relato_sobre_terceiro,
@@ -128,7 +152,10 @@ export function mesclarRelatos(base: RelatoEstruturado, extra: RelatoEstruturado
     sinais_obstetricos: unir(base.sinais_obstetricos, extra.sinais_obstetricos),
     sinais_trauma: unir(base.sinais_trauma, extra.sinais_trauma),
     sinais_neurologicos: unir(base.sinais_neurologicos, extra.sinais_neurologicos),
-    informacoes_contraditorias: unir(base.informacoes_contraditorias, extra.informacoes_contraditorias),
+    informacoes_contraditorias: unir(
+      unir(base.informacoes_contraditorias, extra.informacoes_contraditorias),
+      contradicoes,
+    ),
     texto_original_acumulado: extra.texto_original_acumulado || base.texto_original_acumulado || '',
     inicio: extra.inicio !== 'nao_informado' ? extra.inicio : base.inicio,
     duracao: extra.duracao !== 'nao_informado' ? extra.duracao : base.duracao,
