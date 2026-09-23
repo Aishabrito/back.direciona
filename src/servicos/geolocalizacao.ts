@@ -27,9 +27,11 @@ type ElementoOsm = {
   tags?: Tags;
 };
 
-const RAIOS_M = [8_000, 20_000, 40_000];
-const TIMEOUT_MS = 22_000;
-const ORCAMENTO_TOTAL_MS = 45_000;
+// [FIX Bloco 1] Tempos de espera reduzidos: falha rápido em vez de deixar
+// o usuário esperando 60s. Cascata local → OSM → Google resolve o resto.
+const RAIOS_M = [8_000, 25_000];
+const TIMEOUT_MS = 9_000;
+const ORCAMENTO_TOTAL_MS = 16_000;
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -304,30 +306,59 @@ async function buscarOsm(lat: number, lng: number, primarias: CategoriaUnidade[]
   return { unidades, sucessos, falhas };
 }
 
+// ────────────────────────────────────────────────────────────
+// Base local curada (opcional) — CNES ou exportação manual.
+// Arquivo padrão: dados/unidades_saude.json (ou env UNIDADES_JSON).
+// Formato:
+//   { "atualizado_em": "2026-03-15", "unidades": [
+//       { "nome": "...", "categoria": "UPA"|"EMERGENCIA"|"UBS",
+//         "endereco": "...", "telefone": "...", "lat": -22.9, "lng": -43.1,
+//         "publica": true } ] }
+// Aceita também o formato antigo (array direto) para retrocompatibilidade.
+// ────────────────────────────────────────────────────────────
 type UnidadeLocal = {
   nome: string; categoria: CategoriaUnidade; endereco?: string;
   telefone?: string | null; lat: number; lng: number; publica?: boolean | null;
 };
 let baseLocal: UnidadeLocal[] | null = null;
 
+
 function carregarBaseLocal(): UnidadeLocal[] {
-  if (baseLocal) return baseLocal;
+  if (baseLocal !== null) return baseLocal;
+
   try {
     const caminho = process.env.UNIDADES_JSON ?? path.resolve(process.cwd(), 'dados', 'unidades_saude.json');
-    if (!fs.existsSync(caminho)) return (baseLocal = []);
+    if (!fs.existsSync(caminho)) {
+      baseLocal = [];
+      return baseLocal;
+    }
+
     const bruto = JSON.parse(fs.readFileSync(caminho, 'utf-8'));
-    baseLocal = Array.isArray(bruto)
-      ? bruto.filter((u: any) => u && Number.isFinite(u.lat) && Number.isFinite(u.lng) &&
-          ['UPA', 'EMERGENCIA', 'UBS'].includes(u.categoria) && typeof u.nome === 'string')
-      : [];
-    console.log(`📚 Base local de unidades: ${baseLocal.length} registros.`);
+
+    // Aceita os 2 formatos: array direto (antigo) ou { atualizado_em, unidades } (novo)
+    const lista = Array.isArray(bruto) ? bruto : (bruto.unidades ?? []);
+
+    if (!Array.isArray(bruto) && typeof bruto.atualizado_em === 'string') {
+      const idadeDias = (Date.now() - new Date(bruto.atualizado_em).getTime()) / (24 * 3600 * 1000);
+      if (idadeDias > 180) {
+        console.warn(`⚠️ Base local de unidades desatualizada há ${Math.round(idadeDias)} dias. Reimporte do CNES.`);
+      }
+    }
+
+    const filtrado: UnidadeLocal[] = lista.filter((u: any) =>
+      u && Number.isFinite(u.lat) && Number.isFinite(u.lng) &&
+      ['UPA', 'EMERGENCIA', 'UBS'].includes(u.categoria) &&
+      typeof u.nome === 'string');
+
+    console.log(`📚 Base local de unidades: ${filtrado.length} registros.`);
+    baseLocal = filtrado;
+    return baseLocal;
   } catch (err) {
     console.error('❌ Erro lendo base local de unidades:', err);
     baseLocal = [];
+    return baseLocal;
   }
-  return baseLocal;
 }
-
 function buscarLocal(lat: number, lng: number, raioMax = 30_000): UnidadeSaude[] {
   return carregarBaseLocal()
     .map((u): UnidadeSaude => ({
@@ -426,7 +457,11 @@ export async function buscarUnidades(lat: number, lng: number, tipo: TipoUsuario
 
   const google = await buscarGoogle(lat, lng, tipo);
   if (google && google.length > 0) {
-    return { unidades: selecionar(google, tipo).length ? selecionar(google, tipo) : google.slice(0, 5), origem: 'google', falhaServico: false };
+    return {
+      unidades: selecionar(google, tipo).length ? selecionar(google, tipo) : google.slice(0, 5),
+      origem: 'google',
+      falhaServico: false,
+    };
   }
 
   const sobra = doOsm.length ? doOsm : local;
@@ -483,39 +518,26 @@ export function formatarUnidades(
 ): string {
   if (unidades.length === 0) {
     const termo =
-      tipoBusca === 'UBS'
-        ? 'UBS posto de saúde'
-        : tipoBusca === 'UPA'
-        ? 'UPA 24h'
-        : tipoBusca === 'HOSPITAL'
-        ? 'hospital pronto socorro'
-        : 'UBS UPA hospital';
+      tipoBusca === 'UBS' ? 'UBS posto de saúde'
+      : tipoBusca === 'UPA' ? 'UPA 24h'
+      : tipoBusca === 'HOSPITAL' ? 'hospital pronto socorro'
+      : 'UBS UPA hospital';
 
     const instrucao =
-      tipoBusca === 'UBS'
-        ? 'Não achei a lista automática, mas você pode ver no mapa as UBS próximas:'
-        : tipoBusca === 'UPA'
-        ? 'Não achei a lista automática, mas você pode ver no mapa as UPAs próximas:'
-        : tipoBusca === 'HOSPITAL'
-        ? 'Não achei a lista automática, mas você pode ver no mapa os hospitais próximos:'
-        : 'Não achei a lista automática, mas você pode ver no mapa as unidades próximas:';
+      tipoBusca === 'UBS' ? 'Não achei a lista automática, mas você pode ver no mapa as UBS próximas:'
+      : tipoBusca === 'UPA' ? 'Não achei a lista automática, mas você pode ver no mapa as UPAs próximas:'
+      : tipoBusca === 'HOSPITAL' ? 'Não achei a lista automática, mas você pode ver no mapa os hospitais próximos:'
+      : 'Não achei a lista automática, mas você pode ver no mapa as unidades próximas:';
 
     const rodape =
-      tipoBusca === 'UBS'
-        ? '🚨 Em caso de urgência, ligue *192* (SAMU) ou procure uma UPA 24h.'
-        : '🚨 Em caso de urgência, ligue *192* (SAMU).';
+      tipoBusca === 'UBS' ? '🚨 Em caso de urgência, ligue *192* (SAMU) ou procure uma UPA 24h.'
+      : '🚨 Em caso de urgência, ligue *192* (SAMU).';
 
     const aviso = opcoes.falhaServico
       ? '⚠️ O serviço de mapas está instável agora e não consegui montar a lista.'
       : '⚠️ Não encontrei unidades cadastradas perto desse ponto.';
-    return [
-      aviso,
-      '',
-      `🗺️ ${instrucao}`,
-      linkBuscaGoogleMaps(lat, lng, termo),
-      '',
-      rodape,
-    ].join('\n');
+
+    return [aviso, '', `🗺️ ${instrucao}`, linkBuscaGoogleMaps(lat, lng, termo), '', rodape].join('\n');
   }
 
   const blocos: string[] = [];

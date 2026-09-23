@@ -1,4 +1,5 @@
 import type { DecisaoRegras, RelatoEstruturado } from './tipos.js';
+import { sanitizarTextoGerado } from './mensagens.js';
 
 const ABERTURAS: Record<string, string[]> = {
   SAMU_AGORA: [
@@ -19,8 +20,7 @@ function sortear<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// [FIX] Dicionário expandido — antes só tinha 15 palavras; agora cobre
-// sintomas comuns (náusea, vômito, convulsão) e partes do corpo.
+// Dicionário expandido — sintomas comuns e partes do corpo.
 const ACENTOS: Record<string, string> = {
   cabeca: 'cabeça', estomago: 'estômago', coracao: 'coração', pescoco: 'pescoço',
   musculo: 'músculo', garganta: 'garganta', barriga: 'barriga',
@@ -65,9 +65,13 @@ function espelhar(relato: RelatoEstruturado): string | null {
   const combinados = [...new Set([...itens, ...primeiros])].slice(0, 3);
   if (combinados.length === 0) return null;
 
-  if (combinados.length === 1) return `Você mencionou ${combinados[0]}.`;
-  if (combinados.length === 2) return `Você mencionou ${combinados[0]} e ${combinados[1]}.`;
-  return `Você mencionou ${combinados[0]}, ${combinados[1]} e ${combinados[2]}.`;
+  let frase = '';
+  if (combinados.length === 1) frase = `Você mencionou ${combinados[0]}.`;
+  else if (combinados.length === 2) frase = `Você mencionou ${combinados[0]} e ${combinados[1]}.`;
+  else frase = `Você mencionou ${combinados[0]}, ${combinados[1]} e ${combinados[2]}.`;
+
+  // [FIX Bloco 1] Sanitiza o espelho (texto dinâmico, ainda que indireto).
+  return sanitizarTextoGerado(frase);
 }
 
 function blocoMotivos(decisao: DecisaoRegras): string | null {
@@ -92,8 +96,12 @@ export function comporResposta(params: {
 
   blocos.push(mensagemAprovada);
 
+ // Em emergência, "por que" é ruído cognitivo. A pessoa precisa agir.
+  // Em agendamento (baixa gravidade), "por que" também atrapalha — ela já vai à UBS.
+  // Nos níveis intermediários (UPA_AGORA / HOJE), o motivo ajuda a pessoa a entender
+  // e a justificar a ida ao serviço.
   const motivo = blocoMotivos(decisao);
-  if (motivo && nivel !== 'AGENDAR') blocos.push(motivo);
+  if (motivo && nivel !== 'AGENDAR' && nivel !== 'SAMU_AGORA') blocos.push(motivo);
 
   return blocos.join('\n\n');
 }

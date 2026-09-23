@@ -1,6 +1,6 @@
-
 import { GoogleGenAI } from '@google/genai';
 import { normalizarTexto } from './normalizar.js';
+import { sanitizarTextoGerado } from './mensagens.js';
 
 const TERMOS_PROIBIDOS_REFORM =
   /\b(remedio|medicamento|comprimido|antibiotico|diagnostico|infarto|avc|doenca|dose|mg|ml)\b/i;
@@ -36,6 +36,11 @@ REGRAS:
     if (!texto || texto.length > 300) return perguntaFixa;
     if (TERMOS_PROIBIDOS_REFORM.test(normalizarTexto(texto))) return perguntaFixa;
     if (!texto.endsWith('?')) return perguntaFixa;
+
+    // [FIX Bloco 1] Segunda barreira: passa pela sanitização geral de mensagens.
+    // Se o texto virar fallback_001 (contém termo proibido), devolve a pergunta fixa.
+    const sanitizado = sanitizarTextoGerado(texto);
+    if (sanitizado !== texto) return perguntaFixa;
 
     return texto;
   } catch {

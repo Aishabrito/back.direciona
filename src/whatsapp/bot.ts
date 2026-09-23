@@ -364,10 +364,13 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   // ── ÁUDIO ──
-  const audioMessage = msg.message.audioMessage;
+    const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     try {
       await sock.sendPresenceUpdate("composing", sender);
+      // [FIX Bloco 1] Feedback imediato — transcrição+TTS pode levar >15s.
+      // Sem isso o usuário acha que o bot travou e manda de novo.
+      await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
       const buffer = (await downloadMediaMessage(
         msg, "buffer", {},
