@@ -436,10 +436,23 @@ function mesclarComIA(local: RelatoEstruturado, g: RelatoEstruturado): RelatoEst
 }
 
 // ─── Texto (Groq) ───────────────────────────────────────────
-export async function interpretarRelato(texto: string): Promise<RelatoEstruturado> {
+export async function interpretarRelato(
+  texto: string,
+  historicoFormatado?: string,
+): Promise<RelatoEstruturado> {
   const local = extrairInformacoes(texto);
 
-  const prompt = `Relato: "${texto.replace(/"/g, '\\"')}"`;
+  const prompt = `${
+    historicoFormatado && historicoFormatado !== '(sem histórico)'
+      ? `HISTÓRICO RECENTE DA CONVERSA:\n${historicoFormatado}\n\n---\n\n`
+      : ''
+  }RELATO ATUAL DO USUÁRIO:
+"${texto.replace(/"/g, '\\"')}"
+
+Extraia os dados clínicos APENAS do relato atual. Use o histórico somente para
+desambiguar referências ("e se for 40 graus?" → sobre a febre já mencionada).
+NÃO misture sintomas antigos com o relato atual.`;
+
   const parsed = await gerarJSON<any>(prompt, SYSTEM_INSTRUCTION, 20000);
   if (!parsed) return local;
 

@@ -31,21 +31,10 @@ export function sanitizarResposta(texto: string, _idMensagem?: string): string {
   return texto;
 }
 
-// ────────────────────────────────────────────────────────────
-// [FIX Bloco 1] Antes o filtro era uma lista solta de substrings — qualquer
-// coisa que contivesse "o que eu tenho" (inclusive "o que eu tenho que fazer?")
-// era bloqueada. Agora exige contexto de pergunta direta sobre si mesmo.
-// ────────────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 export function ehPedidoDiagnostico(texto: string): boolean {
-  const n = ` ${normalizarTexto(texto)} `;
-  // Pergunta direta sobre o diagnóstico
-  return (
-    /\bqual (e|eh) o (meu )?diagnostico\b/.test(n) ||
-    /\bque doenca (eu )?(tenho|possuo)\b/.test(n) ||
-    /\bqual (a )?doenca (eu )?(tenho|possuo)\b/.test(n) ||
-    /\bme da o diagnostico\b/.test(n) ||
-    /\bo que (eu )?tenho\b(?!.*\b(que fazer|que tomar)\b)/.test(n)
-  );
+  const n = normalizarTexto(texto);
+  return /\b(o que (eu )?tenho|oq (eu )?tenho|qual (a )?(minha )?doenca|qual (o )?(meu )?problema|me diagnostica|me da um diagnostico|pode ser (o )?que|sera (o )?que (eu )?tenho|isso (e|eh) (o )?que|meus sintomas (sao|são|e|eh)|meus? sintomas? (podem|pode) ser|isso (pode|pode ser) (ser )?|tenho (isso|aquilo|o que))\b/.test(n);
 }
 
 export function ehPedidoMedicamento(texto: string): boolean {

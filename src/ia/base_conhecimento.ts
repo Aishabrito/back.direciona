@@ -1,3 +1,6 @@
+// src/ia/base_conhecimento.ts
+// RAG: busca vetorial (semântica) + resposta via Groq.
+// Devolve estrutura + passa por LLM-judge antes de sair.
 
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
 import { gerarEmbedding } from '../servicos/embeddings.js';
@@ -15,7 +18,7 @@ export function registrarClienteDb(sql: Sql | null): void {
 }
 
 // ────────────────────────────────────────────────────
-// Tipo público — o orquestrador monta a mensagem a partir disso.
+// Tipo público
 // ────────────────────────────────────────────────────
 export type RespostaEstruturada = {
   titulo: string;
@@ -23,7 +26,7 @@ export type RespostaEstruturada = {
   topico_id: string;
   origem: 'vetorial' | 'keyword' | 'fallback_direto';
   similaridade?: number;
-  bloqueado?: boolean; // true se o judge reprovou; corpo já é o seguro
+  bloqueado?: boolean;
 };
 
 // ────────────────────────────────────────────────────
@@ -95,8 +98,7 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 }
 
 // ────────────────────────────────────────────────────
-// [FIX] LLM-judge — valida se a resposta associa sintoma
-// do usuário a doença. Aceita explicação educativa.
+// LLM-judge
 // ────────────────────────────────────────────────────
 const JUDGE_SYSTEM = `Você analisa respostas de um assistente do SUS.
 
@@ -121,15 +123,10 @@ async function respostaTemDiagnostico(pergunta: string, resposta: string): Promi
     return limpo.startsWith('SIM');
   } catch (err: any) {
     console.error(`❌ [RAG/judge] falha:`, err?.message || err);
-    // Em caso de falha do judge, conservador: bloqueia (prefere perder resposta
-    // do que arriscar diagnóstico).
-    return true;
+    return true; // conservador
   }
 }
 
-// ────────────────────────────────────────────────────
-// Texto seguro quando o judge reprova
-// ────────────────────────────────────────────────────
 function respostaSeguraGenerica(): string {
   return (
     'Para sintomas como os que você descreveu, o ideal é procurar uma UBS para avaliação. ' +
@@ -138,7 +135,7 @@ function respostaSeguraGenerica(): string {
 }
 
 // ────────────────────────────────────────────────────
-// System prompt do RAG — proíbe diagnóstico explicitamente
+// System prompt do RAG
 // ────────────────────────────────────────────────────
 const RAG_SYSTEM = `Você é um assistente do SUS que explica informações GERAIS sobre saúde e serviços públicos.
 
@@ -167,6 +164,7 @@ Exemplo RUIM: "Seus sintomas podem ser de gripe."`;
 // ────────────────────────────────────────────────────
 export async function responderDaBase(
   pergunta: string,
+  historicoFormatado?: string,
 ): Promise<RespostaEstruturada | null> {
   let contextoTexto = '';
   let topicoBase: { id: string; titulo: string; conteudo: string; similaridade?: number } | null = null;
@@ -190,10 +188,18 @@ export async function responderDaBase(
     console.log(`🔄 [RAG] usando fallback keyword: ${candidatosLocais.length} tópicos`);
   }
 
-  const prompt = `PERGUNTA DO USUÁRIO:\n"${pergunta}"\n\nBASE DE CONHECIMENTO (use SOMENTE isto):\n${contextoTexto}`;
+  const prompt = `PERGUNTA DO USUÁRIO:
+"${pergunta}"
+
+${
+  historicoFormatado
+    ? `CONTEXTO DA CONVERSA (use APENAS para desambiguar a pergunta):\n${historicoFormatado}\n\n---\n\n`
+    : ''
+}BASE DE CONHECIMENTO (use SOMENTE isto):
+${contextoTexto}`;
+
   const texto = await gerarTexto(prompt, RAG_SYSTEM, 20000);
 
-  // ── Fallback: LLM não respondeu → usa tópico curado direto (já é seguro)
   if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO') || texto.length < 20) {
     console.log(`⚠️ [RAG] resposta insuficiente, usando tópico direto`);
     if (!topicoBase) return null;
@@ -206,7 +212,6 @@ export async function responderDaBase(
     };
   }
 
-  // ── [FIX estrutural] Judge antes de devolver
   const suspeito = await respostaTemDiagnostico(pergunta, texto);
   if (suspeito) {
     console.warn(`🚫 [RAG/judge] bloqueado: "${texto.slice(0, 80)}..."`);

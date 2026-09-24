@@ -1,3 +1,5 @@
+// src/ia/orquestrador.ts
+
 import { registrarDecisao } from './auditoria.js';
 import { interpretarRelato } from './extrator_de_informacoes.js';
 import {
@@ -17,19 +19,53 @@ import { classificarNivel } from './sinais_criticos.js';
 import {
   RELATO_VAZIO, VERSAO_REGRAS,
   type EstadoConversa, type RelatoEstruturado, type TurnoResultado,
+  type MensagemHistorico,
 } from './tipos.js';
 import { mesclarRelatos } from './validador_de_saida.js';
 import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
+import { classificarIntencao } from './classificador_intencao.js';
+import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 
+// ────────────────────────────────────────────────────
+// Estado inicial
+// ────────────────────────────────────────────────────
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
   rodadasPerguntas: 0,
   texto_original_acumulado: '',
   fase: 'inicio',
   perguntasJaFeitas: [],
+  historico: [],
 };
 
+// ────────────────────────────────────────────────────
+// Histórico — helpers
+// ────────────────────────────────────────────────────
+const MAX_HISTORICO = 12;
+
+function appendHistorico(
+  estado: EstadoConversa,
+  role: 'user' | 'assistant',
+  content: string,
+): EstadoConversa {
+  const historico = [
+    ...(estado.historico ?? []),
+    { role, content, ts: Date.now() },
+  ].slice(-MAX_HISTORICO);
+  return { ...estado, historico };
+}
+
+function formatarHistorico(historico: MensagemHistorico[] | undefined): string {
+  if (!historico || historico.length === 0) return '(sem histórico)';
+  return historico
+    .map((m) => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
+    .join('\n');
+}
+
+// ────────────────────────────────────────────────────
+// Detecções simples
+// ────────────────────────────────────────────────────
 const SAUDACOES = ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'opa', 'tudo bem', 'eae'];
 
 function ehSaudacao(texto: string): boolean {
@@ -49,6 +85,19 @@ function ehConfirmacaoOrientacao(texto: string): boolean {
   return /^(ok|já fui|ja fui|estou indo|cheguei|obrigad|valeu|brigad|entendi|certo|beleza|blz|já chamei|ja chamei|chamei|vou (ligar|chamar)|liguei)\b/.test(n);
 }
 
+function parecePergunta(texto: string): boolean {
+  if (/\?/.test(texto)) return true;
+  const n = normalizarTexto(texto);
+  return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera)\b/.test(n);
+}
+
+function descreveQueixaPropriaRegex(textoNorm: string): boolean {
+  return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
+}
+
+// ────────────────────────────────────────────────────
+// Consolidação
+// ────────────────────────────────────────────────────
 function consolidar(estado: EstadoConversa): RelatoEstruturado {
   const base = estado.relatos.reduce((acc, item) => mesclarRelatos(acc, item), { ...RELATO_VAZIO });
   return { ...base, texto_original_acumulado: estado.texto_original_acumulado || '' };
@@ -66,56 +115,106 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
   );
 }
 
-// Detecta pergunta com tolerância a abreviações comuns no WhatsApp.
-// Mantida pra uso interno (ex: detectar "isso é pergunta?" em blocos genéricos).
-function parecePergunta(texto: string): boolean {
-  if (/\?/.test(texto)) return true;
-  const n = normalizarTexto(texto);
-  return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera)\b/.test(n);
-}
-
-// [FIX] Pergunta de CONHECIMENTO → vai pro RAG.
-// Só dispara pra perguntas educativas ("o que é X", "como funciona Y").
-function ehPerguntaConhecimento(texto: string): boolean {
-  const n = normalizarTexto(texto);
-  return /\b(o que (e|eh|sao)|oq (e|eh|sao)|como funciona|para que serve|pra que serve|qual a diferenca|diferenca entre|o que significa|significa|quantos? graus|quantos? dias|quanto tempo|como se pega|como evita|como prevenir|tem cura|o que causa|me explica|me explica o que|explica|me fala sobre|fala sobre)\b/.test(n);
-}
-
-// [FIX] Pergunta de NAVEGAÇÃO → vai pro motor de regras (triagem).
-// "Para onde vou", "onde devo ir", "o que faço" — pedido de encaminhamento.
-function ehPerguntaNavegacao(texto: string): boolean {
-  const n = normalizarTexto(texto);
-  return /\b(para onde|pra onde|onde (eu )?(vou|devo ir|procuro|busco)|o que (eu )?(faco|devo fazer)|qual (o )?(servico|unidade)|aonde|me indica (um|uma)|onde (tem|fica)|devo ir|preciso ir)\b/.test(n);
-}
-
-// Detecta se a pessoa descreve uma queixa em 1ª pessoa:
-// "estou com X", "sinto Y", "to com Z". Usado pra separar pergunta de relato.
-function descreveQueixaPropriaRegex(textoNorm: string): boolean {
-  return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
-}
-
 // ============================================================
-// PROCESSAR TURNO — texto normal
+// WRAPPERS PÚBLICOS — gerenciam histórico + logging
 // ============================================================
+
 export async function processarTurno(
+  textoUsuario: string,
+  estadoEntrada: EstadoConversa,
+): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
+  const timer = iniciarTimer();
+  const faseAnterior = estadoEntrada.fase ?? 'inicio';
+
+  const estadoComUser = appendHistorico(estadoEntrada, 'user', textoUsuario);
+  const { resultado, estado } = await processarTurnoInterno(textoUsuario, estadoComUser);
+
+  const estadoFinal = appendHistorico(
+    { ...estado, historico: estadoComUser.historico ?? [] },
+    'assistant',
+    resultado.texto,
+  );
+
+  const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
+
+  logTurno({
+    ts: new Date().toISOString(),
+    texto_usuario: textoUsuario.slice(0, 200),
+    tamanho_historico: estadoFinal.historico?.length ?? 0,
+    regra_acionada: decisao?.regra_acionada,
+    nivel: decisao?.nivel,
+    destino: decisao?.destino,
+    resposta_id: decisao?.resposta_id,
+    bloqueado: decisao?.resposta_id === 'base_bloqueada',
+    fase_anterior: faseAnterior,
+    fase_nova: estadoFinal.fase,
+    latencia_ms: timer(),
+  });
+
+  return { resultado, estado: estadoFinal };
+}
+
+export async function processarTurnoComRelato(
+  textoRepresentativo: string,
+  relatoPronto: RelatoEstruturado,
+  estadoEntrada: EstadoConversa,
+): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
+  const timer = iniciarTimer();
+  const faseAnterior = estadoEntrada.fase ?? 'inicio';
+
+  const estadoComUser = appendHistorico(estadoEntrada, 'user', textoRepresentativo);
+  const { resultado, estado } = await processarTurnoComRelatoInterno(
+    textoRepresentativo,
+    relatoPronto,
+    estadoComUser,
+  );
+
+  const estadoFinal = appendHistorico(
+    { ...estado, historico: estadoComUser.historico ?? [] },
+    'assistant',
+    resultado.texto,
+  );
+
+  const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
+
+  logTurno({
+    ts: new Date().toISOString(),
+    texto_usuario: textoRepresentativo.slice(0, 200),
+    tamanho_historico: estadoFinal.historico?.length ?? 0,
+    regra_acionada: decisao?.regra_acionada,
+    nivel: decisao?.nivel,
+    destino: decisao?.destino,
+    resposta_id: decisao?.resposta_id,
+    bloqueado: decisao?.resposta_id === 'base_bloqueada',
+    fase_anterior: faseAnterior,
+    fase_nova: estadoFinal.fase,
+    latencia_ms: timer(),
+  });
+
+  return { resultado, estado: estadoFinal };
+}
+
+// ============================================================
+// PROCESSAR TURNO — interno (texto)
+// ============================================================
+async function processarTurnoInterno(
   textoUsuario: string,
   estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
   inc('total_mensagens');
 
-  // [FIX] Conversa encerrada → qualquer mensagem nova começa ciclo limpo.
-  // Sem isso, "para onde vou..." depois de um encerramento herdava relatos antigos.
   let estado = estadoEntrada;
   let fase = estado.fase ?? 'inicio';
   if (fase === 'encerrado') {
-    estado = { ...ESTADO_INICIAL };
+    estado = { ...ESTADO_INICIAL, historico: estado.historico ?? [] };
     fase = 'inicio';
   }
 
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const textoNorm = normalizarTexto(textoUsuario);
+  const historicoFmt = formatarHistorico(estado.historico);
 
-  // ── 1. Confirmação pós-orientação → encerramento amigável
+  // ── 1. Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
     return {
       estado: { ...estado, fase: 'encerrado' },
@@ -134,15 +233,15 @@ export async function processarTurno(
   const respostaCurta = interpretarRespostaCurta(textoUsuario, estado.ultimaPergunta);
   const extraido = respostaCurta
     ? ({ ...RELATO_VAZIO, ...respostaCurta, texto_original_acumulado: '' } as RelatoEstruturado)
-    : await interpretarRelato(textoUsuario);
+    : await interpretarRelato(textoUsuario, historicoFmt);
 
-  // ── 2. Detecção de novo caso (zera o contexto)
+  // ── 2. Novo caso
   const ehNovoCaso = /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
 
   if (fase === 'orientado' && ehNovoCaso) {
     const msg = mensagemPorId('novo_caso_001');
     return {
-      estado: { ...ESTADO_INICIAL },
+      estado: { ...ESTADO_INICIAL, historico: estado.historico ?? [] },
       resultado: {
         tipo: 'orientacao',
         texto: msg.texto,
@@ -155,22 +254,27 @@ export async function processarTurno(
     };
   }
 
-  // ── 3. BASE DE CONHECIMENTO — só pra perguntas de CONHECIMENTO.
-  // [FIX] "Para onde eu vou..." é navegação → cai no motor de regras.
-  // Pergunta educativa ("oq eh dengue") → RAG.
-  const ehConhecimento = ehPerguntaConhecimento(textoUsuario);
-  const ehNavegacao = ehPerguntaNavegacao(textoUsuario);
-  const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
+  // ── 3. Classificação de intenção (com histórico) + RAG
+  const intencao = await classificarIntencao(textoUsuario, historicoFmt);
+  const ehConhecimento = intencao === 'conhecimento';
+  const ehNavegacao = intencao === 'navegacao';
+  const relatoComoQueixa =
+    intencao === 'relato' || descreveQueixaPropriaRegex(textoNorm);
 
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
-  if (ehConhecimento && !ehNavegacao && !relatoComoQueixa && !sinalCriticoInicial && !respostaCurta) {
+  if (
+    ehConhecimento &&
+    !ehNavegacao &&
+    !relatoComoQueixa &&
+    !sinalCriticoInicial &&
+    !respostaCurta
+  ) {
     const temTopico = await temTopicoRelevante(textoUsuario);
     if (temTopico) {
-      const respostaBase = await responderDaBase(textoUsuario);
+      const respostaBase = await responderDaBase(textoUsuario, historicoFmt);
       if (respostaBase) {
-        // [FIX] monta a mensagem em template — corpo já passou pelo judge
         const cabecalho = respostaBase.titulo ? `*${respostaBase.titulo}*\n\n` : '';
         const rodape = respostaBase.bloqueado
           ? ''
@@ -187,7 +291,9 @@ export async function processarTurno(
               resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
               regra_acionada: 'base_conhecimento',
               versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-              motivos: respostaBase.bloqueado ? ['base bloqueada por segurança'] : ['base de conhecimento'],
+              motivos: respostaBase.bloqueado
+                ? ['base bloqueada por segurança']
+                : ['base de conhecimento'],
             },
           },
         };
@@ -214,7 +320,7 @@ export async function processarTurno(
   const nivel = classificarNivel(extraido);
   const sinalCritico = nivel === 'critico';
 
-  // ── 5. FAQ — só se não tem sintoma clínico
+  // ── 5. FAQ
   if (!temSintomaClinico(extraido) && !respostaCurta) {
     const faqEncontrada = checarFaq(textoUsuario);
     if (faqEncontrada) {
@@ -233,7 +339,7 @@ export async function processarTurno(
     }
   }
 
-  // ── 6. Bloqueios de escopo
+  // ── 6. Bloqueios
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -263,7 +369,7 @@ export async function processarTurno(
     };
   }
 
-  // ── 7. Saudação inicial SEM sintoma
+  // ── 7. Saudação inicial
   if (
     estado.relatos.length === 0 &&
     ehSaudacao(textoUsuario) &&
@@ -295,7 +401,7 @@ export async function processarTurno(
     };
   }
 
-  // ── 8. Reset de contexto: mensagem sem nada clínico e não-pergunta
+  // ── 8. Reset de contexto
   const nadaClinico =
     !temSintomaClinico(extraido) &&
     !parecePergunta(textoUsuario) &&
@@ -305,7 +411,7 @@ export async function processarTurno(
   if (nadaClinico) {
     const msgForaEscopo = mensagemPorId('fora_escopo_001');
     return {
-      estado: { ...ESTADO_INICIAL },
+      estado: { ...ESTADO_INICIAL, historico: estado.historico ?? [] },
       resultado: {
         tipo: 'orientacao', texto: msgForaEscopo.texto,
         decisao: {
@@ -317,7 +423,7 @@ export async function processarTurno(
     };
   }
 
-  // ── 9. Fora de escopo (primeira interação)
+  // ── 9. Fora de escopo inicial
   if (
     !temSintomaClinico(extraido) &&
     !relatoComoQueixa &&
@@ -349,7 +455,6 @@ export async function processarTurno(
 
   const MAX_RODADAS = 2;
 
-  // Refinamento (nível normal)
   if (nivelAtual === 'normal' && estado.rodadasPerguntas < MAX_RODADAS) {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
@@ -374,7 +479,6 @@ export async function processarTurno(
     }
   }
 
-  // Alerta — uma pergunta crítica se faltar
   if (nivelAtual === 'alerta') {
     const tema = escolherTemaPergunta({
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
@@ -399,7 +503,6 @@ export async function processarTurno(
     }
   }
 
-  // Decisão pelo motor
   const decisao = aplicarMotor(atual, textoAcumulado);
 
   if (decisao.categoria_interna === 'informacao_insuficiente') {
@@ -442,27 +545,26 @@ export async function processarTurno(
 }
 
 // ============================================================
-// PROCESSAR TURNO COM RELATO PRONTO — quando veio de áudio
+// PROCESSAR TURNO COM RELATO — interno (áudio)
 // ============================================================
-export async function processarTurnoComRelato(
+async function processarTurnoComRelatoInterno(
   textoRepresentativo: string,
   relatoPronto: RelatoEstruturado,
   estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
   inc('total_mensagens');
 
-  // [FIX] Mesmo reset do fluxo de texto.
   let estado = estadoEntrada;
   let fase = estado.fase ?? 'inicio';
   if (fase === 'encerrado') {
-    estado = { ...ESTADO_INICIAL };
+    estado = { ...ESTADO_INICIAL, historico: estado.historico ?? [] };
     fase = 'inicio';
   }
 
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const textoNorm = normalizarTexto(textoRepresentativo);
+  const historicoFmt = formatarHistorico(estado.historico);
 
-  // Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoRepresentativo)) {
     return {
       estado: { ...estado, fase: 'encerrado' },
@@ -478,7 +580,6 @@ export async function processarTurnoComRelato(
     };
   }
 
-  // Agradecimento
   if (fase === 'orientado' && ehAgradecimento(textoRepresentativo) && !temSintomaClinico(relatoPronto)) {
     return {
       estado: { ...estado, fase: 'orientado' },
@@ -494,11 +595,11 @@ export async function processarTurnoComRelato(
     };
   }
 
-  // [FIX] Base de conhecimento — mesmo filtro do fluxo de texto:
-  // só dispara pra pergunta de conhecimento pura, nunca pra navegação.
-  const ehConhecimento = ehPerguntaConhecimento(textoRepresentativo);
-  const ehNavegacao = ehPerguntaNavegacao(textoRepresentativo);
-  const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
+  const intencao = await classificarIntencao(textoRepresentativo, historicoFmt);
+  const ehConhecimento = intencao === 'conhecimento';
+  const ehNavegacao = intencao === 'navegacao';
+  const relatoComoQueixa =
+    intencao === 'relato' || descreveQueixaPropriaRegex(textoNorm);
   const nivelInicial = classificarNivel(relatoPronto);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
@@ -510,17 +611,27 @@ export async function processarTurnoComRelato(
   ) {
     const temTopico = await temTopicoRelevante(textoRepresentativo);
     if (temTopico) {
-      const respostaBase = await responderDaBase(textoRepresentativo);
+      const respostaBase = await responderDaBase(textoRepresentativo, historicoFmt);
       if (respostaBase) {
+        const cabecalho = respostaBase.titulo ? `*${respostaBase.titulo}*\n\n` : '';
+        const rodape = respostaBase.bloqueado
+          ? ''
+          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
+        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+
         return {
           estado: { ...estado, fase: 'orientado' },
           resultado: {
             tipo: 'orientacao',
-            texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
+            texto: mensagem,
             decisao: {
               categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
+              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
+              regra_acionada: 'base_conhecimento',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+              motivos: respostaBase.bloqueado
+                ? ['base bloqueada por segurança']
+                : ['base de conhecimento'],
             },
           },
         };
@@ -528,7 +639,6 @@ export async function processarTurnoComRelato(
     }
   }
 
-  // Áudio vazio / sem sintoma
   if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0 && !parecePergunta(textoRepresentativo)) {
     return {
       estado,
@@ -549,7 +659,6 @@ export async function processarTurnoComRelato(
   const nivel = classificarNivel(relatoPronto);
   const sinalCritico = nivel === 'critico';
 
-  // FAQ — só se não tem sintoma
   if (!temSintomaClinico(relatoPronto)) {
     const faq = checarFaq(textoRepresentativo);
     if (faq) {
@@ -567,7 +676,6 @@ export async function processarTurnoComRelato(
     }
   }
 
-  // Bloqueios
   if (!sinalCritico && ehPedidoMedicamento(textoRepresentativo)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {

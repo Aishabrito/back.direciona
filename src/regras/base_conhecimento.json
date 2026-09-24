@@ -80,11 +80,17 @@
       "tags": ["amamentacao", "leite materno", "mama", "bebe", "aleitamento"],
       "conteudo": "O leite materno é o alimento ideal para o bebê até os 6 meses de vida, exclusivamente. Depois, complementado com outros alimentos até 2 anos ou mais. O bebê deve mamar em livre demanda (quando quiser). Se houver dor nas mamas, fissuras ou dificuldade na pega, procure a UBS ou um Banco de Leite Humano para orientação. Sinais de alerta no bebê: não está ganhando peso, está muito sonolento, tem menos de 6 fraldas molhadas por dia, ou febre — procure atendimento."
     },
+        {
+      "id": "febre_geral",
+      "titulo": "Febre — o que é, quando se preocupar e onde buscar ajuda",
+      "tags": ["febre", "temperatura", "febre alta", "adulto", "febre persistente", "infecção", "37 graus", "38 graus", "39 graus"],
+      "conteudo": "Febre é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Em adultos e adolescentes, febre isolada de início recente sem outros sintomas pode ser acompanhada em casa com hidratação, repouso e antitérmico quando prescrito. Procure a UBS se a febre durar mais de 3 dias, se repetir com frequência ou vier com outros sintomas. Procure uma UPA ou ligue 192 imediatamente se houver: falta de ar, dor no peito, confusão mental, rigidez de nuca, manchas roxas na pele que não desaparecem ao esticar, convulsão, ou febre acima de 39°C que não baixa com antitérmico. Em crianças, bebês e gestantes, os critérios são diferentes e mais rigorosos — consulte os tópicos específicos."
+    },
     {
       "id": "febre_crianca",
       "titulo": "Febre em criança — quando procurar ajuda",
-      "tags": ["febre", "crianca", "bebe", "temperatura"],
-      "conteudo": "Febre é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Cuidados em casa: deixar a criança com pouca roupa, oferecer líquidos com frequência, dar antitérmico apenas se prescrito pelo médico. Procure imediatamente uma UPA ou ligue 192 se: bebê com menos de 3 meses com qualquer febre, criança muito sonolenta ou difícil de acordar, manchas roxas na pele que não desaparecem ao esticar, dificuldade para respirar, convulsão, rigidez de nuca, ou febre acima de 39°C que não baixa com antitérmico."
+      "tags": ["febre", "crianca", "bebe", "temperatura", "pediatria", "filho", "filha"],
+      "conteudo": "Febre em criança é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Cuidados em casa: deixar a criança com pouca roupa, oferecer líquidos com frequência, dar antitérmico apenas se prescrito pelo médico. Procure imediatamente uma UPA ou ligue 192 se: bebê com menos de 3 meses com qualquer febre, criança muito sonolenta ou difícil de acordar, manchas roxas na pele que não desaparecem ao esticar, dificuldade para respirar, convulsão, rigidez de nuca, ou febre acima de 39°C que não baixa com antitérmico."
     },
     {
       "id": "antibiotico",
