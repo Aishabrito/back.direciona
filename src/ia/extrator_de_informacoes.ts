@@ -359,40 +359,64 @@ const SYSTEM_INSTRUCTION = `Você é um médico regulador e triador do SUS (SAMU
 Interprete a gravidade e o contexto por trás da mensagem — gírias, erros ortográficos, relatos sobre terceiros.
 Extraia apenas o que está explícito, não invente informações.
 
-SOBRE "intencao":
-- CONHECIMENTO: pergunta genérica sobre saúde ou sobre o SUS ("o que é dengue", "qual a temperatura de febre", "como funciona o CAPS").
-- NAVEGACAO: pede indicação de onde ir ("para onde vou com dor de cabeça", "onde devo ir").
-- RELATO: descreve sintoma próprio ("estou com febre há 2 dias").
-- SAUDACAO: cumprimento isolado.
-- AGRADECIMENTO: agradece/encerra.
-- OUTRO: nada das categorias acima.
+SOBRE "intencoes":
+Lista com TODAS as intenções presentes na mensagem (pode ser mais de uma).
+
+- "conhecimento": pergunta genérica sobre saúde ou sobre o SUS.
+  Ex: "o que é dengue", "qual a temperatura de febre", "como funciona o CAPS".
+- "navegacao": pede indicação de onde ir / qual serviço procurar.
+  Ex: "para onde vou com dor de cabeça", "onde devo ir", "aonde levo meu filho".
+- "relato": descreve sintoma próprio em 1ª pessoa.
+  Ex: "estou com febre há 2 dias", "sinto dor de cabeça".
+- "saudacao": cumprimento isolado.
+- "agradecimento": agradece/encerra.
+- "outro": nada das categorias acima.
+
+REGRA DE MULTI-INTENT (importante):
+- Se a mensagem contém PERGUNTA GENÉRICA **e** RELATO/SINTOMA, devolva as duas:
+  Ex: "estou com dor de cabeça, o que é dengue?" → ["relato", "conhecimento"]
+  Ex: "febre e tosse. como funciona o CAPS?" → ["relato", "conhecimento"]
+  Ex: "tô com dor no peito. qual UPA mais perto?" → ["relato", "navegacao"]
+- Se for só cumprimento, ["saudacao"].
+- Se for só agradecimento, ["agradecimento"].
+- Se for só pergunta, ["conhecimento"].
+- Se for só relato, ["relato"].
+
+SOBRE "pergunta":
+- Quando houver intenção "conhecimento", extraia a PERGUNTA ESPECÍFICA aqui.
+- Ex: "estou com febre, o que é dengue?" → pergunta: "o que é dengue"
+- Ex: "qual a temperatura de febre?" → pergunta: "qual a temperatura de febre?"
+- Se não houver intenção "conhecimento", deixe string vazia.
 
 SOBRE "sintomas":
 - É a lista mais importante. Inclua QUALQUER queixa, sensação ou desconforto relatado.
-- NÃO se limite a exemplos. Se a pessoa menciona algo que a incomoda ou preocupa, isso É um sintoma.
 - Em dúvida, INCLUA.
 
 SOBRE "sinais_alerta":
 - Só marque o que indica gravidade: falta de ar, dor no peito, desmaio, confusão, sangramento intenso, convulsão, sinais de AVC, rigidez de nuca, lábios arroxeados, dor abdominal intensa.
-- NÃO marque cansaço/fraqueza isolados.
 
 DIRETRIZES:
-- Emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave, AVC.
-- Ideação suicida: "quero morrer", "não quero mais viver".
-- Se for PERGUNTA sobre termo/serviço, deixe "informacao_insuficiente": true.
-- NÃO diagnostique doenças.`;
+- NÃO diagnostique doenças.
+- Se a mensagem NÃO tem sintoma algum e é só pergunta, deixe "informacao_insuficiente": true.`;
 
-// ─── [Task 1] Schema fechado pro structured output ─────────
+// ─── [Task 3] Schema com `intencoes` (array) + `pergunta` ───
 export const RELATO_JSON_SCHEMA: JsonSchema = {
   name: 'relato_clinico_sus',
   strict: true,
   schema: {
     type: 'object',
     properties: {
-      intencao: {
+      intencoes: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: ['conhecimento', 'navegacao', 'relato', 'saudacao', 'agradecimento', 'outro'],
+        },
+        description: 'Lista de intenções presentes na mensagem (pode ter mais de uma).',
+      },
+      pergunta: {
         type: 'string',
-        enum: ['conhecimento', 'navegacao', 'relato', 'saudacao', 'agradecimento', 'outro'],
-        description: 'Intenção principal da mensagem.',
+        description: 'Pergunta específica de conhecimento, se houver. Senão, string vazia.',
       },
       sintomas: { type: 'array', items: { type: 'string' } },
       sinais_alerta: { type: 'array', items: { type: 'string' } },
@@ -427,7 +451,7 @@ export const RELATO_JSON_SCHEMA: JsonSchema = {
       informacao_insuficiente: { type: 'boolean' },
     },
     required: [
-      'intencao', 'sintomas', 'sinais_alerta', 'relato_sobre_terceiro', 'pessoa',
+      'intencoes', 'pergunta', 'sintomas', 'sinais_alerta', 'relato_sobre_terceiro', 'pessoa',
       'idade_grupo', 'idade_numerica', 'gestante', 'pos_parto', 'risco_mental',
       'falta_de_ar', 'dor_no_peito', 'desmaio', 'confusao', 'sangramento',
       'febre', 'vomitos', 'trauma', 'exposicao_intoxicacao', 'duracao',
@@ -482,18 +506,16 @@ export async function interpretarRelato(
     historicoFormatado && historicoFormatado !== '(sem histórico)'
       ? `HISTÓRICO RECENTE DA CONVERSA:\n${historicoFormatado}\n\n---\n\n`
       : ''
-  }RELATO ATUAL DO USUÁRIO:
+  }MENSAGEM ATUAL DO USUÁRIO:
 "${texto.replace(/"/g, '\\"')}"
 
-Extraia os dados clínicos APENAS do relato atual. Use o histórico somente para
-desambiguar referências ("e se for 40 graus?" → sobre a febre já mencionada).
+Extraia os dados clínicos E a(s) intenção(ões) da mensagem atual. Use o histórico
+somente para desambiguar referências ("e se for 40 graus?" → sobre a febre mencionada).
 NÃO misture sintomas antigos com o relato atual.`;
 
-  // [Task 1] structured output com schema fechado
   const parsed = await gerarJSON<any>(prompt, SYSTEM_INSTRUCTION, 20000, RELATO_JSON_SCHEMA);
   if (!parsed) return local;
 
-  // Post-processing: idade_numerica 0 → null (o schema não suporta null)
   const idadeLimpa = parsed.idade_numerica === 0 ? null : parsed.idade_numerica ?? null;
 
   const g = validarRelato({
@@ -503,9 +525,12 @@ NÃO misture sintomas antigos com o relato atual.`;
   }).relato;
 
   const resultado = mesclarComIA(local, g);
-  // [Task 1] preserva a intenção detectada — Task 2 vai consumir
-  if (typeof parsed.intencao === 'string') {
-    resultado.intencao = parsed.intencao;
+  // [Task 3] preserva intenções (array) e pergunta separada
+  if (Array.isArray(parsed.intencoes)) {
+    resultado.intencoes = parsed.intencoes.filter((x: any) => typeof x === 'string');
+  }
+  if (typeof parsed.pergunta === 'string' && parsed.pergunta.trim().length > 0) {
+    resultado.pergunta = parsed.pergunta.trim();
   }
   return resultado;
 }
@@ -514,6 +539,8 @@ NÃO misture sintomas antigos com o relato atual.`;
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
+    intencoes: { type: Type.ARRAY, items: { type: Type.STRING } },
+    pergunta: { type: Type.STRING },
     sintomas: { type: Type.ARRAY, items: { type: Type.STRING } },
     sinais_alerta: { type: Type.ARRAY, items: { type: Type.STRING } },
     relato_sobre_terceiro: { type: Type.BOOLEAN },
@@ -538,7 +565,7 @@ const RESPONSE_SCHEMA = {
     informacao_insuficiente: { type: Type.BOOLEAN },
     transcricao: { type: Type.STRING },
   },
-  required: ['sintomas', 'sinais_alerta', 'relato_sobre_terceiro'],
+  required: ['intencoes', 'sintomas', 'sinais_alerta', 'relato_sobre_terceiro'],
 };
 
 export async function interpretarAudio(
@@ -577,6 +604,12 @@ export async function interpretarAudio(
 
     const resultado = mesclarComIA(local, g);
     resultado.texto_original_acumulado = '[áudio] ' + transcricao;
+    if (Array.isArray(parsed.intencoes)) {
+      resultado.intencoes = parsed.intencoes.filter((x: any) => typeof x === 'string');
+    }
+    if (typeof parsed.pergunta === 'string' && parsed.pergunta.trim().length > 0) {
+      resultado.pergunta = parsed.pergunta.trim();
+    }
     return resultado;
   } catch (error) {
     console.error('❌ Gemini (áudio) falhou:', error);

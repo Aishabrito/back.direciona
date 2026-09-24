@@ -75,7 +75,10 @@ export type RelatoEstruturado = {
   autodiagnostico_grave: string | null;
   texto_original_acumulado: string;
 
-    pergunta?: string;
+  // [Task 3] Multi-intent: lista de intenções presentes na mensagem.
+  intencoes?: string[];
+  // [Task 3] Pergunta de conhecimento específica, quando houver.
+  pergunta?: string;
 };
 
 export type DecisaoRegras = {
