@@ -96,7 +96,7 @@ export type UltimaPergunta = {
   texto: string;
 };
 
-export type FaseConversa = 'inicio' | 'coletando' | 'orientado';
+export type FaseConversa = 'inicio' | 'coletando' | 'orientado' | 'encerrado';
 
 export type EstadoConversa = {
   relatos: RelatoEstruturado[];
