@@ -95,6 +95,12 @@ function descreveQueixaPropriaRegex(textoNorm: string): boolean {
   return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
 }
 
+// [FIX] Pré-filtro amplo de pedido de diagnóstico.
+// Pega casos que o ehPedidoDiagnostico do mensagens.ts não cobre.
+function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
+  return /\b(sera que (e|eh|tenho|to com|estou com)|acho que (e|eh|tenho|to com|estou com)|deve ser (gripe|dengue|covid|pneumonia|infarto|avc|virose|alergia)|to achando que|estou achando que|meus sintomas (sao|e|podem ser)|isso (pode|deve) ser (gripe|dengue|covid|pneumonia|infarto|avc)|pode ser (gripe|dengue|covid|pneumonia|infarto|avc))\b/.test(textoNorm);
+}
+
 // ────────────────────────────────────────────────────
 // Consolidação
 // ────────────────────────────────────────────────────
@@ -254,6 +260,30 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 2.5. [FIX] Bloqueio de diagnóstico ANTES do RAG.
+  // Pega "meus sintomas são de gripe?", "será que é dengue?", "acho que é COVID".
+  const nivelPre = classificarNivel(extraido);
+  const sinalCriticoPre = nivelPre === 'critico';
+
+  if (
+    !sinalCriticoPre &&
+    !respostaCurta &&
+    (ehPedidoDiagnostico(textoUsuario) || pedidoDiagnosticoAmplo(textoNorm))
+  ) {
+    const msg = mensagemPorId('recusa_diagnostico');
+    return {
+      estado,
+      resultado: {
+        tipo: 'orientacao', texto: msg.texto,
+        decisao: {
+          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
+          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
+        },
+      },
+    };
+  }
+
   // ── 3. Classificação de intenção (com histórico) + RAG
   const intencao = await classificarIntencao(textoUsuario, historicoFmt);
   const ehConhecimento = intencao === 'conhecimento';
@@ -275,7 +305,11 @@ async function processarTurnoInterno(
     if (temTopico) {
       const respostaBase = await responderDaBase(textoUsuario, historicoFmt);
       if (respostaBase) {
-        const cabecalho = respostaBase.titulo ? `*${respostaBase.titulo}*\n\n` : '';
+        // [FIX] só usa cabeçalho em fallback_direto (tópico curado direto).
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
         const rodape = respostaBase.bloqueado
           ? ''
           : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
@@ -339,7 +373,7 @@ async function processarTurnoInterno(
     }
   }
 
-  // ── 6. Bloqueios
+  // ── 6. Bloqueios (medicamento — diagnóstico já foi tratado no bloco 2.5)
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -349,20 +383,6 @@ async function processarTurnoInterno(
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
           resposta_id: 'recusa_medicamento', regra_acionada: 'bloqueio_medicamento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
-  }
-  if (!sinalCritico && ehPedidoDiagnostico(textoUsuario)) {
-    const msg = mensagemPorId('recusa_diagnostico');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
           versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
         },
       },
@@ -595,6 +615,28 @@ async function processarTurnoComRelatoInterno(
     };
   }
 
+  // ── 2.5. [FIX] Bloqueio de diagnóstico ANTES do RAG (mesmo tratamento do fluxo de texto)
+  const nivelPre = classificarNivel(relatoPronto);
+  const sinalCriticoPre = nivelPre === 'critico';
+
+  if (
+    !sinalCriticoPre &&
+    (ehPedidoDiagnostico(textoRepresentativo) || pedidoDiagnosticoAmplo(textoNorm))
+  ) {
+    const msg = mensagemPorId('recusa_diagnostico');
+    return {
+      estado,
+      resultado: {
+        tipo: 'orientacao', texto: msg.texto,
+        decisao: {
+          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
+          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
+        },
+      },
+    };
+  }
+
   const intencao = await classificarIntencao(textoRepresentativo, historicoFmt);
   const ehConhecimento = intencao === 'conhecimento';
   const ehNavegacao = intencao === 'navegacao';
@@ -613,7 +655,10 @@ async function processarTurnoComRelatoInterno(
     if (temTopico) {
       const respostaBase = await responderDaBase(textoRepresentativo, historicoFmt);
       if (respostaBase) {
-        const cabecalho = respostaBase.titulo ? `*${respostaBase.titulo}*\n\n` : '';
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
         const rodape = respostaBase.bloqueado
           ? ''
           : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
@@ -685,20 +730,6 @@ async function processarTurnoComRelatoInterno(
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
           resposta_id: 'recusa_medicamento', regra_acionada: 'bloqueio_medicamento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
-  }
-  if (!sinalCritico && ehPedidoDiagnostico(textoRepresentativo)) {
-    const msg = mensagemPorId('recusa_diagnostico');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
           versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
         },
       },
