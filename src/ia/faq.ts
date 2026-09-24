@@ -16,12 +16,29 @@ function extrairTokens(texto: string): string[] {
     .filter((p) => p.length > 2 && !STOP_WORDS.has(p));
 }
 
+// [FIX] Mais permissivo: aceita erro de digitação, transposição, plural
 function palavrasSemelhantes(a: string, b: string): boolean {
   if (a === b) return true;
-  if (a.length >= 5 && b.length >= 5 && (a.startsWith(b) || b.startsWith(a))) return true;
+
+  // Prefixo de pelo menos 4 caracteres
+  const minLen = Math.min(a.length, b.length);
+  if (minLen >= 4) {
+    let comum = 0;
+    for (let i = 0; i < minLen; i++) {
+      if (a[i] === b[i]) comum++;
+      else break;
+    }
+    if (comum >= minLen - 1) return true;
+  }
+
+  // Um contém o outro (>= 4 chars) — pega plural, diminutivo, prefixo comum
+  if (minLen >= 4 && (a.includes(b) || b.includes(a))) return true;
+
   const d = levenshtein.get(a, b);
   const max = Math.max(a.length, b.length);
-  return max <= 5 ? d <= 1 : d <= 2;
+  if (max <= 4) return d <= 1;
+  if (max <= 7) return d <= 2;
+  return d <= 3;
 }
 
 const SINTOMA_PRIMEIRA_PESSOA =
@@ -50,7 +67,10 @@ export function checarFaq(texto: string): ItemFaq | null {
       const cobertura = acertos / tokensGatilho.length;
       const score = cobertura * acertos;
 
-      if (cobertura >= 0.75 && acertos >= 2 && score > melhorScore) {
+      // Perguntas curtas (1-2 tokens) toleram 1 acerto com cobertura alta
+      const minAcertos = tokensUsuario.length <= 2 ? 1 : 2;
+      const coberturaMin = tokensUsuario.length <= 2 ? 0.7 : 0.75;
+      if (cobertura >= coberturaMin && acertos >= minAcertos && score > melhorScore) {
         melhorScore = score;
         melhorItem = item;
       }
