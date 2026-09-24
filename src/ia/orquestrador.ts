@@ -54,8 +54,6 @@ function consolidar(estado: EstadoConversa): RelatoEstruturado {
   return { ...base, texto_original_acumulado: estado.texto_original_acumulado || '' };
 }
 
-// [FIX] Conta sinais_trauma também — antes uma "queda" sozinha podia
-// fazer o bot achar que não havia nada clínico.
 function temSintomaClinico(relato: RelatoEstruturado): boolean {
   return (
     relato.sintomas.length > 0 ||
@@ -68,11 +66,19 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
   );
 }
 
-// Detecta se a pessoa está perguntando algo (não descrevendo sintoma)
+//Detecta pergunta com tolerância a abreviações comuns no WhatsApp.
+// Aceita: "oq eh X", "pq", "qdo", "kd", "me explica", "o que é", etc.
 function parecePergunta(texto: string): boolean {
+  if (/\?/.test(texto)) return true;
+
   const n = normalizarTexto(texto);
-  return /[?]/.test(texto) ||
-    /\b(o que|como|por que|porque|quando|qual|quais|onde|serve|devo|posso|pra que)\b/.test(n);
+  return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera)\b/.test(n);
+}
+
+// Detecta se a pessoa descreve uma queixa em 1ª pessoa:
+// "estou com X", "sinto Y", "to com Z". Usado pra separar pergunta de relato.
+function descreveQueixaPropriaRegex(textoNorm: string): boolean {
+  return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
 }
 
 // ============================================================
@@ -87,7 +93,7 @@ export async function processarTurno(
   const fase = estado.fase ?? 'inicio';
   const textoNorm = normalizarTexto(textoUsuario);
 
-  // Confirmação pós-orientação → encerramento amigável
+  // ── 1. Confirmação pós-orientação → encerramento amigável
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
     return {
       estado: { ...estado, fase: 'encerrado' },
@@ -108,7 +114,7 @@ export async function processarTurno(
     ? ({ ...RELATO_VAZIO, ...respostaCurta, texto_original_acumulado: '' } as RelatoEstruturado)
     : await interpretarRelato(textoUsuario);
 
-  // Detecção de novo caso (zera o contexto)
+  // ── 2. Detecção de novo caso (zera o contexto)
   const ehNovoCaso = /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
 
   if (fase === 'orientado' && ehNovoCaso) {
@@ -127,6 +133,38 @@ export async function processarTurno(
     };
   }
 
+  // ── 3. BASE DE CONHECIMENTO — perguntas sobre saúde ANTES da triagem
+  // Regra: se PARECE PERGUNTA e NÃO é relato de queixa própria, consulta a
+  // base. Não depende de temSintomaClinico porque "o que é dengue?" é pergunta
+  // mesmo que o extrator marque "dengue" como sintoma.
+  const ehPergunta = parecePergunta(textoUsuario);
+  const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
+
+  const nivelInicial = classificarNivel(extraido);
+  const sinalCriticoInicial = nivelInicial === 'critico';
+
+  if (ehPergunta && !relatoComoQueixa && !sinalCriticoInicial && !respostaCurta) {
+    const temTopico = await temTopicoRelevante(textoUsuario);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(textoUsuario);
+      if (respostaBase) {
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
+            decisao: {
+              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+              resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
+            },
+          },
+        };
+      }
+    }
+  }
+
+  // ── 4. Agradecimento
   if (fase === 'orientado' && ehAgradecimento(textoUsuario) && !temSintomaClinico(extraido)) {
     return {
       estado: { ...estado, fase: 'orientado' },
@@ -145,7 +183,7 @@ export async function processarTurno(
   const nivel = classificarNivel(extraido);
   const sinalCritico = nivel === 'critico';
 
-  // FAQ — só se não tem sintoma clínico
+  // ── 5. FAQ — só se não tem sintoma clínico
   if (!temSintomaClinico(extraido) && !respostaCurta) {
     const faqEncontrada = checarFaq(textoUsuario);
     if (faqEncontrada) {
@@ -164,7 +202,7 @@ export async function processarTurno(
     }
   }
 
-  // Bloqueios de escopo
+  // ── 6. Bloqueios de escopo
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -194,7 +232,7 @@ export async function processarTurno(
     };
   }
 
-  // Saudação inicial SEM sintoma
+  // ── 7. Saudação inicial SEM sintoma
   if (
     estado.relatos.length === 0 &&
     ehSaudacao(textoUsuario) &&
@@ -226,43 +264,34 @@ export async function processarTurno(
     };
   }
 
-  // ============================================================
-  // BASE DE CONHECIMENTO — antes de desistir, pesquisa
-  // ============================================================
-  // Se a pessoa fez uma PERGUNTA sobre saúde (não descreveu sintoma),
-  // tentamos responder via base de conhecimento antes de cair em "fora de escopo".
-  if (
+  // ── 8.Reset de contexto: mensagem sem nada clínico e não-pergunta
+  // (ex: "como plantar tomate?") — zera o estado anterior pra não herdar
+  // sintomas antigos ("dengue", "tosse") na triagem.
+  const nadaClinico =
     !temSintomaClinico(extraido) &&
-    estado.relatos.length === 0 &&
-    !respostaCurta &&
-      parecePergunta(textoUsuario) &&
-    (await temTopicoRelevante(textoUsuario))
-  ) {
-    const respostaBase = await responderDaBase(textoUsuario);
-    if (respostaBase) {
-      return {
-        estado: { ...estado, fase: 'orientado' },
-        resultado: {
-          tipo: 'orientacao',
-          texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
-          decisao: {
-            categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-            resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
-            versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
-          },
+    !ehPergunta &&
+    !relatoComoQueixa &&
+    !respostaCurta;
+
+  if (nadaClinico) {
+    const msgForaEscopo = mensagemPorId('fora_escopo_001');
+    return {
+      estado: { ...ESTADO_INICIAL },
+      resultado: {
+        tipo: 'orientacao', texto: msgForaEscopo.texto,
+        decisao: {
+          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+          resposta_id: 'fora_escopo_001', regra_acionada: 'fora_do_escopo_reset',
+          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['fora de escopo'],
         },
-      };
-    }
-    // Se `responderDaBase` devolveu null, segue o fluxo — provavelmente cai em fora de escopo.
+      },
+    };
   }
 
-  const descreveQueixaPropria =
-    /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
-
-  // Fora de escopo
+  // ── 9. Fora de escopo (primeira interação)
   if (
     !temSintomaClinico(extraido) &&
-    !descreveQueixaPropria &&
+    !relatoComoQueixa &&
     estado.relatos.length === 0 &&
     !respostaCurta
   ) {
@@ -280,7 +309,7 @@ export async function processarTurno(
     };
   }
 
-  // Consolida relato
+  // ── 10. Consolida relato
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -394,6 +423,7 @@ export async function processarTurnoComRelato(
   inc('total_mensagens');
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const fase = estado.fase ?? 'inicio';
+  const textoNorm = normalizarTexto(textoRepresentativo);
 
   // Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoRepresentativo)) {
@@ -427,8 +457,36 @@ export async function processarTurnoComRelato(
     };
   }
 
+  // Base de conhecimento — mesmo no fluxo de áudio, se a transcrição
+  // virou uma pergunta ("o que é dengue?"), consulta a base antes de triar.
+  const ehPergunta = parecePergunta(textoRepresentativo);
+  const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
+  const nivelInicial = classificarNivel(relatoPronto);
+  const sinalCriticoInicial = nivelInicial === 'critico';
+
+  if (ehPergunta && !relatoComoQueixa && !sinalCriticoInicial) {
+    const temTopico = await temTopicoRelevante(textoRepresentativo);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(textoRepresentativo);
+      if (respostaBase) {
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
+            decisao: {
+              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+              resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
+            },
+          },
+        };
+      }
+    }
+  }
+
   // Áudio vazio / sem sintoma
-  if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0) {
+  if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0 && !ehPergunta) {
     return {
       estado,
       resultado: {
