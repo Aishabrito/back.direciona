@@ -302,6 +302,10 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'ubs_001', 'AGENDAR', ['queixa estável']);
   }
 
+  if (R.sintomas.includes('queixa inespecífica')) {
+    return decisao('queixa_inespecifica', 'baixa_gravidade', 'UBS_CLINICA_DA_FAMILIA',
+      'ubs_001', 'AGENDAR', ['queixa a esclarecer']);
+  }
   return decisao('informacao_insuficiente', 'informacao_insuficiente', 'FALLBACK',
     'fallback_001', 'HOJE', ['informação insuficiente']);
 }

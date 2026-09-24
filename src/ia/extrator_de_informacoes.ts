@@ -129,11 +129,8 @@ function extrairDuracao(n: string): string {
   return 'nao_informado';
 }
 
-// [FIX 1+2] Perguntas sobre termos/serviços ("o que é AVC?", "o que é infarto?",
-// "oq e caps", "diferença entre UPA e UBS") são perguntas institucionais, não
-// relato de sintoma. Sem este filtro, citar "avc"/"infarto" já bastava pra
-// disparar SAMU_AGORA (emergência falsa). Frases de autopreocupação continuam
-// passando ("será que é infarto?", "acho que é avc").
+// Perguntas sobre termos/serviços ("o que é AVC?", "o que é infarto?",
+// "oq e caps", "diferença entre UPA e UBS") NÃO são relato de sintoma.
 const RE_PERGUNTA_DEFINICAO =
   /\bo?\s*q(?:ue)?\s*(?:eh|e|sao)\b|\bpra\s*que\s*serve\b|\bpara\s*que\s*serve\b|\bquando\s*(?:ir|devo\s*ir|procurar)\b|\bcomo\s*funciona\b|\bquer\s*dizer\b|\bsignifica\b|\bdif[a-z]{3,}\b/;
 const MARCADORES_PRIMEIRA_PESSOA =
@@ -143,11 +140,9 @@ function pareceDuvidaSobreTermo(n: string): boolean {
   return RE_PERGUNTA_DEFINICAO.test(n) && !MARCADORES_PRIMEIRA_PESSOA.test(n);
 }
 
-// [FIX 4] Exposição a intoxicação: além dos termos clínicos, cobre quantidade
-// ("tomei 2 cartelas", "bebi um vidro de álcool"). Sem isso, overdose relatada
-// por quantidade não sobe pra SAMU.
+// [FIX] Aceita singular e plural (cartela/cartelas, vidro/vidros...)
 const RE_INTOXICACAO =
-  /intoxica[cç][aã]o|envenenamento|overdose|tomei\s+\d+\s+(caixa|cartela|vidro|garrafa|frasco|comprimido|comprimidos)|bebi\s+\d+\s+(vidro|garrafa|frasco)|ingeri\s+\d+/;
+  /intoxica[cç][aã]o|envenenamento|overdose|tomei\s+\d+\s+(caixas?|cartelas?|vidros?|garrafas?|frascos?|comprimidos?|unidades?)|bebi\s+\d+\s+(vidros?|garrafas?|frascos?)|ingeri\s+\d+/;
 
 export function extrairInformacoes(texto: string): RelatoEstruturado {
   const n = normalizarTexto(texto);
@@ -165,7 +160,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   if (ehSaudacao) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
-  // [FIX 1+2] Pergunta institucional → não extrai nada clínico. Quem responde é o FAQ.
+  // Pergunta institucional → não extrai nada clínico
   if (pareceDuvidaSobreTermo(n)) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
   const falta_de_ar = afirmadoTri(nc, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
@@ -176,7 +171,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   const febre = afirmadoTri(nc, /\bfebre\b|\bfebril\b/);
   const vomitos = afirmadoTri(nc, /\bvomito\b|\bvomitando\b|\bvomitei\b|\benjoo\b|\bnausea\b/);
   const trauma = afirmadoTri(nc, /\btrauma\b|\bacidente\b|\bbatida\b|\bqueda\b|\bcaiu\b|\bcai\b|\batropel/);
-  // [FIX 4] Usa RE_INTOXICACAO ampliado
   const exposicao_intoxicacao = afirmadoTri(nc, RE_INTOXICACAO);
 
   const labios_roxos = afirmadoTri(nc, /\blabios (roxos|arroxeados|azuis)\b/);
@@ -218,9 +212,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     if (!sintomas.includes('sinais de desidratação')) sintomas.push('sinais de desidratação');
   }
 
-  // RISCO MENTAL
-  // [FIX 3] 'caps' SAIU da lista. Perguntar "o que é CAPS" não é sinal de sofrimento
-  // psíquico. O CAPS é só um serviço. Quem responde é o FAQ.
+  // RISCO MENTAL ('caps' removido — pergunta não é sintoma)
   let risco_mental: RelatoEstruturado['risco_mental'] = 'nao_mencionado';
   if (/\bquero me matar\b|\bvou me matar\b|\bn[aã]o quero mais viver\b|\bquero morrer\b|\bacabar com tudo\b|\btentativa de suic[ií]dio\b|\bme machucar\b/.test(n)) {
     risco_mental = 'iminente';
@@ -259,7 +251,6 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     }
   }
 
-  // [FIX 3+4] sintomasMap: 'caps' removido (não é sintoma), intoxicação ampliada
   const sintomasMap: [RegExp, string][] = [
     [/\bfebre\b/, 'febre'],
     [/\btosse\b/, 'tosse'],
@@ -367,20 +358,50 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 
   const validado = validarRelato(bruto);
   if (!validado.ok) console.warn('⚠️ Relato fora do formato:', bruto);
+   if (
+    bruto.sintomas.length === 0 &&
+    bruto.sinais_alerta.length === 0 &&
+    !bruto.autodiagnostico_grave &&
+    bruto.risco_mental === 'nao_mencionado'
+  ) {
+    const descreveQueixa =
+      /\b(estou|to|tou|sinto|senti|me sinto|estou me sentindo|tenho|ando|venho)\b/.test(n) &&
+      /\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(n);
+    if (descreveQueixa) {
+      bruto.sintomas = ['queixa inespecífica'];
+      bruto.informacao_insuficiente = false;
+    }
+  }
   return validado.relato;
 }
 
 const SYSTEM_INSTRUCTION = `Você é um médico regulador e triador do SUS (SAMU 192, UBS, UPA).
 Interprete a gravidade e o contexto por trás da mensagem — gírias, erros ortográficos, relatos sobre terceiros.
 Extraia apenas o que está explícito, não invente informações.
+
+SOBRE "sintomas":
+- É a lista mais importante. Inclua QUALQUER queixa, sensação ou desconforto relatado.
+- NÃO se limite a exemplos. Se a pessoa menciona algo que a incomoda ou preocupa,
+  isso É um sintoma e DEVE entrar na lista.
+- Exemplos que devem SEMPRE virar sintoma: cansaço, fraqueza, corpo mole, desânimo,
+  tontura, mal-estar, insônia, falta de apetite, dor em qualquer parte do corpo,
+  queimação, coceira, mancha, inchaço, dormência, formigamento, visão embaçada,
+  ouvido tampado, gosto ruim na boca, dor de barriga, azia, náusea, arroto, gases.
+- Em dúvida, INCLUA. É melhor pecar por excesso do que perder uma queixa real.
+
+SOBRE "sinais_alerta":
+- Só marque o que indica gravidade: falta de ar, dor no peito, desmaio, confusão,
+  sangramento intenso, convulsão, sinais de AVC (boca torta, fala enrolada),
+  rigidez de nuca, lábios arroxeados, dor abdominal intensa.
+- NÃO marque cansaço/fraqueza isolados como sinal de alerta.
+
 DIRETRIZES:
-- Sintomas: dor, febre, tosse, queimadura, queda.
-- Emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave, AVC (boca torta, fala enrolada).
+- Emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão,
+  sangramento intenso, trauma grave, AVC.
 - Ideação suicida: "quero morrer", "não quero mais viver".
 - Se a mensagem for uma PERGUNTA sobre o que é um termo/serviço (ex.: "o que é CAPS",
-  "o que é AVC", "diferença entre UPA e UBS", "pra que serve o SAMU") e a pessoa não
-  estiver relatando algo que sente, NÃO marque sintomas, sinais de alerta nem risco_mental.
-  Deixe "informacao_insuficiente": true nesse caso.
+  "o que é AVC", "diferença entre UPA e UBS") e a pessoa não estiver relatando algo
+  que sente, deixe "informacao_insuficiente": true.
 - NÃO diagnostique doenças.`;
 
 const RESPONSE_SCHEMA = {

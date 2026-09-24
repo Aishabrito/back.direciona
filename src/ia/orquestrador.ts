@@ -216,9 +216,12 @@ export async function processarTurno(
     };
   }
 
-  // Fora de escopo
+   const descreveQueixaPropria =
+    /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
+
   if (
     !temSintomaClinico(extraido) &&
+    !descreveQueixaPropria &&
     estado.relatos.length === 0 &&
     !respostaCurta
   ) {
