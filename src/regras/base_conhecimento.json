@@ -1,0 +1,108 @@
+{
+  "versao": "1.0.0",
+  "atualizado_em": "2026-03-15",
+  "topicos": [
+    {
+      "id": "dengue",
+      "titulo": "Dengue — sintomas, transmissão e quando procurar ajuda",
+      "tags": ["dengue", "aedes", "mosquito", "febre", "dor no corpo", "mancha"],
+      "conteudo": "A dengue é transmitida pela picada do mosquito Aedes aegypti, principalmente em períodos chuvosos. Os sintomas clássicos são febre alta (acima de 38°C), dor de cabeça, dor atrás dos olhos, dor no corpo e nas juntas, náusea e manchas vermelhas na pele. A maioria dos casos evolui bem com hidratação e repouso. SINAIS DE ALARME que exigem atendimento imediato: dor abdominal intensa e contínua, vômitos persistentes, sangramento pelo nariz ou gengiva, fezes escuras, tontura ao levantar, sonolência excessiva, pele pálida e fria. Não tome ácido acetilsalicílico (AAS) nem anti-inflamatórios — aumentam o risco de sangramento. Procure uma UPA se tiver sinais de alarme; a UBS atende casos leves."
+    },
+    {
+      "id": "dengue_zika_chikungunya",
+      "titulo": "Diferença entre dengue, zika e chikungunya",
+      "tags": ["zika", "chikungunya", "dengue", "aedes", "arbovirose"],
+      "conteudo": "As três são transmitidas pelo mesmo mosquito (Aedes aegypti) e podem ter sintomas parecidos. Dengue: febre alta e dor no corpo, pode evoluir para formas graves. Zika: febre baixa, manchas vermelhas no corpo, conjuntivite, dura poucos dias; é perigoso principalmente para gestantes (risco de microcefalia). Chikungunya: febre e dor intensa nas juntas (articulações), que pode durar meses. Não há tratamento específico para nenhuma — o cuidado é sintomático com hidratação e repouso. Todas exigem avaliação médica para confirmar o diagnóstico."
+    },
+    {
+      "id": "gripe_resfriado",
+      "titulo": "Diferença entre gripe e resfriado",
+      "tags": ["gripe", "resfriado", "influenza", "coriza", "tosse"],
+      "conteudo": "Resfriado comum: causado por rinovírus, geralmente brando, com coriza, espirros, garganta irritada, dura 3 a 7 dias. Gripe (influenza): causada pelo vírus influenza, mais intensa, com febre alta, dor no corpo, dor de cabeça, cansaço, pode durar 1 a 2 semanas. Ambos melhoram com repouso e hidratação. Procure uma UBS se persistir além de 7 dias ou se tiver febre alta por mais de 3 dias. Procure uma UPA se surgir falta de ar, dor no peito ou piora rápida. A vacina contra gripe é oferecida anualmente na UBS para grupos prioritários (idosos, crianças, gestantes, profissionais de saúde)."
+    },
+    {
+      "id": "covid",
+      "titulo": "COVID-19 — sintomas e cuidados",
+      "tags": ["covid", "coronavirus", "sars", "perda de olfato", "perda de paladar"],
+      "conteudo": "A COVID-19 é causada pelo vírus SARS-CoV-2. Sintomas comuns: febre, tosse, dor de garganta, perda de olfato ou paladar, cansaço, dor no corpo. Casos leves podem ser acompanhados em casa com repouso e hidratação, isolamento por 5 a 7 dias. Procure uma UPA se surgir falta de ar, dor no peito, confusão, lábios arroxeados ou saturação de oxigênio abaixo de 94%. A vacinação está disponível na UBS para grupos prioritários."
+    },
+    {
+      "id": "pressao_alta",
+      "titulo": "Pressão alta (hipertensão) — o que fazer",
+      "tags": ["pressao alta", "hipertensao", "pressao arterial", "dor de cabeca"],
+      "conteudo": "A hipertensão é uma doença crônica comum, geralmente sem sintomas, que exige acompanhamento na UBS com medição regular da pressão arterial. Pressão alta persistente pode causar AVC, infarto e problemas nos rins. Mudanças no estilo de vida ajudam: reduzir sal, praticar atividade física, controlar o peso, evitar álcool e cigarro. Se a pressão subir muito e vier acompanhada de dor de cabeça intensa, visão turva, dor no peito ou falta de ar, procure imediatamente uma UPA ou ligue 192."
+    },
+    {
+      "id": "diabetes",
+      "titulo": "Diabetes — sintomas e acompanhamento",
+      "tags": ["diabetes", "glicemia", "açucar no sangue", "sede", "urinar muito"],
+      "conteudo": "O diabetes é uma doença crônica caracterizada por níveis elevados de açúcar no sangue. Sintomas comuns: muita sede, urinar muito, cansaço, perda de peso sem explicação, visão embaçada, feridas que demoram a cicatrizar. O acompanhamento é feito na UBS com exames de sangue periódicos e uso de medicamentos quando prescritos. Sinais de emergência: confusão mental, hálito de acetona, respiração rápida e profunda, desmaio — procure uma UPA imediatamente."
+    },
+    {
+      "id": "asma",
+      "titulo": "Asma — crise e cuidados",
+      "tags": ["asma", "chiado no peito", "falta de ar", "bronquite"],
+      "conteudo": "A asma é uma doença inflamatória dos brônquios que causa chiado no peito, tosse seca e falta de ar. Durante uma crise, o tratamento inclui o uso de bombinhas (broncodilatadores) prescritas. Numa crise grave, com falta de ar intensa que não melhora com a bombinha, dificuldade para falar frases inteiras, ou lábios arroxeados, procure uma UPA ou ligue 192. O acompanhamento de rotina é feito na UBS, com plano de ação escrito pelo médico."
+    },
+    {
+      "id": "alergia",
+      "titulo": "Alergia — quando é grave",
+      "tags": ["alergia", "alérgico", "coceira", "urticaria", "anafilaxia"],
+      "conteudo": "Reações alérgicas leves causam coceira, espirros, coriza, olhos vermelhos — trate com antialérgico prescrito ou procure a UBS. SINAIS DE GRAVIDADE: falta de ar, chiado no peito, inchaço nos lábios, língua ou garganta, dificuldade para engolir, tontura, desmaio, queda de pressão. Isso é anafilaxia, uma emergência — ligue 192 imediatamente. Pessoas com histórico de alergia grave devem andar com adrenalina autoinjetável quando prescrita."
+    },
+    {
+      "id": "dor_cabeca",
+      "titulo": "Dor de cabeça — tipos e quando se preocupar",
+      "tags": ["dor de cabeca", "enxaqueca", "cefaleia", "migranea"],
+      "conteudo": "A maioria das dores de cabeça é benigna (tensão, enxaqueca, cansaço, desidratação). Melhora com repouso, hidratação e analgésico comum. SINAIS DE ALARME: dor de cabeça súbita e muito intensa (a pior da vida), acompanhada de febre e rigidez de nuca, vômitos em jato, confusão, fraqueza em um lado do corpo, alteração da visão ou da fala, ou após uma queda. Nesses casos, procure uma UPA ou ligue 192 imediatamente."
+    },
+    {
+      "id": "dor_costas",
+      "titulo": "Dor nas costas — quando procurar ajuda",
+      "tags": ["dor nas costas", "lombar", "coluna", "lombalgia"],
+      "conteudo": "A dor nas costas é muito comum e geralmente melhora com repouso relativo, calor local e analgésico. Procure uma UBS se durar mais de uma semana, se repetir com frequência ou se atrapalhar as atividades diárias. SINAIS DE URGÊNCIA: dor que desce pela perna com formigamento ou perda de força, perda de controle da urina ou fezes, febre com dor intensa, dor após uma queda, ou perda de sensibilidade na região genital — procure uma UPA."
+    },
+    {
+      "id": "diarreia",
+      "titulo": "Diarreia — cuidados em casa e sinais de alerta",
+      "tags": ["diarreia", "desidratacao", "soro", "intestino"],
+      "conteudo": "A diarreia aguda geralmente dura 2 a 3 dias e melhora com hidratação (soro caseiro ou soro de reidratação oral) e alimentação leve. Evite refrigerantes, sucos industrializados e leite. Procure uma UBS se durar mais de 3 dias ou se houver sangue nas fezes. Procure uma UPA se houver sinais de desidratação: boca seca, olhos fundos, pouca urina, tontura ao levantar, sonolência excessiva. Em crianças e idosos, a desidratação é mais rápida — procure atendimento antes."
+    },
+    {
+      "id": "vacinacao",
+      "titulo": "Vacinação — calendário e onde tomar",
+      "tags": ["vacina", "vacinacao", "imunizacao", "calendario"],
+      "conteudo": "As vacinas estão disponíveis gratuitamente na UBS de referência, com o Cartão Nacional de Saúde e documento com foto. O calendário infantil inclui BCG, hepatite B, pentavalente, VIP/VOP, rotavírus, pneumocócica, meningocócica, tríplice viral, varicela e outras. Adultos e idosos têm calendário próprio (gripe anual, COVID-19, tétano, hepatite B). Gestantes têm calendário específico. Leve sempre o cartão de vacinação para registro."
+    },
+    {
+      "id": "aleitamento",
+      "titulo": "Amamentação — orientações gerais",
+      "tags": ["amamentacao", "leite materno", "mama", "bebe", "aleitamento"],
+      "conteudo": "O leite materno é o alimento ideal para o bebê até os 6 meses de vida, exclusivamente. Depois, complementado com outros alimentos até 2 anos ou mais. O bebê deve mamar em livre demanda (quando quiser). Se houver dor nas mamas, fissuras ou dificuldade na pega, procure a UBS ou um Banco de Leite Humano para orientação. Sinais de alerta no bebê: não está ganhando peso, está muito sonolento, tem menos de 6 fraldas molhadas por dia, ou febre — procure atendimento."
+    },
+    {
+      "id": "febre_crianca",
+      "titulo": "Febre em criança — quando procurar ajuda",
+      "tags": ["febre", "crianca", "bebe", "temperatura"],
+      "conteudo": "Febre é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Cuidados em casa: deixar a criança com pouca roupa, oferecer líquidos com frequência, dar antitérmico apenas se prescrito pelo médico. Procure imediatamente uma UPA ou ligue 192 se: bebê com menos de 3 meses com qualquer febre, criança muito sonolenta ou difícil de acordar, manchas roxas na pele que não desaparecem ao esticar, dificuldade para respirar, convulsão, rigidez de nuca, ou febre acima de 39°C que não baixa com antitérmico."
+    },
+    {
+      "id": "antibiotico",
+      "titulo": "Antibióticos — uso correto",
+      "tags": ["antibiotico", "bacteria", "virus", "receita"],
+      "conteudo": "Antibióticos só funcionam contra bactérias, não contra vírus. Por isso, não ajudam em gripes, resfriados ou COVID — na maioria dos casos. O uso incorreto causa resistência bacteriana, dificultando tratamentos futuros. Só use antibiótico com prescrição médica, na dose e pelo tempo indicados. Não pare antes do fim do tratamento mesmo se sentir melhor. Não use sobras de tratamentos anteriores nem compartilhe com outras pessoas. Guardar e descartar antibiótico deve ser feito corretamente (na farmácia ou UBS)."
+    },
+    {
+      "id": "saude_mental_ansiedade",
+      "titulo": "Ansiedade e crise de pânico — o que fazer",
+      "tags": ["ansiedade", "panico", "crise", "coracao acelerado", "falta de ar"],
+      "conteudo": "A ansiedade pode causar coração acelerado, falta de ar, sudorese, tremores, sensação de morte iminente. Numa crise de pânico, respire devagar, conte até 4 para inspirar e 6 para expirar, foque em objetos ao redor. Se for a primeira vez ou se houver dor no peito intensa, procure uma UPA para descartar causas cardíacas. O acompanhamento contínuo é feito no CAPS ou na UBS, com apoio psicológico e, quando indicado, medicação. O CVV 188 atende gratuitamente 24h para apoio emocional."
+    },
+    {
+      "id": "dengue_prevencao",
+      "titulo": "Prevenção da dengue em casa",
+      "tags": ["dengue", "prevencao", "agua parada", "mosquito"],
+      "conteudo": "Para evitar a dengue, elimine água parada em pneus, garrafas, vasos de plantas, calhas e caixas d'água destampadas. Mantenha caixas d'água, tonéis e cisternas fechados. Tampe ralos pouco usados. Lave bebedouros de animais com escova semanalmente. Descarte corretamente lixo que possa acumular água. Se a prefeitura fizer visita de combate ao mosquito, permita a entrada dos agentes. Em períodos de epidemia, use repelente."
+    }
+  ]
+}
