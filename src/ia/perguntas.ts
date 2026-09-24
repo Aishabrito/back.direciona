@@ -2,7 +2,8 @@ import type { RelatoEstruturado, UltimaPergunta } from './tipos';
 
 export type TemaPergunta =
   | 'vago' | 'dor' | 'febre' | 'respiratorio'
-  | 'falta_de_ar' | 'crianca' | 'gestacao' | 'saude_mental';
+  | 'falta_de_ar' | 'crianca' | 'gestacao' | 'saude_mental'
+  | 'trauma' | 'desmaio';
 
 export type Pergunta = {
   id: string;
@@ -44,6 +45,17 @@ export const PERGUNTAS: Record<TemaPergunta, Pergunta[]> = {
     { id: 'mental_risco', texto: 'Existe risco de a pessoa se machucar ou machucar alguém agora?', campoAlvo: 'risco_mental' },
     { id: 'mental_intox', texto: 'Houve tentativa recente, intoxicação ou desmaio?' },
   ],
+  trauma: [
+    { id: 'trauma_cabeca', texto: 'Bateu a cabeça ou perdeu a consciência em algum momento?', campoAlvo: 'desmaio' },
+    { id: 'trauma_consciencia', texto: 'A pessoa está consciente e falando normalmente?', campoAlvo: 'confusao' },
+    { id: 'trauma_tempo', texto: 'Quando aconteceu?', campoAlvo: 'duracao' },
+  ],
+  // [NOVO] Tema específico para desmaio/desacordo
+  desmaio: [
+    { id: 'desmaio_recuperou', texto: 'Você voltou a ficar consciente logo depois ou ainda está se sentindo tonto?', campoAlvo: 'confusao' },
+    { id: 'desmaio_contexto', texto: 'Foi ao levantar, depois de esforço, ou sem motivo aparente?', campoAlvo: 'sintomas' },
+    { id: 'desmaio_duracao', texto: 'Há quanto tempo aconteceu?', campoAlvo: 'duracao' },
+  ],
 };
 
 export function escolherTemaPergunta(params: {
@@ -53,7 +65,15 @@ export function escolherTemaPergunta(params: {
   risco_mental: string;
   falta_de_ar: boolean | 'nao_informado';
   febre?: boolean | 'nao_informado';
+  sinais_trauma?: string[];
 }): TemaPergunta {
+  // [NOVO] Desmaio primeiro (é mais específico que febre)
+  if (params.sintomas.some((s) => /desmai/i.test(s))) return 'desmaio';
+
+  // Trauma (se já tem mecanismo identificado)
+  if (params.sinais_trauma && params.sinais_trauma.length > 0) return 'trauma';
+  if (params.sintomas.some((s) => /trauma|queda|acidente|batida/i.test(s))) return 'trauma';
+
   if (params.risco_mental === 'sem_risco_imediato') return 'saude_mental';
   if (params.idade_grupo === 'bebe' || params.idade_grupo === 'crianca') return 'crianca';
   if (params.gestante === 'nao_informado' && params.sintomas.some((s) => s.includes('sangramento'))) return 'gestacao';
@@ -78,8 +98,6 @@ export function escolherProximaPergunta(
   return null;
 }
 
-// Só trata como resposta curta se a mensagem for MESMO curta.
-// "não, mas estou com dor" tem mais de 5 palavras → não é resposta curta.
 const SO_CURTA =
   /^\s*(sim|s|nao|n|não|ok|isso|claro|positivo|negativo|afirmativo|talvez|nao sei|não sei|nao tenho certeza|consigo|nao consigo|nao posso|não posso|tenho|estou|nao tenho|nao estou|acabei de falar|ja falei|já falei)\s*$/i;
 
@@ -104,7 +122,6 @@ export function interpretarRespostaCurta(
   const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[.!?,;]+$/g, '').trim();
 
-  // Resposta a "há quantos dias?" → "3 dias", "uma semana", "desde ontem", "ontem"
   if (ultima.campoAlvo === 'duracao') {
     const m = n.match(RE_DURACAO_CURTA);
     if (m) return { duracao: `${m[1]} ${m[2]}` };
@@ -115,7 +132,6 @@ export function interpretarRespostaCurta(
     return null;
   }
 
-  // Resposta a "qual a idade?" → "5", "5 anos", "8 meses"
   if (ultima.campoAlvo === 'idade_numerica') {
     const m = n.match(/^(\d{1,3})\s*(anos?|meses|mes)?$/);
     if (m) {
