@@ -10,9 +10,10 @@ import pino from "pino";
 import dotenv from "dotenv";
 import path from "path";
 import { createHash } from "crypto";
-
+import { interpretarRelato } from "../ia/extrator_de_informacoes.js";
+import { transcreverAudio } from "../servicos/transcricao_audio.js";
 import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
-import { interpretarAudio } from "../ia/extrator_de_informacoes.js";
+
 import { mensagemPorId } from "../ia/mensagens.js";
 import { reformularPergunta } from "../ia/reformulador_pergunta.js";
 import type { EstadoConversa } from "../ia/tipos.js";
@@ -29,6 +30,7 @@ import {
 import {
   salvarEstado, carregarEstado, apagarEstado,
 } from "./persistencia_estado.js";
+ 
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
@@ -397,25 +399,47 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-  // ── ÁUDIO ──
+    // ── ÁUDIO ──
   const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     inc('total_audios');
     try {
       await sock.sendPresenceUpdate("composing", sender);
-      // [Bloco 2] Aviso imediato — TTS + transcrição podem levar >15s
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
-      const buffer = (await downloadMediaMessage(
-        msg, "buffer", {},
-        { logger: pino({ level: "silent" }) as any, reuploadRequest: sock.updateMediaMessage },
-      )) as Buffer;
+      // [FIX] Timeout de 15s no download — o Baileys trava sem avisar
+      const buffer = (await Promise.race([
+        downloadMediaMessage(
+          msg, "buffer", {},
+          { logger: pino({ level: "silent" }) as any, reuploadRequest: sock.updateMediaMessage },
+        ),
+        new Promise<never>((_, rej) =>
+          setTimeout(() => rej(new Error('timeout download')), 15000),
+        ),
+      ])) as Buffer;
+
       if (!buffer || buffer.length === 0) throw new Error("Buffer vazio");
 
       const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
       console.log(`🎤 [${hashSender(sender)}] Áudio (${(buffer.length / 1024).toFixed(1)} KB)`);
 
-      const relatoDoAudio = await interpretarAudio(buffer, mime);
+      // [FIX] 1. TRANSCREVE (chamada dedicada, só transcrição)
+      const transcricao = await transcreverAudio(buffer, mime);
+      console.log(
+        `📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`,
+      );
+
+      // [FIX] 2. Transcrição vazia → pede pra repetir
+      if (!transcricao || transcricao.length < 3) {
+        await sock.sendMessage(sender, {
+          text: '🎤 Não consegui entender o áudio. Pode repetir em um lugar mais silencioso ou escrever? Em emergência, ligue 192.',
+        });
+        await sock.sendPresenceUpdate("paused", sender);
+        return;
+      }
+
+      // [FIX] 3. Passa o TEXTO pelo pipeline normal
+      const relatoDoAudio = await interpretarRelato(transcricao);
 
       const primeiraMensagemAudio = !sessions.has(sender);
       if (primeiraMensagemAudio) {
@@ -423,27 +447,26 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       const estadoAtualAudio = sessions.get(sender)!;
 
-      const transcricao = (relatoDoAudio.texto_original_acumulado || "").replace(/^\[áudio\]\s*/i, "").trim();
-      const textoRepresentativo = transcricao || "[áudio]";
-
       const { resultado, estado: novoEstado } = await processarTurnoComRelato(
-        textoRepresentativo, relatoDoAudio, estadoAtualAudio,
+        transcricao, relatoDoAudio, estadoAtualAudio,
       );
       sessions.set(sender, novoEstado);
 
-      // [Bloco 2] Persiste estado
       if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
 
       let respostaAudio = resultado.texto;
       if (resultado.tipo === "perguntas") {
         respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
       }
+
+      // [FIX] 4. Mostra a transcrição pro usuário conferir
+      respostaAudio = `_🎤 Ouvi: "${transcricao}"_\n\n${respostaAudio}`;
+
       if (primeiraMensagemAudio) {
         respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
       }
       respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
 
-      // [FIX] Responde em áudio porque a pessoa mandou áudio
       await responder(sock, sender, respostaAudio, true);
     } catch (err) {
       console.error("❌ Erro ao processar áudio:", err);
@@ -454,7 +477,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     await sock.sendPresenceUpdate("paused", sender);
     return;
   }
-
   // ── FOTO / STICKER / DOCUMENTO ──
   const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
   if (temImagem && !cleanText) {
