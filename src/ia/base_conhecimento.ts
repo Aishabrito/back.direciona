@@ -125,7 +125,7 @@ export async function responderDaBase(pergunta: string): Promise<string | null> 
   try {
     const ai = new GoogleGenAI({ apiKey });
     const promessa = ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.6-flash-lite',
       contents: `PERGUNTA DO USUÁRIO:
 "${pergunta}"
 
