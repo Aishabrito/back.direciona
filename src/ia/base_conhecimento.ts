@@ -1,5 +1,3 @@
-// src/ia/base_conhecimento.ts
-// Pesquisa na base usando busca vetorial (semântica) + resposta via Groq.
 
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
 import { gerarEmbedding } from '../servicos/embeddings.js';
@@ -17,6 +15,18 @@ export function registrarClienteDb(sql: Sql | null): void {
 }
 
 // ────────────────────────────────────────────────────
+// Tipo público — o orquestrador monta a mensagem a partir disso.
+// ────────────────────────────────────────────────────
+export type RespostaEstruturada = {
+  titulo: string;
+  corpo: string;
+  topico_id: string;
+  origem: 'vetorial' | 'keyword' | 'fallback_direto';
+  similaridade?: number;
+  bloqueado?: boolean; // true se o judge reprovou; corpo já é o seguro
+};
+
+// ────────────────────────────────────────────────────
 // Busca vetorial
 // ────────────────────────────────────────────────────
 type ResultadoDb = {
@@ -31,12 +41,9 @@ async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
     console.log(`⚠️ [RAG] sqlCliente NULO`);
     return [];
   }
-
   const vetor = await gerarEmbedding(pergunta);
   if (!vetor) return [];
-
   const vetorStr = `[${vetor.join(',')}]`;
-
   try {
     const linhas = (await sqlCliente`
       SELECT id, titulo, conteudo,
@@ -46,7 +53,6 @@ async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
       ORDER BY embedding <=> ${vetorStr}::vector
       LIMIT ${k}
     `) as ResultadoDb[];
-
     console.log(
       `🔍 [RAG] "${pergunta}" → ${linhas.length} candidatos, top: ${
         linhas[0]?.similaridade?.toFixed(3) ?? 'n/a'
@@ -89,66 +95,88 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 }
 
 // ────────────────────────────────────────────────────
-// Resposta direta (fallback se LLM falha)
+// [FIX] LLM-judge — valida se a resposta associa sintoma
+// do usuário a doença. Aceita explicação educativa.
 // ────────────────────────────────────────────────────
-function montarRespostaDireta(topico: { titulo: string; conteudo: string }): string {
-  const paragrafos = topico.conteudo.split('\n\n').filter(Boolean);
-  const trecho = paragrafos.slice(0, 2).join('\n\n');
-  return `*${topico.titulo}*\n\n${trecho}`;
+const JUDGE_SYSTEM = `Você analisa respostas de um assistente do SUS.
+
+Pergunta-chave: a resposta proposta sugere que o USUÁRIO TEM alguma doença específica,
+ou associa os sintomas relatados por ele a um diagnóstico?
+
+Exemplos:
+- "Dengue é transmitida por mosquito" → NAO (explicação educativa)
+- "Você pode estar com dengue" → SIM
+- "Seus sintomas são típicos de gripe" → SIM
+- "Febre acima de 39°C merece atenção" → NAO (info geral)
+- "Quadro de gripe costuma durar 7 dias" → SIM
+- "Recomendo tomar dipirona" → SIM
+
+Responda APENAS: SIM ou NAO.`;
+
+async function respostaTemDiagnostico(pergunta: string, resposta: string): Promise<boolean> {
+  try {
+    const prompt = `Pergunta: "${pergunta}"\n\nResposta proposta: "${resposta}"`;
+    const saida = await gerarTexto(prompt, JUDGE_SYSTEM, 5);
+    const limpo = (saida ?? '').trim().toUpperCase();
+    return limpo.startsWith('SIM');
+  } catch (err: any) {
+    console.error(`❌ [RAG/judge] falha:`, err?.message || err);
+    // Em caso de falha do judge, conservador: bloqueia (prefere perder resposta
+    // do que arriscar diagnóstico).
+    return true;
+  }
 }
 
 // ────────────────────────────────────────────────────
-// [FIX] Filtro de segurança — detecta diagnóstico disfarçado
-// sem bloquear conteúdo educativo ("o que é dengue").
-// ────────────────────────────────────────────────────
-function detectarDiagnostico(texto: string): string | null {
-  const padroes: Array<{ nome: string; re: RegExp }> = [
-    {
-      nome: 'associacao_sintoma_doenca',
-      re: /\b(voc[eê]|seus?\s+sintomas?|isso|esse\s+quadro|esse\s+caso)\b[^.!?]{0,60}\b(pode|pode ser|deve ser|parece|sugere|indica|é compat[íi]vel|compat[íi]vel)\b[^.!?]{0,40}\b(gripe|influenza|dengue|covid|pneumonia|infarto|avc|derrame|meningite|apendicite|cancer|c[aâ]ncer)\b/i,
-    },
-    {
-      nome: 'suspeita_explicita',
-      re: /\b(parece|provavelmente|possivelmente|talvez)\b[^.!?]{0,30}\b(gripe|influenza|dengue|covid|pneumonia|infarto|avc|meningite)\b/i,
-    },
-    {
-      nome: 'quadro_de',
-      re: /\b(quadro\s+de|caso\s+de|suspeita\s+de|compat[íi]vel\s+com)\b[^.!?]{0,30}\b(gripe|influenza|dengue|covid|pneumonia|infarto|avc|meningite|apendicite)\b/i,
-    },
-    {
-      nome: 'recomendacao_medicamento',
-      re: /\b(tome|tomar|beba|beber|use|usar)\b[^.!?]{0,30}\b(dipirona|paracetamol|ibuprofeno|amoxicilina|rem[eé]dio|medicamento|antibi[oó]tico)\b/i,
-    },
-  ];
-  for (const p of padroes) if (p.re.test(texto)) return p.nome;
-  return null;
-}
-
-// ────────────────────────────────────────────────────
-// [FIX] Resposta segura quando o filtro bloqueia
+// Texto seguro quando o judge reprova
 // ────────────────────────────────────────────────────
 function respostaSeguraGenerica(): string {
   return (
-    'Para saber onde buscar atendimento, me conte o que você está sentindo e há quanto tempo. ' +
-    'Se for falta de ar, dor no peito, desmaio ou confusão mental, procure uma UPA 24h ou ligue 192 (SAMU). ' +
-    'Para sintomas mais leves e persistentes, uma UBS resolve.'
+    'Para sintomas como os que você descreveu, o ideal é procurar uma UBS para avaliação. ' +
+    'Se for urgente (falta de ar, dor no peito, desmaio ou confusão), procure uma UPA 24h ou ligue 192 (SAMU).'
   );
 }
 
 // ────────────────────────────────────────────────────
+// System prompt do RAG — proíbe diagnóstico explicitamente
+// ────────────────────────────────────────────────────
+const RAG_SYSTEM = `Você é um assistente do SUS que explica informações GERAIS sobre saúde e serviços públicos.
+
+REGRAS ABSOLUTAS:
+1. NUNCA diga o que a pessoa "pode ter", "parece ser", "é compatível com" ou "pode indicar".
+2. NUNCA use sintomas que a pessoa relatou para sugerir uma doença específica.
+3. NUNCA recomende medicamentos, doses ou tratamentos.
+4. Ao explicar uma doença (ex: "o que é dengue"), explique transmissão, sinais gerais e
+   prevenção — NUNCA diga que os sintomas do usuário batem com ela.
+
+O QUE VOCÊ PODE FAZER:
+- Explicar informações gerais (ex: "febre é temperatura acima de 37,8°C").
+- Explicar diferenças entre serviços do SUS (UBS, UPA, SAMU, CAPS).
+- Orientar quando procurar cada serviço.
+
+FORMATO:
+- Português claro, acolhedor, direto. Máximo 3 parágrafos.
+- Se a base não tiver a informação, devolva EXATAMENTE: NAO_ENCONTRADO
+
+Exemplo BOM: "Febre é temperatura acima de 37,8°C. Se durar mais de 3 dias ou vier com
+falta de ar, procure uma UPA."
+Exemplo RUIM: "Seus sintomas podem ser de gripe."`;
+
+// ────────────────────────────────────────────────────
 // API pública
 // ────────────────────────────────────────────────────
-export async function responderDaBase(pergunta: string): Promise<string | null> {
+export async function responderDaBase(
+  pergunta: string,
+): Promise<RespostaEstruturada | null> {
   let contextoTexto = '';
-  let primeiroTopico: { titulo: string; conteudo: string } | null = null;
+  let topicoBase: { id: string; titulo: string; conteudo: string; similaridade?: number } | null = null;
+  let origem: RespostaEstruturada['origem'] = 'vetorial';
 
   const candidatosVetoriais = await buscarTopK(pergunta, 5);
 
   if (candidatosVetoriais.length > 0) {
-    contextoTexto = candidatosVetoriais
-      .map((t) => `### ${t.titulo}\n${t.conteudo}`)
-      .join('\n\n---\n\n');
-    primeiroTopico = candidatosVetoriais[0];
+    contextoTexto = candidatosVetoriais.map((t) => `### ${t.titulo}\n${t.conteudo}`).join('\n\n---\n\n');
+    topicoBase = candidatosVetoriais[0];
     console.log(`✅ [RAG] usando ${candidatosVetoriais.length} tópicos vetoriais`);
   } else {
     const candidatosLocais = buscarLocalKeyword(pergunta, 3);
@@ -156,66 +184,49 @@ export async function responderDaBase(pergunta: string): Promise<string | null> 
       console.log(`❌ [RAG] sem tópicos para "${pergunta}"`);
       return null;
     }
-    contextoTexto = candidatosLocais
-      .map((t) => `### ${t.titulo}\n${t.conteudo}`)
-      .join('\n\n---\n\n');
-    primeiroTopico = candidatosLocais[0];
+    contextoTexto = candidatosLocais.map((t) => `### ${t.titulo}\n${t.conteudo}`).join('\n\n---\n\n');
+    topicoBase = candidatosLocais[0];
+    origem = 'keyword';
     console.log(`🔄 [RAG] usando fallback keyword: ${candidatosLocais.length} tópicos`);
   }
 
-  const prompt = `PERGUNTA DO USUÁRIO:
-"${pergunta}"
+  const prompt = `PERGUNTA DO USUÁRIO:\n"${pergunta}"\n\nBASE DE CONHECIMENTO (use SOMENTE isto):\n${contextoTexto}`;
+  const texto = await gerarTexto(prompt, RAG_SYSTEM, 20000);
 
-BASE DE CONHECIMENTO (use SOMENTE isto):
-${contextoTexto}`;
-
-  // [FIX] Proibir diagnóstico explicitamente. O prompt antigo
-  // ("agente do SUS explicando") deixava brecha pro LLM nomear doença.
-  const systemInstruction = `Você é um assistente do SUS que explica informações GERAIS sobre saúde e serviços públicos.
-
-REGRAS ABSOLUTAS — NUNCA QUEBRE NENHUMA:
-1. NUNCA diga o que a pessoa "pode ter", "parece ser", "é compatível com" ou "pode indicar".
-2. NUNCA use sintomas que a pessoa relatou para sugerir uma doença específica.
-3. NUNCA recomende medicamentos, doses, tratamentos ou remédios caseiros.
-4. NUNCA dê orientação clínica personalizada.
-5. Ao explicar uma doença (ex: "o que é dengue"), explique transmissão, sinais gerais e prevenção — NUNCA diga que os sintomas do usuário batem com ela.
-
-O QUE VOCÊ PODE FAZER:
-- Explicar informações gerais (ex: "febre é temperatura acima de 37,8°C").
-- Explicar diferenças entre serviços do SUS (UBS, UPA, SAMU, CAPS, maternidade).
-- Orientar de forma geral quando procurar cada serviço.
-- Ensinar sinais de alarme em termos gerais ("procure ajuda se a febre durar mais de 3 dias").
-
-FORMATO:
-- Português claro, acolhedor, direto. Máximo 3 parágrafos.
-- Se a pergunta não puder ser respondida dentro dessas regras, devolva EXATAMENTE a string NAO_ENCONTRADO.
-
-Exemplo BOM: "Febre é temperatura acima de 37,8°C. Se durar mais de 3 dias ou vier com falta de ar, procure uma UPA."
-Exemplo RUIM (NUNCA): "Seus sintomas podem ser de gripe. Beba bastante líquido."
-
-Se a base não tiver a informação suficiente, devolva EXATAMENTE NAO_ENCONTRADO.`;
-
-  const texto = await gerarTexto(prompt, systemInstruction, 20000);
-
-  if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO')) {
-    console.log(`⚠️ [RAG] Groq sem resposta, usando tópico direto`);
-    return primeiroTopico ? montarRespostaDireta(primeiroTopico) : null;
-  }
-  if (texto.length < 20) {
-    console.log(`⚠️ [RAG] resposta curta, usando tópico direto`);
-    return primeiroTopico ? montarRespostaDireta(primeiroTopico) : null;
+  // ── Fallback: LLM não respondeu → usa tópico curado direto (já é seguro)
+  if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO') || texto.length < 20) {
+    console.log(`⚠️ [RAG] resposta insuficiente, usando tópico direto`);
+    if (!topicoBase) return null;
+    const paragrafos = topicoBase.conteudo.split('\n\n').filter(Boolean);
+    return {
+      titulo: topicoBase.titulo,
+      corpo: paragrafos.slice(0, 2).join('\n\n'),
+      topico_id: topicoBase.id,
+      origem: 'fallback_direto',
+    };
   }
 
-  // [FIX] Filtro contextualizado: bloqueia associação diagnóstico ↔ usuário,
-  // mas NÃO bloqueia explicação educativa ("o que é dengue").
-  const violacao = detectarDiagnostico(texto);
-  if (violacao) {
-    console.warn(`🚫 [RAG] bloqueado por "${violacao}": "${texto.slice(0, 80)}..."`);
-    return respostaSeguraGenerica();
+  // ── [FIX estrutural] Judge antes de devolver
+  const suspeito = await respostaTemDiagnostico(pergunta, texto);
+  if (suspeito) {
+    console.warn(`🚫 [RAG/judge] bloqueado: "${texto.slice(0, 80)}..."`);
+    return {
+      titulo: '',
+      corpo: respostaSeguraGenerica(),
+      topico_id: topicoBase?.id ?? 'seguro_generico',
+      origem,
+      bloqueado: true,
+    };
   }
 
-  console.log(`✅ [RAG] resposta gerada pelo Groq (${texto.length} chars)`);
-  return texto;
+  console.log(`✅ [RAG] resposta aprovada pelo judge (${texto.length} chars)`);
+  return {
+    titulo: topicoBase?.titulo ?? '',
+    corpo: texto,
+    topico_id: topicoBase?.id ?? 'desconhecido',
+    origem,
+    similaridade: topicoBase?.similaridade,
+  };
 }
 
 export async function temTopicoRelevante(pergunta: string): Promise<boolean> {

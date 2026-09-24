@@ -165,26 +165,29 @@ export async function processarTurno(
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
-  if (
-    ehConhecimento &&
-    !ehNavegacao &&
-    !relatoComoQueixa &&
-    !sinalCriticoInicial &&
-    !respostaCurta
-  ) {
+  if (ehConhecimento && !ehNavegacao && !relatoComoQueixa && !sinalCriticoInicial && !respostaCurta) {
     const temTopico = await temTopicoRelevante(textoUsuario);
     if (temTopico) {
       const respostaBase = await responderDaBase(textoUsuario);
       if (respostaBase) {
+        // [FIX] monta a mensagem em template — corpo já passou pelo judge
+        const cabecalho = respostaBase.titulo ? `*${respostaBase.titulo}*\n\n` : '';
+        const rodape = respostaBase.bloqueado
+          ? ''
+          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
+        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+
         return {
           estado: { ...estado, fase: 'orientado' },
           resultado: {
             tipo: 'orientacao',
-            texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
+            texto: mensagem,
             decisao: {
               categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
+              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
+              regra_acionada: 'base_conhecimento',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+              motivos: respostaBase.bloqueado ? ['base bloqueada por segurança'] : ['base de conhecimento'],
             },
           },
         };
