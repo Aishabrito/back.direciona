@@ -1,4 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+// src/ia/reformulador_pergunta.ts
+import { gerarTexto } from '../servicos/ia.js';
 import { normalizarTexto } from './normalizar.js';
 import { sanitizarTextoGerado } from './mensagens.js';
 
@@ -9,41 +10,25 @@ export async function reformularPergunta(
   perguntaFixa: string,
   contexto: string,
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return perguntaFixa;
+  const prompt = `CONTEXTO DO PACIENTE: ${contexto}
+PERGUNTA ORIGINAL: ${perguntaFixa}`;
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const promessa = ai.models.generateContent({
-      model: 'gemini-3.6-flash-lite',
-      contents: `Reformule a pergunta abaixo em UMA frase curta, acolhedora e natural, para WhatsApp.
-CONTEXTO DO PACIENTE: ${contexto}
-PERGUNTA ORIGINAL: ${perguntaFixa}
-
+  const systemInstruction = `Reformule a pergunta abaixo em UMA frase curta, acolhedora e natural, para WhatsApp.
 REGRAS:
 - Não dê diagnóstico, não sugira remédio, não prescreva.
 - Não invente informação clínica.
 - Mantenha o mesmo sentido da pergunta.
-- Devolva apenas a frase reformulada.`,
-    });
+- Devolva apenas a frase reformulada (terminando com "?").`;
 
-    const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout reform')), 10000),
-    );
-    const resp = (await Promise.race([promessa, timeout])) as any;
-    const texto = (resp.text || '').trim();
+  const texto = await gerarTexto(prompt, systemInstruction, 10000);
 
-    if (!texto || texto.length > 300) return perguntaFixa;
-    if (TERMOS_PROIBIDOS_REFORM.test(normalizarTexto(texto))) return perguntaFixa;
-    if (!texto.endsWith('?')) return perguntaFixa;
+  if (!texto) return perguntaFixa;
+  if (texto.length > 300) return perguntaFixa;
+  if (TERMOS_PROIBIDOS_REFORM.test(normalizarTexto(texto))) return perguntaFixa;
+  if (!texto.endsWith('?')) return perguntaFixa;
 
-    // [FIX Bloco 1] Segunda barreira: passa pela sanitização geral de mensagens.
-    // Se o texto virar fallback_001 (contém termo proibido), devolve a pergunta fixa.
-    const sanitizado = sanitizarTextoGerado(texto);
-    if (sanitizado !== texto) return perguntaFixa;
+  const sanitizado = sanitizarTextoGerado(texto);
+  if (sanitizado !== texto) return perguntaFixa;
 
-    return texto;
-  } catch {
-    return perguntaFixa;
-  }
+  return texto;
 }
