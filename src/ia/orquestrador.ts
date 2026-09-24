@@ -66,13 +66,26 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
   );
 }
 
-//Detecta pergunta com tolerância a abreviações comuns no WhatsApp.
-// Aceita: "oq eh X", "pq", "qdo", "kd", "me explica", "o que é", etc.
+// Detecta pergunta com tolerância a abreviações comuns no WhatsApp.
+// Mantida pra uso interno (ex: detectar "isso é pergunta?" em blocos genéricos).
 function parecePergunta(texto: string): boolean {
   if (/\?/.test(texto)) return true;
-
   const n = normalizarTexto(texto);
   return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera)\b/.test(n);
+}
+
+// [FIX] Pergunta de CONHECIMENTO → vai pro RAG.
+// Só dispara pra perguntas educativas ("o que é X", "como funciona Y").
+function ehPerguntaConhecimento(texto: string): boolean {
+  const n = normalizarTexto(texto);
+  return /\b(o que (e|eh|sao)|oq (e|eh|sao)|como funciona|para que serve|pra que serve|qual a diferenca|diferenca entre|o que significa|significa|quantos? graus|quantos? dias|quanto tempo|como se pega|como evita|como prevenir|tem cura|o que causa|me explica|me explica o que|explica|me fala sobre|fala sobre)\b/.test(n);
+}
+
+// [FIX] Pergunta de NAVEGAÇÃO → vai pro motor de regras (triagem).
+// "Para onde vou", "onde devo ir", "o que faço" — pedido de encaminhamento.
+function ehPerguntaNavegacao(texto: string): boolean {
+  const n = normalizarTexto(texto);
+  return /\b(para onde|pra onde|onde (eu )?(vou|devo ir|procuro|busco)|o que (eu )?(faco|devo fazer)|qual (o )?(servico|unidade)|aonde|me indica (um|uma)|onde (tem|fica)|devo ir|preciso ir)\b/.test(n);
 }
 
 // Detecta se a pessoa descreve uma queixa em 1ª pessoa:
@@ -86,11 +99,20 @@ function descreveQueixaPropriaRegex(textoNorm: string): boolean {
 // ============================================================
 export async function processarTurno(
   textoUsuario: string,
-  estado: EstadoConversa,
+  estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
   inc('total_mensagens');
+
+  // [FIX] Conversa encerrada → qualquer mensagem nova começa ciclo limpo.
+  // Sem isso, "para onde vou..." depois de um encerramento herdava relatos antigos.
+  let estado = estadoEntrada;
+  let fase = estado.fase ?? 'inicio';
+  if (fase === 'encerrado') {
+    estado = { ...ESTADO_INICIAL };
+    fase = 'inicio';
+  }
+
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
-  const fase = estado.fase ?? 'inicio';
   const textoNorm = normalizarTexto(textoUsuario);
 
   // ── 1. Confirmação pós-orientação → encerramento amigável
@@ -133,17 +155,23 @@ export async function processarTurno(
     };
   }
 
-  // ── 3. BASE DE CONHECIMENTO — perguntas sobre saúde ANTES da triagem
-  // Regra: se PARECE PERGUNTA e NÃO é relato de queixa própria, consulta a
-  // base. Não depende de temSintomaClinico porque "o que é dengue?" é pergunta
-  // mesmo que o extrator marque "dengue" como sintoma.
-  const ehPergunta = parecePergunta(textoUsuario);
+  // ── 3. BASE DE CONHECIMENTO — só pra perguntas de CONHECIMENTO.
+  // [FIX] "Para onde eu vou..." é navegação → cai no motor de regras.
+  // Pergunta educativa ("oq eh dengue") → RAG.
+  const ehConhecimento = ehPerguntaConhecimento(textoUsuario);
+  const ehNavegacao = ehPerguntaNavegacao(textoUsuario);
   const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
 
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
-  if (ehPergunta && !relatoComoQueixa && !sinalCriticoInicial && !respostaCurta) {
+  if (
+    ehConhecimento &&
+    !ehNavegacao &&
+    !relatoComoQueixa &&
+    !sinalCriticoInicial &&
+    !respostaCurta
+  ) {
     const temTopico = await temTopicoRelevante(textoUsuario);
     if (temTopico) {
       const respostaBase = await responderDaBase(textoUsuario);
@@ -264,12 +292,10 @@ export async function processarTurno(
     };
   }
 
-  // ── 8.Reset de contexto: mensagem sem nada clínico e não-pergunta
-  // (ex: "como plantar tomate?") — zera o estado anterior pra não herdar
-  // sintomas antigos ("dengue", "tosse") na triagem.
+  // ── 8. Reset de contexto: mensagem sem nada clínico e não-pergunta
   const nadaClinico =
     !temSintomaClinico(extraido) &&
-    !ehPergunta &&
+    !parecePergunta(textoUsuario) &&
     !relatoComoQueixa &&
     !respostaCurta;
 
@@ -418,11 +444,19 @@ export async function processarTurno(
 export async function processarTurnoComRelato(
   textoRepresentativo: string,
   relatoPronto: RelatoEstruturado,
-  estado: EstadoConversa,
+  estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
   inc('total_mensagens');
+
+  // [FIX] Mesmo reset do fluxo de texto.
+  let estado = estadoEntrada;
+  let fase = estado.fase ?? 'inicio';
+  if (fase === 'encerrado') {
+    estado = { ...ESTADO_INICIAL };
+    fase = 'inicio';
+  }
+
   const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
-  const fase = estado.fase ?? 'inicio';
   const textoNorm = normalizarTexto(textoRepresentativo);
 
   // Confirmação pós-orientação
@@ -457,14 +491,20 @@ export async function processarTurnoComRelato(
     };
   }
 
-  // Base de conhecimento — mesmo no fluxo de áudio, se a transcrição
-  // virou uma pergunta ("o que é dengue?"), consulta a base antes de triar.
-  const ehPergunta = parecePergunta(textoRepresentativo);
+  // [FIX] Base de conhecimento — mesmo filtro do fluxo de texto:
+  // só dispara pra pergunta de conhecimento pura, nunca pra navegação.
+  const ehConhecimento = ehPerguntaConhecimento(textoRepresentativo);
+  const ehNavegacao = ehPerguntaNavegacao(textoRepresentativo);
   const relatoComoQueixa = descreveQueixaPropriaRegex(textoNorm);
   const nivelInicial = classificarNivel(relatoPronto);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
-  if (ehPergunta && !relatoComoQueixa && !sinalCriticoInicial) {
+  if (
+    ehConhecimento &&
+    !ehNavegacao &&
+    !relatoComoQueixa &&
+    !sinalCriticoInicial
+  ) {
     const temTopico = await temTopicoRelevante(textoRepresentativo);
     if (temTopico) {
       const respostaBase = await responderDaBase(textoRepresentativo);
@@ -486,7 +526,7 @@ export async function processarTurnoComRelato(
   }
 
   // Áudio vazio / sem sintoma
-  if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0 && !ehPergunta) {
+  if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0 && !parecePergunta(textoRepresentativo)) {
     return {
       estado,
       resultado: {
