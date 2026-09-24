@@ -95,10 +95,30 @@ function descreveQueixaPropriaRegex(textoNorm: string): boolean {
   return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
 }
 
-// [FIX] Pré-filtro amplo de pedido de diagnóstico.
-// Pega casos que o ehPedidoDiagnostico do mensagens.ts não cobre.
+
 function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
-  return /\b(sera que (e|eh|tenho|to com|estou com)|acho que (e|eh|tenho|to com|estou com)|deve ser (gripe|dengue|covid|pneumonia|infarto|avc|virose|alergia)|to achando que|estou achando que|meus sintomas (sao|e|podem ser)|isso (pode|deve) ser (gripe|dengue|covid|pneumonia|infarto|avc)|pode ser (gripe|dengue|covid|pneumonia|infarto|avc))\b/.test(textoNorm);
+  const DOENCAS =
+    'gripe|influenza|dengue|covid|corona|coronavirus|pneumonia|infarto|avc|derrame|virose|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma';
+  const SUSPEITA = 'acho|acredito|penso|imagino|suspeito|desconfio|sera';
+  const VERBO_PROPRIO = 'estou\\s+com|to\\s+com|tou\\s+com|tenho|peguei|pega';
+
+  // 1. "meus sintomas são X" / "meus sintomas podem ser X"
+  if (/\bmeus?\s+sintomas?\s+(sao|e|eh|podem ser|pode ser)\b/.test(textoNorm)) return true;
+
+  // 2. "acho q estou com X" / "acho que tenho X" / "sera q to com X"
+  const re1 = new RegExp(`\\b(${SUSPEITA})\\s+(q|que)?\\s*(${VERBO_PROPRIO})\\b`);
+  if (re1.test(textoNorm)) return true;
+
+  // 3. "acho que é X" / "será q é X" / "deve ser X" / "pode ser X"
+  const re2 = new RegExp(
+    `\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`,
+  );
+  if (re2.test(textoNorm)) return true;
+
+  // 4. "to achando que X" / "estou pensando que X"
+  if (/\b(to|estou|tou)\s+(achando|pensando|suspeitando)\b/.test(textoNorm)) return true;
+
+  return false;
 }
 
 // ────────────────────────────────────────────────────
