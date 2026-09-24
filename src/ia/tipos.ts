@@ -33,6 +33,7 @@ export type CategoriaInterna = (typeof CATEGORIAS_INTERNAS)[number];
 export type Destino = (typeof DESTINOS)[number];
 export type FlagTriState = boolean | 'nao_informado';
 export type Nivel = (typeof NIVEIS)[number];
+
 export type MensagemHistorico = {
   role: 'user' | 'assistant';
   content: string;
@@ -73,6 +74,10 @@ export type RelatoEstruturado = {
   alergia_grave: FlagTriState;
   autodiagnostico_grave: string | null;
   texto_original_acumulado: string;
+
+  // [Task 1] Intenção detectada pelo extrator (structured output).
+  // Ainda não usada no roteamento — Task 2 vai consumir.
+  intencao?: string;
 };
 
 export type DecisaoRegras = {
@@ -110,7 +115,7 @@ export type EstadoConversa = {
   texto_original_acumulado: string;
   fase: FaseConversa;
   perguntasJaFeitas: string[];
-historico?: MensagemHistorico[];
+  historico?: MensagemHistorico[];
   ultimaPergunta?: UltimaPergunta;
   aguardandoLocalizacao?: {
     ativo: boolean;
@@ -120,14 +125,16 @@ historico?: MensagemHistorico[];
   };
   ultimaLocalizacao?: { lat: number; lng: number; em: number };
 };
+
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
   rodadasPerguntas: 0,
   texto_original_acumulado: '',
   fase: 'inicio',
   perguntasJaFeitas: [],
-  historico: [], // [NOVO]
+  historico: [],
 };
+
 export const RELATO_VAZIO: RelatoEstruturado = {
   relato_sobre_terceiro: false,
   pessoa: 'nao_informado',

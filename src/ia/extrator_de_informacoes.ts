@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { contemAlgum, normalizarTexto, unicos, afirmado, afirmadoTri } from './normalizar';
 import { RELATO_VAZIO, type RelatoEstruturado } from './tipos';
 import { validarRelato } from './validador_de_saida';
-import { gerarJSON } from '../servicos/ia.js';
+import { gerarJSON, type JsonSchema } from '../servicos/ia.js';
 
 const TERCEIROS: Record<string, string> = {
   mae: 'mãe', pai: 'pai', filho: 'filho', filha: 'filha',
@@ -359,10 +359,17 @@ const SYSTEM_INSTRUCTION = `Você é um médico regulador e triador do SUS (SAMU
 Interprete a gravidade e o contexto por trás da mensagem — gírias, erros ortográficos, relatos sobre terceiros.
 Extraia apenas o que está explícito, não invente informações.
 
+SOBRE "intencao":
+- CONHECIMENTO: pergunta genérica sobre saúde ou sobre o SUS ("o que é dengue", "qual a temperatura de febre", "como funciona o CAPS").
+- NAVEGACAO: pede indicação de onde ir ("para onde vou com dor de cabeça", "onde devo ir").
+- RELATO: descreve sintoma próprio ("estou com febre há 2 dias").
+- SAUDACAO: cumprimento isolado.
+- AGRADECIMENTO: agradece/encerra.
+- OUTRO: nada das categorias acima.
+
 SOBRE "sintomas":
 - É a lista mais importante. Inclua QUALQUER queixa, sensação ou desconforto relatado.
 - NÃO se limite a exemplos. Se a pessoa menciona algo que a incomoda ou preocupa, isso É um sintoma.
-- Exemplos: cansaço, fraqueza, corpo mole, desânimo, tontura, mal-estar, insônia, falta de apetite, dor em qualquer parte do corpo, queimação, coceira, mancha, inchaço, dormência, formigamento, visão embaçada, ouvido tampado, gosto ruim na boca, dor de barriga, azia, náusea, arroto, gases.
 - Em dúvida, INCLUA.
 
 SOBRE "sinais_alerta":
@@ -373,33 +380,62 @@ DIRETRIZES:
 - Emergências: falta de ar intensa, dor no peito com sinais, desmaio, confusão, sangramento intenso, trauma grave, AVC.
 - Ideação suicida: "quero morrer", "não quero mais viver".
 - Se for PERGUNTA sobre termo/serviço, deixe "informacao_insuficiente": true.
-- NÃO diagnostique doenças.
+- NÃO diagnostique doenças.`;
 
-Responda SEMPRE em JSON com este formato exato:
-{
-  "sintomas": ["string"],
-  "sinais_alerta": ["string"],
-  "relato_sobre_terceiro": false,
-  "pessoa": "string",
-  "idade_grupo": "bebe|crianca|adolescente|adulto|idoso|nao_informado",
-  "idade_numerica": 0,
-  "gestante": "sim|nao|nao_informado",
-  "pos_parto": "sim|nao|nao_informado",
-  "risco_mental": "iminente|sem_risco_imediato|nao_mencionado",
-  "falta_de_ar": false,
-  "dor_no_peito": false,
-  "desmaio": false,
-  "confusao": false,
-  "sangramento": false,
-  "febre": false,
-  "vomitos": false,
-  "trauma": false,
-  "exposicao_intoxicacao": false,
-  "duracao": "string",
-  "piora": "sim|nao|nao_informado",
-  "intensidade": "leve|moderada|intensa|nao_informado",
-  "informacao_insuficiente": false
-}`;
+// ─── [Task 1] Schema fechado pro structured output ─────────
+export const RELATO_JSON_SCHEMA: JsonSchema = {
+  name: 'relato_clinico_sus',
+  strict: true,
+  schema: {
+    type: 'object',
+    properties: {
+      intencao: {
+        type: 'string',
+        enum: ['conhecimento', 'navegacao', 'relato', 'saudacao', 'agradecimento', 'outro'],
+        description: 'Intenção principal da mensagem.',
+      },
+      sintomas: { type: 'array', items: { type: 'string' } },
+      sinais_alerta: { type: 'array', items: { type: 'string' } },
+      relato_sobre_terceiro: { type: 'boolean' },
+      pessoa: { type: 'string' },
+      idade_grupo: {
+        type: 'string',
+        enum: ['bebe', 'crianca', 'adolescente', 'adulto', 'idoso', 'nao_informado'],
+      },
+      idade_numerica: { type: 'integer' },
+      gestante: { type: 'string', enum: ['sim', 'nao', 'nao_informado'] },
+      pos_parto: { type: 'string', enum: ['sim', 'nao', 'nao_informado'] },
+      risco_mental: {
+        type: 'string',
+        enum: ['iminente', 'sem_risco_imediato', 'nao_mencionado'],
+      },
+      falta_de_ar: { type: 'boolean' },
+      dor_no_peito: { type: 'boolean' },
+      desmaio: { type: 'boolean' },
+      confusao: { type: 'boolean' },
+      sangramento: { type: 'boolean' },
+      febre: { type: 'boolean' },
+      vomitos: { type: 'boolean' },
+      trauma: { type: 'boolean' },
+      exposicao_intoxicacao: { type: 'boolean' },
+      duracao: { type: 'string' },
+      piora: { type: 'string', enum: ['sim', 'nao', 'nao_informado'] },
+      intensidade: {
+        type: 'string',
+        enum: ['leve', 'moderada', 'intensa', 'nao_informado'],
+      },
+      informacao_insuficiente: { type: 'boolean' },
+    },
+    required: [
+      'intencao', 'sintomas', 'sinais_alerta', 'relato_sobre_terceiro', 'pessoa',
+      'idade_grupo', 'idade_numerica', 'gestante', 'pos_parto', 'risco_mental',
+      'falta_de_ar', 'dor_no_peito', 'desmaio', 'confusao', 'sangramento',
+      'febre', 'vomitos', 'trauma', 'exposicao_intoxicacao', 'duracao',
+      'piora', 'intensidade', 'informacao_insuficiente',
+    ],
+    additionalProperties: false,
+  },
+};
 
 function mesclarComIA(local: RelatoEstruturado, g: RelatoEstruturado): RelatoEstruturado {
   const sintomasFinal = unicos([...local.sintomas, ...g.sintomas]);
@@ -453,11 +489,25 @@ Extraia os dados clínicos APENAS do relato atual. Use o histórico somente para
 desambiguar referências ("e se for 40 graus?" → sobre a febre já mencionada).
 NÃO misture sintomas antigos com o relato atual.`;
 
-  const parsed = await gerarJSON<any>(prompt, SYSTEM_INSTRUCTION, 20000);
+  // [Task 1] structured output com schema fechado
+  const parsed = await gerarJSON<any>(prompt, SYSTEM_INSTRUCTION, 20000, RELATO_JSON_SCHEMA);
   if (!parsed) return local;
 
-  const g = validarRelato({ ...parsed, texto_original_acumulado: '' }).relato;
-  return mesclarComIA(local, g);
+  // Post-processing: idade_numerica 0 → null (o schema não suporta null)
+  const idadeLimpa = parsed.idade_numerica === 0 ? null : parsed.idade_numerica ?? null;
+
+  const g = validarRelato({
+    ...parsed,
+    idade_numerica: idadeLimpa,
+    texto_original_acumulado: '',
+  }).relato;
+
+  const resultado = mesclarComIA(local, g);
+  // [Task 1] preserva a intenção detectada — Task 2 vai consumir
+  if (typeof parsed.intencao === 'string') {
+    resultado.intencao = parsed.intencao;
+  }
+  return resultado;
 }
 
 // ─── Áudio (Gemini — mantido pra extração estruturada multimodal) ───
