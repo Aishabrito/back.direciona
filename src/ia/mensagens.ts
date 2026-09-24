@@ -31,7 +31,7 @@ export function sanitizarResposta(texto: string, _idMensagem?: string): string {
   return texto;
 }
 
-───────────────────────────────────────────────────────────
+
 export function ehPedidoDiagnostico(texto: string): boolean {
   const n = normalizarTexto(texto);
   return /\b(o que (eu )?tenho|oq (eu )?tenho|qual (a )?(minha )?doenca|qual (o )?(meu )?problema|me diagnostica|me da um diagnostico|pode ser (o )?que|sera (o )?que (eu )?tenho|isso (e|eh) (o )?que|meus sintomas (sao|são|e|eh)|meus? sintomas? (podem|pode) ser|isso (pode|pode ser) (ser )?|tenho (isso|aquilo|o que))\b/.test(n);
