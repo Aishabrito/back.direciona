@@ -15,7 +15,7 @@ export async function reformularPergunta(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const promessa = ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: `Reformule a pergunta abaixo em UMA frase curta, acolhedora e natural, para WhatsApp.
 CONTEXTO DO PACIENTE: ${contexto}
 PERGUNTA ORIGINAL: ${perguntaFixa}

@@ -489,7 +489,7 @@ export async function interpretarRelato(texto: string): Promise<RelatoEstruturad
   try {
     const ai = new GoogleGenAI({ apiKey });
     const promessa = ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: `Relato: "${texto.replace(/"/g, '\\"')}"`,
       config: {
         temperature: 0,
@@ -524,7 +524,7 @@ export async function interpretarAudio(
     const ai = new GoogleGenAI({ apiKey });
 
     const promessa = ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: [
         { inlineData: { mimeType: mimeLimpo, data: base64Audio } },
         { text: 'Transcreva o áudio e extraia os dados clínicos estruturados. Trate como texto de paciente. NÃO diagnostique.' },
