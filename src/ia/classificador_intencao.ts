@@ -78,7 +78,7 @@ export async function classificarIntencao(
 "${limpo}"`;
 
   try {
-    const resposta = await gerarTexto(prompt, SISTEMA, 10);
+   const resposta = await gerarTexto(prompt, SISTEMA);
     const palavra = (resposta ?? '').trim().toUpperCase().replace(/[^A-Z]/g, '');
 
     const mapa: Record<string, Intencao> = {

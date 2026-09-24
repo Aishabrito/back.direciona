@@ -118,7 +118,7 @@ Responda APENAS: SIM ou NAO.`;
 async function respostaTemDiagnostico(pergunta: string, resposta: string): Promise<boolean> {
   try {
     const prompt = `Pergunta: "${pergunta}"\n\nResposta proposta: "${resposta}"`;
-    const saida = await gerarTexto(prompt, JUDGE_SYSTEM, 5);
+    const saida = await gerarTexto(prompt, JUDGE_SYSTEM);
     const limpo = (saida ?? '').trim().toUpperCase();
     return limpo.startsWith('SIM');
   } catch (err: any) {
