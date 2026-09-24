@@ -137,7 +137,7 @@ Responda à pergunta em português, de forma clara e acolhedora, como se fosse u
     });
 
     const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout base')), 8000),
+      setTimeout(() => rej(new Error('timeout base')), 20000),
     );
     const resp = (await Promise.race([promessa, timeout])) as any;
     const texto = (resp.text || '').trim();

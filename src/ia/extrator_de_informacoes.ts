@@ -499,7 +499,7 @@ export async function interpretarRelato(texto: string): Promise<RelatoEstruturad
       },
     });
 
-    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 20000));
     const response = await Promise.race([promessa, timeout]) as any;
     const parsed = JSON.parse(response.text || '{}');
     const g = validarRelato({ ...parsed, texto_original_acumulado: '' }).relato;
@@ -537,7 +537,7 @@ export async function interpretarAudio(
       },
     });
 
-    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout audio')), 20000));
+    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout audio')), 30000));
     const response = await Promise.race([promessa, timeout]) as any;
     const parsed = JSON.parse(response.text || '{}');
 

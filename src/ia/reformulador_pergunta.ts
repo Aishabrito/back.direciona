@@ -28,7 +28,7 @@ REGRAS:
     });
 
     const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout reform')), 5000),
+      setTimeout(() => rej(new Error('timeout reform')), 10000),
     );
     const resp = (await Promise.race([promessa, timeout])) as any;
     const texto = (resp.text || '').trim();
