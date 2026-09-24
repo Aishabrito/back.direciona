@@ -1,0 +1,5761 @@
+{
+  "atualizado_em": "2026-09-24",
+  "fonte": "CNES",
+  "municipios": [
+    "Niterói",
+    "Rio de Janeiro"
+  ],
+  "unidades": [
+    {
+      "nome": "MMF JORGE LUIZ CAMACHO RODRIGUES",
+      "categoria": "UBS",
+      "endereco": "RUA MARUI GRANDE, 15 - BARRETO, Niterói",
+      "telefone": "(21) 3613-2146",
+      "lat": -22.86627116,
+      "lng": -43.10791881,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOSE NEVES AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA QUINTANILHA, S/N - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-49",
+      "lat": -22.9424251,
+      "lng": -43.351841,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL BANGU",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FRANCISCO REAL, 00732 - PADRE MIGUEL, Rio de Janeiro",
+      "telefone": "(21) 3107-5600",
+      "lat": -22.87875395,
+      "lng": -43.4522464,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ HOSPITAL ESTADUAL CARLOS CHAGAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA GENERAL OSVALDO CORDEIRO DE FARIAS, 466 - MARECHAL HERMES, Rio de Janeiro",
+      "telefone": "(21) 2332-1127",
+      "lat": -22.865494049658444,
+      "lng": -43.37406098842621,
+      "publica": true
+    },
+    {
+      "nome": "MED LAB MEDICINA",
+      "categoria": "UBS",
+      "endereco": "RUA JABORANDI, 170 - VILA KOSMOS, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8662021,
+      "lng": -43.4688891,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DR MYRTES AMORELLI GONZAGA AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO LAMEIRAO PEQUENO, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.94196,
+      "lng": -43.59097,
+      "publica": true
+    },
+    {
+      "nome": "DENTES FORTES",
+      "categoria": "UBS",
+      "endereco": "REVERENDO ARMANDO FERREIRA, 350 - LARGO DA BATALHA, Niterói",
+      "telefone": "(21) 3164-8985",
+      "lat": -22,
+      "lng": -43,
+      "publica": true
+    },
+    {
+      "nome": "ESTETIC DENTE CLINICA ODONTOLOGICA LTDA",
+      "categoria": "UBS",
+      "endereco": "RUA GAVIAO PEIXOTO, 124 - ICARAI, Niterói",
+      "telefone": null,
+      "lat": -22.9074364,
+      "lng": -43.106038,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CASA SAO BERNARDO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA DAS AMERICAS, 3250 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3216-8000",
+      "lat": -23.010752,
+      "lng": -43.58542041,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL COPA STAR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FIGUEIREDO MAGALHAES, 700 - COPACABANA, Rio de Janeiro",
+      "telefone": "(34) 6136-20",
+      "lat": -22.970830391077477,
+      "lng": -43.18550169467926,
+      "publica": true
+    },
+    {
+      "nome": "COCKRANE E BLANC SERVICOS MEDICOS",
+      "categoria": "UBS",
+      "endereco": "ETR DO GALEAO, 1401 - JARDIM GUANABARA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "UBS DE ITAIPU",
+      "categoria": "UBS",
+      "endereco": "AVENIDA IRENE LOPES SODRE, S/N - ENGENHO DO MATO, Niterói",
+      "telefone": "(21) 2609-6368",
+      "lat": -22.934118,
+      "lng": -43.012795217,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL PREMIUM",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DO BISPO, 18 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(02) 1355-03800",
+      "lat": -22.9246439,
+      "lng": -43.2130936,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA GABRIEL FERREIRA CASTILHO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4790",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB INSTITUTO PENAL BENJAMIM DE MORAES",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3346-66",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL MEMORIAL FUAD CHIDID",
+      "categoria": "EMERGENCIA",
+      "endereco": "JOSE DOS REIS, 81 - ENGENHO DE DENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.921762,
+      "lng": -42.8223614,
+      "publica": true
+    },
+    {
+      "nome": "LONGEVICARE",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE DE PIRAJA, 414 - IPANEMA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.983776,
+      "lng": -43.2073712,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM REALENGO",
+      "categoria": "UBS",
+      "endereco": "SANTA CRUZ, 598 - REALENGO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9176248,
+      "lng": -43.6834907,
+      "publica": true
+    },
+    {
+      "nome": "MMF MARIA TEREZA BARBOSA RANGEL VO TEREZA",
+      "categoria": "UBS",
+      "endereco": "PRACA DOUTOR VITORINO, S/N - PONTA DA AREIA, Niterói",
+      "telefone": "(21) 3613-2148",
+      "lat": -22.88322237,
+      "lng": -43.12490026,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CAMPANHA COVID 19 LEBLON",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DINIZ CORDEIRO, 30 - BOTAFOGO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9584619,
+      "lng": -43.1913353,
+      "publica": true
+    },
+    {
+      "nome": "INI FIOCRUZ",
+      "categoria": "EMERGENCIA",
+      "endereco": "BRASIL, 4365 - MANGUINHOS, Rio de Janeiro",
+      "telefone": "(21) 3865-9595",
+      "lat": -22.879388,
+      "lng": -43.243377,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DEPUTADO PEDRO FERNANDES FILHO AP 33",
+      "categoria": "UBS",
+      "endereco": "PRACA NOSSA SENHORA DA APRESENTACAO, S/N - IRAJA, Rio de Janeiro",
+      "telefone": "(97) 5302-03633710144",
+      "lat": -22.83018,
+      "lng": -43.32822,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MESTRE MOLEQUINHO DO IMPERIO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA IGUACU, S/N - ENGENHEIRO LEAL, Rio de Janeiro",
+      "telefone": "(97) 5260-95424529224",
+      "lat": -22.87459,
+      "lng": -43.32941,
+      "publica": true
+    },
+    {
+      "nome": "MMF COLONIA",
+      "categoria": "UBS",
+      "endereco": "PRAIA DA ITAIPU, S/N - ITAIPU, Niterói",
+      "telefone": "(21) 3613-2161",
+      "lat": -22.97115582,
+      "lng": -43.04523604,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CYPRIANO DAS CHAGAS MEDEIROS AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA JUMIRIM, 87 - COELHO NETO, Rio de Janeiro",
+      "telefone": "(97) 5087-44534504311",
+      "lat": -22.83622,
+      "lng": -43.34821,
+      "publica": true
+    },
+    {
+      "nome": "SERVICO DE SAUDE EDISE",
+      "categoria": "UBS",
+      "endereco": "AVENIDA REPUBLICA DO CHILE, 65 - CENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.909600400000002,
+      "lng": -43.179351631328515,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED PA MEIER",
+      "categoria": "UPA",
+      "endereco": "RUA ARISTIDES CAIRE, 27 - MEIER, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8966954,
+      "lng": -43.2754556,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER BARRA AP 40",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA AYRTON SENNA, 2000 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(35) 5070-60",
+      "lat": -22.594,
+      "lng": -43.2715093,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF WILMA COSTA AP 31",
+      "categoria": "UBS",
+      "endereco": "PARQUE POETA MANUEL BANDEIRA, S/N - COCOTA, Rio de Janeiro",
+      "telefone": "(21) 9859-10044",
+      "lat": -22.9115715,
+      "lng": -43.17392843,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF NILDA CAMPOS DE LIMA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA OLIVEIRA MELO, S/N - CORDOVIL, Rio de Janeiro",
+      "telefone": "(21) 9859-10054",
+      "lat": -22.827522,
+      "lng": -43.302427,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MEDALHISTA OLIMPICO ARTHUR ZANETTI AP 52",
+      "categoria": "UBS",
+      "endereco": "AVENIDA MARECHAL DANTAS BARRETO, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3439-3902",
+      "lat": -22.8835313854,
+      "lng": -43.5580058819,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL GLORIA DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SANTO AMARO, 80 - GLORIA, Rio de Janeiro",
+      "telefone": "(21) 3262-2000",
+      "lat": -22.9220574,
+      "lng": -43.1797701,
+      "publica": true
+    },
+    {
+      "nome": "UBS SANTA BARBARA",
+      "categoria": "UBS",
+      "endereco": "RUA JANDIRA PEREIRA, 625 - SANTA BARBARA, Niterói",
+      "telefone": "(21) 2627-6303",
+      "lat": -22.8766449,
+      "lng": -43.0490753,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JOSE PARANHOS FONTENELLE AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA LEOPOLDINA REGO, 700 - PENHA, Rio de Janeiro",
+      "telefone": "(21) 9859-10020",
+      "lat": -22.84128,
+      "lng": -43.26928,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIA JOSE PAPERA DE AZEVEDO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA POSSE, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3523-8467",
+      "lat": -22.9029806181798,
+      "lng": -43.20798397064209,
+      "publica": true
+    },
+    {
+      "nome": "QUALITY CARE",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MENA BARRETO, 165 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3090-3400",
+      "lat": -22.95660520957547,
+      "lng": -43.19132745265961,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO MEDICO CABB",
+      "categoria": "UBS",
+      "endereco": "RUA AIARA, 125 - HIGIENOPOLIS, Rio de Janeiro",
+      "telefone": "(21) 2117-1716",
+      "lat": -22.876491512119475,
+      "lng": -43.26416015625,
+      "publica": true
+    },
+    {
+      "nome": "HOSP CASA PRONTOCOR ADM E GESTAO HOSPITALAR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SAO FRANCISCO XAVIER, 26 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.906914,
+      "lng": -43.2395797,
+      "publica": true
+    },
+    {
+      "nome": "UBS DR GUILHERME TAYLOR MARCH",
+      "categoria": "UBS",
+      "endereco": "RUA DESEMBARGADOR LIMA CASTRO, 238 - FONSECA, Niterói",
+      "telefone": "(21) 2626-4170",
+      "lat": -22.886316806152145,
+      "lng": -43.08655500411987,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CASA EGAS MONIZ HOSPITAL GERAL ADMINISTRACAO E GEST",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV HENRIQUE VALADARES, 158 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 3497-1803",
+      "lat": -22.912611300000002,
+      "lng": -43.19116814018587,
+      "publica": true
+    },
+    {
+      "nome": "PERSONA SAUDE",
+      "categoria": "UBS",
+      "endereco": "R HERMENGARDA, 60 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 9966-00202",
+      "lat": -22.8811964,
+      "lng": -42.4052551,
+      "publica": true
+    },
+    {
+      "nome": "UNICARE SERVICOS MEDICOS E TERAPIA INTENSIVA",
+      "categoria": "EMERGENCIA",
+      "endereco": "JAMBEIRO, 48 - VILA VALQUEIRE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.877890226657605,
+      "lng": -43.36983919143677,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR TOBIAS TOSTES MACHADO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA VELHA DE MARICA, S/N - RIO DO OURO, Niterói",
+      "telefone": "(21) 3613-2178",
+      "lat": -22.90335158,
+      "lng": -42.98564868,
+      "publica": true
+    },
+    {
+      "nome": "MMF CALIXTO GARCIA",
+      "categoria": "UBS",
+      "endereco": "RUA QUINTINO BOCAIUVA, S/N - CHARITAS, Niterói",
+      "telefone": "(21) 3613-2158",
+      "lat": -22.93465419,
+      "lng": -43.09960243,
+      "publica": true
+    },
+    {
+      "nome": "MMF CARLOS JUAN FINLAY",
+      "categoria": "UBS",
+      "endereco": "RUA ANTONIO BAPTISTA, 8 - VITAL BRASIL, Niterói",
+      "telefone": "(21) 3613-2172",
+      "lat": -22.90682137,
+      "lng": -43.09339168,
+      "publica": true
+    },
+    {
+      "nome": "MMF CELIA SANCHEZ",
+      "categoria": "UBS",
+      "endereco": "RUA JORNALISTA SARDO FILHO, 196 - ILHA DA CONCEICAO, Niterói",
+      "telefone": "(21) 3613-2145",
+      "lat": -22.87255049,
+      "lng": -43.11622445,
+      "publica": true
+    },
+    {
+      "nome": "MMF ERNESTO CHE GUEVARA I",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DOUTOR RAUL DE OLIVEIRA RODRIGUES, 03 - PIRATININGA, Niterói",
+      "telefone": "(21) 3613-2163",
+      "lat": -22.93728505,
+      "lng": -43.06993686,
+      "publica": true
+    },
+    {
+      "nome": "MMF FRANK PAIS GARCIA",
+      "categoria": "UBS",
+      "endereco": "ALAMEDA PARIS, S/N - SAO FRANCISCO, Niterói",
+      "telefone": "(21) 3613-2154",
+      "lat": -22.91166658,
+      "lng": -43.09984515,
+      "publica": true
+    },
+    {
+      "nome": "UBS LARGO DA BATALHA",
+      "categoria": "UBS",
+      "endereco": "RUA REVERENDO ARMANDO FERREIRA, 30 - LARGO DA BATALHA, Niterói",
+      "telefone": "(21) 2710-1053",
+      "lat": -22.91757120791453,
+      "lng": -43.16726187467574,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H DEL CASTILHO AP 32",
+      "categoria": "UPA",
+      "endereco": "RUA LAGO VERDE, S/N - INHAUMA, Rio de Janeiro",
+      "telefone": "(21) 9652-30902",
+      "lat": -22.872884419228335,
+      "lng": -43.271459308523966,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ HOSPITAL ESTADUAL AZEVEDO LIMA",
+      "categoria": "EMERGENCIA",
+      "endereco": "DR TEIXEIRA DE FREITAS, 30 - FONSECA, Niterói",
+      "telefone": "(21) 3603-9450",
+      "lat": -22.880227975327994,
+      "lng": -43.07844400405884,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS AUGUSTO DO AMARAL PEIXOTO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA JORNALISTA HERMANO REQUIAO, 447 - GUADALUPE, Rio de Janeiro",
+      "telefone": "(97) 5016-71030151867",
+      "lat": -22.84697,
+      "lng": -43.37775,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS VILA DO JOAO AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA 17, S/N - MARE, Rio de Janeiro",
+      "telefone": "(21) 9859-10075",
+      "lat": -22.87356,
+      "lng": -43.23981,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MANOEL FERNANDES DE ARAUJO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA LAUDO DE CAMARGO, S/N - PAVUNA, Rio de Janeiro",
+      "telefone": "(97) 5081-34333587884",
+      "lat": -22.81637,
+      "lng": -43.38184,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ICARAI",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MARQUES DE PARANA, 233 - CENTRO, Niterói",
+      "telefone": "(31) 7650-005114",
+      "lat": -22.894463191482284,
+      "lng": -43.11252739816554,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CASA BRANCA AP 22",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA CASA BRANCA, 200 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 4042-1971",
+      "lat": -22.9363826399,
+      "lng": -43.2488167699,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CARMELA DUTRA AP 33",
+      "categoria": "UBS",
+      "endereco": "AV DOS ITALIANOS, 480 - ROCHA MIRANDA, Rio de Janeiro",
+      "telefone": "(97) 5040-56830152879",
+      "lat": -22.85208,
+      "lng": -43.34859,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOAO BATISTA CHAGAS AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA PITOMBEIRAS, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3406-7597",
+      "lat": -22.92681,
+      "lng": -43.63507,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ISABELA SEVERO DA SILVA AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA VOTORANTIM, 664 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 4042-1941",
+      "lat": -22.95767678,
+      "lng": -43.53765,
+      "publica": true
+    },
+    {
+      "nome": "SMS PRONTO ATENDIMENTO CESAR PERNETTA AP 32",
+      "categoria": "UPA",
+      "endereco": "RUA ANA BARBOSA, 21 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3111-6715",
+      "lat": -22.90168,
+      "lng": -43.28105,
+      "publica": true
+    },
+    {
+      "nome": "INTERMEDICA",
+      "categoria": "EMERGENCIA",
+      "endereco": "SILVA TELES, 00052 - ANDARAI, Rio de Janeiro",
+      "telefone": "(21) 2570-6336",
+      "lat": -22.9225601,
+      "lng": -43.2434195,
+      "publica": true
+    },
+    {
+      "nome": "SMS UNIDADES PRISIONAIS DE ATENCAO PRIMARIA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA MONTEIRO DA LUZ, S/N - AGUA SANTA, Rio de Janeiro",
+      "telefone": "(21) 2333-9538",
+      "lat": -22.90534,
+      "lng": -43.30822,
+      "publica": true
+    },
+    {
+      "nome": "UBS DR SERGIO AROUCA",
+      "categoria": "UBS",
+      "endereco": "PRACA VITAL BRAZIL, S/N - SANTA ROSA, Niterói",
+      "telefone": null,
+      "lat": -22.905414,
+      "lng": -43.097598,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE PORTUGAL",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DO BISPO, 72 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(39) 8773-00",
+      "lat": -22.924171,
+      "lng": -43.21170718862437,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO REUMATOLOGICO BOTAFOGO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA VOLUNTARIOS DA PATRIA, 408 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3182-8282",
+      "lat": -22.955301,
+      "lng": -43.195558,
+      "publica": true
+    },
+    {
+      "nome": "CBMERJ HOSP ARISTARCHO PESSOA HOSP DO CORPO DE BOMBEIROS",
+      "categoria": "EMERGENCIA",
+      "endereco": "PAULO DE FRONTIN, 876 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 9945-10951",
+      "lat": -22.93137,
+      "lng": -43.209657,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL UNIVERSITARIO GAFFREE E GUINLE",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARIZ E BARROS, 775 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.916223,
+      "lng": -43.221008,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CARLOS FIGUEIREDO FILHO BOREL AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA SAO MIGUEL, S/N - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 4042-2094",
+      "lat": -22.9402288101,
+      "lng": -43.2529666699,
+      "publica": true
+    },
+    {
+      "nome": "RRM REDE RIO DE MEDICINA",
+      "categoria": "EMERGENCIA",
+      "endereco": "DELGADO DE CARVALHO, 22 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3872-9922",
+      "lat": -22.9223007,
+      "lng": -43.2207011,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA PREMED",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL LANDRY GONCALVES, 245 - RECREIO DOS BANDEIRA, Rio de Janeiro",
+      "telefone": "(21) 2497-1413",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DALMIR DE ABREU SALGADO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO MAGARCA, 1831 - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 3311-5326",
+      "lat": -22.941959934,
+      "lng": -43.5909703012,
+      "publica": true
+    },
+    {
+      "nome": "HOSP CASA EVANGELICO HOSP GERAL ADM E GESTAO HOSP",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BOM PASTOR, 295 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.92968405,
+      "lng": -43.23105284676964,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CARLOS NERY DA COSTA FILHO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA CLARIMUNDO DE MELO, 847 - QUINTINO BOCAIUVA, Rio de Janeiro",
+      "telefone": "(97) 5062-458",
+      "lat": -22.89129,
+      "lng": -43.32441,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MAICON SIQUEIRA AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA SALVADOR ALLENDE, S/N - CURICICA, Rio de Janeiro",
+      "telefone": "(20) 4236-81",
+      "lat": -22.9624745,
+      "lng": -43.3932348,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARIO OLINTO DE OLIVEIRA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA FERRAZ, 2 - CASCADURA, Rio de Janeiro",
+      "telefone": "(97) 5403-24332720011",
+      "lat": -22.88471,
+      "lng": -43.32774,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF WALDEMAR BERARDINELLI AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA FREDERICO TROTA, S/N - SEPETIBA, Rio de Janeiro",
+      "telefone": "(21) 3317-3600",
+      "lat": -22.97624,
+      "lng": -43.69357,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SERGIO VIEIRA DE MELLO AP 10",
+      "categoria": "UBS",
+      "endereco": "AVENIDA TRINTA E UM DE MARCO, S/N - CATUMBI, Rio de Janeiro",
+      "telefone": "(21) 3972-7057",
+      "lat": -22.3228,
+      "lng": -43.1229,
+      "publica": true
+    },
+    {
+      "nome": "PLACI NITEROI",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARTINS TORRES, 98 - SANTA ROSA, Niterói",
+      "telefone": "(21) 3435-7385",
+      "lat": -22.8988651,
+      "lng": -43.0906793,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF AMELIA DOS SANTOS FERREIRA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA POMPILIO DE ALBUQUERQUE, 386 - AGUA SANTA, Rio de Janeiro",
+      "telefone": "(21) 3798-9322",
+      "lat": -22.9028079,
+      "lng": -43.3043631,
+      "publica": true
+    },
+    {
+      "nome": "DRA CAMILLA ARAUJO ODONTOLOGIA INFANTIL E ADULTO",
+      "categoria": "UBS",
+      "endereco": "AV DAS AMERICAS, 500 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.58876652,
+      "lng": -43.674527895,
+      "publica": true
+    },
+    {
+      "nome": "T A RANGEL MEDICINA AMBULATORIAL",
+      "categoria": "UBS",
+      "endereco": "AV ERNANI DO AMARAL PEIXOTO, 178 - CENTRO, Niterói",
+      "telefone": "(21) 2622-5391",
+      "lat": -22.8938552,
+      "lng": -43.1134317,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA PAULO ROBERTO ROCHA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4749",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EIDIMIR THIAGO DE SOUZA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA CORDOVIL, 1242 - CORDOVIL, Rio de Janeiro",
+      "telefone": "(21) 9859-10029",
+      "lat": -22.8232239,
+      "lng": -43.3094967891522,
+      "publica": true
+    },
+    {
+      "nome": "MMF DEPUTADO JOSE SALLY",
+      "categoria": "UBS",
+      "endereco": "LOTEAMENTO BENTO PESTANA, S/N - BALDEADOR, Niterói",
+      "telefone": "(21) 3613-2151",
+      "lat": -22.86903693,
+      "lng": -43.06939654,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ORENCIO DE FREITAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "MACHADO, S/N - BARRETO, Niterói",
+      "telefone": "(02) 1262-03434",
+      "lat": -22.864678472037472,
+      "lng": -43.09456944465637,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ HOSPITAL ESTADUAL GETULIO VARGAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "LOBO JUNIOR, 2293 - PENHA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.838923473698692,
+      "lng": -43.285017013549805,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ALOYSIO AMANCIO DA SILVA AP 53",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO CURTUME, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3305-4894",
+      "lat": -22.88502,
+      "lng": -43.64306,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MANOEL JOSE FERREIRA AP 21",
+      "categoria": "UBS",
+      "endereco": "RUA SILVEIRA MARTINS, 161 - CATETE, Rio de Janeiro",
+      "telefone": "(21) 3613-8346",
+      "lat": -22.9263757,
+      "lng": -43.178416,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE PINHEIRO MACHADO",
+      "categoria": "EMERGENCIA",
+      "endereco": "PINHEIRO MACHADO, 00155 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2125-4882",
+      "lat": -22.93774465917101,
+      "lng": -43.18305015563965,
+      "publica": true
+    },
+    {
+      "nome": "SEMIU SERVICOS DE ESP MED E INT DE URGENCIA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV VICENTE DE CARVALHO, 1159 - VILA DA PENHA, Rio de Janeiro",
+      "telefone": "(21) 3391-5457",
+      "lat": -22.847434388211465,
+      "lng": -43.30539193330018,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE SAO JOAO DE DEUS",
+      "categoria": "EMERGENCIA",
+      "endereco": "ALMIRANTE ALEXANDRINO, 2696 - SANTA TEREZA, Rio de Janeiro",
+      "telefone": "(21) 3233-1018",
+      "lat": -22.93261295,
+      "lng": -43.197980006686805,
+      "publica": true
+    },
+    {
+      "nome": "UBS MORRO DO ESTADO",
+      "categoria": "UBS",
+      "endereco": "ARAUJO PIMENTA, S/N - MORRO DO ESTADO, Niterói",
+      "telefone": null,
+      "lat": -22.899715,
+      "lng": -43.1214981,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS DR ALOAN",
+      "categoria": "EMERGENCIA",
+      "endereco": "CHAVES FARIA, 64 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(21) 2233-2225",
+      "lat": -22.9004366,
+      "lng": -43.2261539,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS HAMILTON LAND AP 40",
+      "categoria": "UBS",
+      "endereco": "AV EDGARD WERNECK, 1601 - CIDADE DE DEUS, Rio de Janeiro",
+      "telefone": "(30) 9637-33",
+      "lat": -22.9492295,
+      "lng": -43.3590259,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ATHAYDE JOSE DA FONSECA AP 51",
+      "categoria": "UBS",
+      "endereco": "AV DEZENOVE DE ABRIL RUA ROQUE BARBOSA, S/N - JARDIM BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8287",
+      "lat": -22.847394,
+      "lng": -43.465519,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ERNANI AGRICOLA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA CONSTANTE JARDIM, 08 - SANTA TERESA, Rio de Janeiro",
+      "telefone": "(21) 2224-7194",
+      "lat": -22.9213,
+      "lng": -43.18926,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA SAO VICENTE",
+      "categoria": "EMERGENCIA",
+      "endereco": "JOAO BORGES, 204 - GAVEA, Rio de Janeiro",
+      "telefone": "(21) 3239-4700",
+      "lat": -22.9759592,
+      "lng": -43.2348325,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ARIADNE LOPES DE MENEZES AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA ENG CARLOS GONCALVES PENNA, S/N - ENGENHO DA RAINHA, Rio de Janeiro",
+      "telefone": "(21) 2018-5985",
+      "lat": -22.868715,
+      "lng": -43.296376,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NEWTON ALVES CARDOZO AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA DR ANTONIO MONTEIRO, 191 - JARDIM CARIOCA, Rio de Janeiro",
+      "telefone": "(21) 9859-10021",
+      "lat": -22.80913,
+      "lng": -43.18928,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SILVIO BARBOSA AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA RODRIGUES DE FREITAS, S/N - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(21) 3613-8276",
+      "lat": -22.877667,
+      "lng": -43.497281,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF WILSON MELLO SANTOS ZICO AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA SARGENTO MIGUEL FILHO, S/N - VILA KENNEDY, Rio de Janeiro",
+      "telefone": "(21) 3613-8314",
+      "lat": -22.860081,
+      "lng": -43.487703,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H FONSECA",
+      "categoria": "UPA",
+      "endereco": "RUA SA BARRETO, 107 - FONSECA, Niterói",
+      "telefone": "(21) 2625-7807",
+      "lat": -22.883828681079613,
+      "lng": -43.08305976048326,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS PARQUE ROYAL AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA JORNALISTA ALAIDE PIRES, 25 - PORTUGUESA ILHA DO, Rio de Janeiro",
+      "telefone": "(21) 9859-10026",
+      "lat": -22.7948159,
+      "lng": -43.2097175,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H COPACABANA",
+      "categoria": "UPA",
+      "endereco": "RUA SIQUEIRA CAMPOS, 129 - COPACABANA, Rio de Janeiro",
+      "telefone": "(30) 4269-45",
+      "lat": -22.966844,
+      "lng": -43.186807,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIO DIAS ALENCAR AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA MUCURIPE, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8296",
+      "lat": -22.894142,
+      "lng": -43.488472,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANA MARIA CONCEICAO DOS SANTOS CORREIA AP 33",
+      "categoria": "UBS",
+      "endereco": "AVENIDA VICENTE DE CARVALHO, 1086 - VILA KOSMOS, Rio de Janeiro",
+      "telefone": "(97) 5349-45633527818",
+      "lat": -22.84965,
+      "lng": -43.30613,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SERGIO NICOLAU AMIN AP 32",
+      "categoria": "UBS",
+      "endereco": "PRACA DA CONFEDERACAO SUICA, S/N - DEL CASTILHO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.877618,
+      "lng": -43.27519,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MANOEL GUILHERME DA SILVEIRA FILHO AP 51",
+      "categoria": "UBS",
+      "endereco": "AV RIBEIRO DANTAS, 571 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8288",
+      "lat": -22.870583,
+      "lng": -43.457264,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF OTTO ALVES DE CARVALHO AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA ENGENHEIRO SOUZA FILHO, S/N - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-01",
+      "lat": -22.9688461,
+      "lng": -43.3361689,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H SEPETIBA AP 53",
+      "categoria": "UPA",
+      "endereco": "RUA JOSE FERNANDES, S/N - SEPETIBA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.97471242021949,
+      "lng": -43.69395732879639,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOAOSINHO TRINTA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA ANAMA PRACA JOSE DA MATTA, S/N - VIGARIO GERAL, Rio de Janeiro",
+      "telefone": "(21) 9859-10081",
+      "lat": -22.8158263,
+      "lng": -43.3038729,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CYRO DE MELLO MANGUARIBA AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DO CANAL, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 2418-8065",
+      "lat": -22.8736,
+      "lng": -43.62836,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE NOSSA SENHORA AUXILIADORA S A",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA VEREADOR DUQUE ESTRADA, 157 - SANTA ROSA, Niterói",
+      "telefone": "(21) 2715-0404",
+      "lat": -22.897003724096244,
+      "lng": -43.09842646121979,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS EMYDIO CABRAL AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA IEDA SANTOS DELGADO, 03 - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3314-5159",
+      "lat": -22.92401,
+      "lng": -43.6251,
+      "publica": true
+    },
+    {
+      "nome": "MS HOSPITAL FEDERAL DA LAGOA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA JARDIM BOTANICO, 501 - JARDIM BOTANICO, Rio de Janeiro",
+      "telefone": "(31) 1151-08",
+      "lat": -22.96335247875973,
+      "lng": -43.21575164794922,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIA DO SOCORRO ROCINHA AP 21",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA GAVEA, 522 - ROCINHA, Rio de Janeiro",
+      "telefone": "(21) 3512-3047",
+      "lat": -22.98940176,
+      "lng": -43.25240008,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H JOAO XXIII AP 53",
+      "categoria": "UPA",
+      "endereco": "AV JOAO XXIII, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(24) 1657-1931575411",
+      "lat": -22.8962961,
+      "lng": -43.736719,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL ROCHA FARIA AP 52",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV CESARIO DE MELO, 3215 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2333-6797",
+      "lat": -22.908061044663658,
+      "lng": -43.56238079119834,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SAVIO ANTUNES ANTARES AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA HERMINIA AURELIO SAMPAIO, 105 - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3317-3185",
+      "lat": -22.91985,
+      "lng": -43.6391,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL BARRA DOR PEDIATRIA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA AYRTON SENNA, 3079 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2430-3600",
+      "lat": -22.9531087,
+      "lng": -43.3646139,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS RODOLPHO ROCCO AP 32",
+      "categoria": "UBS",
+      "endereco": "ESTRADA ADHEMAR BEBIANO, 339 - INHAUMA, Rio de Janeiro",
+      "telefone": "(21) 3798-9243",
+      "lat": -22.8724351,
+      "lng": -43.2752249,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NEWTON BETHLEM AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA BARAO, 260 - PRACA SECA, Rio de Janeiro",
+      "telefone": "(38) 3385-52",
+      "lat": -22.8937443,
+      "lng": -43.3588734,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF PADRE JOSE DE AZEVEDO TIUBA AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA ACAPORI, S/N - GARDENIA AZUL, Rio de Janeiro",
+      "telefone": "(20) 4236-72",
+      "lat": -22.960428,
+      "lng": -43.3530601,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H COSTA BARROS AP 33",
+      "categoria": "UPA",
+      "endereco": "EST DE BOTAFOGO, S/N - COSTA BARROS, Rio de Janeiro",
+      "telefone": "(25) 0869-90",
+      "lat": -22.821782080206773,
+      "lng": -43.36872339248657,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SAMUEL PENHA VALLE AP 53",
+      "categoria": "UBS",
+      "endereco": "AV CESARIO DE MELO, 12574 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3313-0945",
+      "lat": -22.92753,
+      "lng": -43.65236,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF IZABEL DOS SANTOS AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA DOIS DE MAIO, 220 - ENGENHO NOVO, Rio de Janeiro",
+      "telefone": "(21) 3795-8966",
+      "lat": -22.898669,
+      "lng": -43.263744,
+      "publica": true
+    },
+    {
+      "nome": "ESPACO COMUNITARIO DE SAUDE BASICA SESI RJ FILIAL COPACABANA",
+      "categoria": "UBS",
+      "endereco": "SAINT ROMAN, S/N - COPACABANA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9106496,
+      "lng": -43.17391554,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EDSON ABDALLA SAAD AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CESARIO DE MELO, 25 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3365-5365",
+      "lat": -22.9315,
+      "lng": -43.65571,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAMARITANO",
+      "categoria": "EMERGENCIA",
+      "endereco": "BAMBINA, 98 - BOTAGOFO, Rio de Janeiro",
+      "telefone": "(21) 3805-1000",
+      "lat": -22.946,
+      "lng": -43.186,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CATIRI AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA TRES MARIAS, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8272",
+      "lat": -22.847722,
+      "lng": -43.471519,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF BARBARA MOSLEY DE SOUZA AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA OTAVIO MALTA, S/N - ANIL, Rio de Janeiro",
+      "telefone": "(20) 4236-60",
+      "lat": -22.9542626,
+      "lng": -43.3423479,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR OMAR MARINHO VIEIRA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA ALARICO DE SOUZA, S/N - SANTA ROSA, Niterói",
+      "telefone": "(21) 3613-2173",
+      "lat": -22.90072931,
+      "lng": -43.08616959,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H MADUREIRA AP 33",
+      "categoria": "UPA",
+      "endereco": "PRACA DOS LAVRADORES, S/N - MADUREIRA, Rio de Janeiro",
+      "telefone": "(33) 5829-94",
+      "lat": -22.88262004857943,
+      "lng": -43.34477663040161,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF FELIPPE CARDOSO AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA NOSSA SENHORA DA PENHA, 42 - PENHA, Rio de Janeiro",
+      "telefone": "(21) 9859-10024",
+      "lat": -22.84261,
+      "lng": -43.27896,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NASCIMENTO GURGEL AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA MERCURIO, S/N - PAVUNA, Rio de Janeiro",
+      "telefone": "(97) 5306-31124744749",
+      "lat": -22.80515,
+      "lng": -43.35392,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE SAO JOSE",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MACEDO SOBRINHO, 21 - HUMAITA, Rio de Janeiro",
+      "telefone": "(21) 2538-7600",
+      "lat": -22.95791355,
+      "lng": -43.19827197619503,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA PEDIATRICA DA BARRA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV DAS AMERICAS, 4666 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.997182,
+      "lng": -43.360349,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EMYGDIO ALVES COSTA FILHO AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA DO LAZER, 153 - PILARES, Rio de Janeiro",
+      "telefone": "(21) 3437-4741",
+      "lat": -22.881505,
+      "lng": -43.287658,
+      "publica": true
+    },
+    {
+      "nome": "UFRJ HOSP ESCOLA SAO FRANCISCO DE ASSIS",
+      "categoria": "EMERGENCIA",
+      "endereco": "PRESIDENTE VARGAS, 2863 - CIDADE NOVA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.90866,
+      "lng": -43.20108,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HANS JURGEN FERNANDO DOHMANN AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO PIAI, S/N - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 2417-6014",
+      "lat": -22.9845685004,
+      "lng": -43.6603680598,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE E MATERNIDADE SANTA MARTHA S A",
+      "categoria": "EMERGENCIA",
+      "endereco": "DR MARIO VIANA, 653 - SANTA ROSA, Niterói",
+      "telefone": null,
+      "lat": -22.90304,
+      "lng": -43.08924,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MAURY ALVES DE PINHO AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DOS BANDEIRANTES, 11227 - VARGEM PEQUENA, Rio de Janeiro",
+      "telefone": "(20) 4236-20",
+      "lat": -22.9918671,
+      "lng": -43.4324385,
+      "publica": true
+    },
+    {
+      "nome": "NOTRE DAME INTERMEDICA SAUDE CENTRO CLINICO CIDADE NOVA",
+      "categoria": "UPA",
+      "endereco": "PINTO DE AZEVEDO, 00105 - CIDADE NOVA, Rio de Janeiro",
+      "telefone": "(11) 3155-2000",
+      "lat": -22.9112015,
+      "lng": -43.2044099,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER SANTA CRUZ AP 53",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DO PRADO, 325 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(33) 6552-01",
+      "lat": -22.90355,
+      "lng": -43.20885,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL PEDRO II AP 53",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DO PRADO, 325 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(33) 6552-01",
+      "lat": -22.912682,
+      "lng": -43.687744,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARIA CRISTINA ROMA PAUGARTTEN AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA JOAQUIM GOMES, S/N - RAMOS, Rio de Janeiro",
+      "telefone": "(21) 9859-10077",
+      "lat": -22.851928,
+      "lng": -43.251818,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA CRISTO REI",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA LOBO JUNIOR, 695 - PENHA CIRCULAR, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8277107,
+      "lng": -43.2753407,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SOUZA MARQUES AP 33",
+      "categoria": "UBS",
+      "endereco": "PRACA PATRIARCA, S/N - MADUREIRA, Rio de Janeiro",
+      "telefone": "(97) 5006-16933505563",
+      "lat": -22.87726,
+      "lng": -43.34169,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ERNESTO ZEFERINO TIBAU JR AP 10",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DO EXERCITO, 1 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(21) 3895-8658",
+      "lat": -22.89978,
+      "lng": -43.22256,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS FLORIPES GALDINO PEREIRA AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA SRG GERALDO BERTI, 0 - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3427-7056",
+      "lat": -22.88452,
+      "lng": -43.64306,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CESARIO DE MELLO AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA 2, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3305-2049",
+      "lat": -22.93493,
+      "lng": -43.66155,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF FAIM PEDRO AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA MARECHAL AGRICOLA, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8291",
+      "lat": -22.872742,
+      "lng": -43.432256,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EVERTON DE SOUZA SANTOS AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DE MORICABA, S/N - SENADOR VASCONCELOS, Rio de Janeiro",
+      "telefone": "(21) 3364-7596",
+      "lat": -22.89912,
+      "lng": -43.53475,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ADOLFO FERREIRA DE CARVALHO AP 33",
+      "categoria": "UBS",
+      "endereco": "ESTRADA JOAO PAULO, 1007 - BARROS FILHO, Rio de Janeiro",
+      "telefone": "(97) 5127-20331068864",
+      "lat": -22.84109,
+      "lng": -43.36183,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL RIO LARANJEIRAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "DAS LARANJEIRAS, 72 - LARANJEIRAS, Rio de Janeiro",
+      "telefone": "(21) 3181-8647",
+      "lat": -22.9319176,
+      "lng": -43.1841419,
+      "publica": true
+    },
+    {
+      "nome": "SEPTO SERVICO ESPECIALIZADO EM PREVENCAO E TRATAMENTO OTORR",
+      "categoria": "EMERGENCIA",
+      "endereco": "PADRE ELIAS GORAYEB, 00040 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2216-9900",
+      "lat": -22.9258983,
+      "lng": -43.2339437,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ADIB JATENE AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA BENTO RIBEIRO DANTAS, S/N - MARE, Rio de Janeiro",
+      "telefone": "(21) 9859-10012",
+      "lat": -22.86544956373263,
+      "lng": -43.239301443099976,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HELANDE DE MELLO GONCALVES AP 53",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DE PACIENCIA, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3395-3020",
+      "lat": -22.91816,
+      "lng": -43.62898,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H ILHA DO GOVERNADOR",
+      "categoria": "UPA",
+      "endereco": "PARQUE POETA MANUEL BANDEIRA, S/N - COCOTA ILHA DO GOVER, Rio de Janeiro",
+      "telefone": "(23) 3463-48",
+      "lat": -22.908333,
+      "lng": -43.196388,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAO LUCAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "TRAVESSA FREDERICO PAMPLONA, 22 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 2545-4407",
+      "lat": -22.897652,
+      "lng": -43.233875,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PRESIDIO EVARISTO DE MORAES",
+      "categoria": "UBS",
+      "endereco": "RUA BARTOLOMEU DE GUSMAO, 1100 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(21) 2334-1841",
+      "lat": -22.90335,
+      "lng": -43.20843,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA JONAS LOPES DE CARVALHO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4697",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA PEDRO MELO DA SILVA",
+      "categoria": "UBS",
+      "endereco": "ESTADA GENERAL EMILIO MAURELL FILHO, 1300 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4724",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA ALFREDO TRANJAN",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4681",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA LEMOS DE BRITO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4730",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA DR SERRANO NEVES A BANGU III",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4696",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA JORGE SANTANNA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, 1300 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4718",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PRESIDIO NELSON HUNGRIA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4802",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA ESBERARD",
+      "categoria": "UBS",
+      "endereco": "MARIZ E BARROS, 288 - ICARAI, Niterói",
+      "telefone": "(21) 3617-1900",
+      "lat": -22.905907702729518,
+      "lng": -43.104239090270234,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H MAGALHAES BASTOS AP 51",
+      "categoria": "UPA",
+      "endereco": "ESTRADA MANUEL NOGUEIRA DE SA, S/N - MAGALHAES BASTOS, Rio de Janeiro",
+      "telefone": "(35) 5070-80",
+      "lat": -22.90355,
+      "lng": -43.20877,
+      "publica": true
+    },
+    {
+      "nome": "SMS RIO COORD DE EMERGENCIA REGIONAL CER ILHA DO GOV AP 31",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA DO GALEAO, 2920 - PORTUGUESA, Rio de Janeiro",
+      "telefone": "(21) 3812-2400",
+      "lat": -22.8052174,
+      "lng": -43.2110472,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DANTE ROMANO JUNIOR AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA CAROLINA MACHADO, S/N - MARECHAL HERMES, Rio de Janeiro",
+      "telefone": "(97) 5402-08924896838",
+      "lat": -22.86003,
+      "lng": -43.37054,
+      "publica": true
+    },
+    {
+      "nome": "SAMARITANO BARRA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV JORGE CURI, 550 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3142-2760",
+      "lat": -22.99183,
+      "lng": -43.37043,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL VITORIA AMC",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA JORGE CURI, 550 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9918,
+      "lng": -43.37041,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ANTENOR NASCENTES AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA PROFESSOR ANTENOR NASCENTES, 125 - LINS DE VASCONCELOS, Rio de Janeiro",
+      "telefone": "(21) 3798-9127",
+      "lat": -22.906407,
+      "lng": -43.274171,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ESTACIO DE SA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA DO BISPO, 159 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 3512-9543",
+      "lat": -22.92559,
+      "lng": -43.21485,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CARLOS ALBERTO NASCIMENTO AP 52",
+      "categoria": "UBS",
+      "endereco": "PRACA MAJOR VIEIRA DE MELO, 0 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2412-4310",
+      "lat": -22.9184611274,
+      "lng": -43.5583563369,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ROGERIO ROCCO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ENCANAMENTO, S/N - COSMOS, Rio de Janeiro",
+      "telefone": "(21) 4042-1940",
+      "lat": -22.8916633503,
+      "lng": -43.6091138996,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARCOS VALADAO AP 33",
+      "categoria": "UBS",
+      "endereco": "AV PASTOR MARTIN LUTHER KING JR, 10976 - ACARI, Rio de Janeiro",
+      "telefone": "(97) 5141-97833732253",
+      "lat": -22.82537,
+      "lng": -43.34757,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ASSIS VALENTE AP 31",
+      "categoria": "UBS",
+      "endereco": "EST DAS CANARIAS COM AV BRAS CRISPIN PRACA, S/N - GALEAO, Rio de Janeiro",
+      "telefone": "(21) 9859-10034",
+      "lat": -22.81104531,
+      "lng": -43.22718071,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS FAZENDA BOTAFOGO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA ARNALDO GUINLE, S/N - COELHO NETO, Rio de Janeiro",
+      "telefone": "(97) 5137-08238352975",
+      "lat": -22.82642,
+      "lng": -43.35647,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ALOYSIO AUGUSTO NOVIS AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA BRAS DE PINA, 651 - PENHA CIRCULAR, Rio de Janeiro",
+      "telefone": "(21) 9859-10082",
+      "lat": -22.83765657,
+      "lng": -43.290104,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CANTAGALO PAVAO PAVAOZINHO AP 21",
+      "categoria": "UBS",
+      "endereco": "LADEIRA SAINT ROMAN, 172 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 3613-8290",
+      "lat": -22.981562,
+      "lng": -43.196405,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF VICTOR VALLA AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DOM HELDER CAMARA, 1390 - MANGUINHOS, Rio de Janeiro",
+      "telefone": "(21) 9859-10072",
+      "lat": -22.890109,
+      "lng": -43.2458976,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF RODRIGO Y AGUILAR ROIG AP 31",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ITARARE, 650 - COMPLEXO DO ALEMAO, Rio de Janeiro",
+      "telefone": "(21) 9859-10063",
+      "lat": -22.86042,
+      "lng": -43.26795,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL NORTE DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA CAROLINA MACHADO, 38 - CASCADURA, Rio de Janeiro",
+      "telefone": "(21) 3747-3600",
+      "lat": -22.8766709,
+      "lng": -43.3371534,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL NOSSA SENHORA DAS DORES",
+      "categoria": "EMERGENCIA",
+      "endereco": "ERNANI CARDOSO, 21 - CASCADURA, Rio de Janeiro",
+      "telefone": "(21) 9973-99187",
+      "lat": -22.8820264,
+      "lng": -43.3309162,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CEMERU",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FELIPE CARDOSO, 1025 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3335-4040",
+      "lat": -22.92300419283,
+      "lng": -43.67910968994,
+      "publica": true
+    },
+    {
+      "nome": "CHN COMPLEXO HOSPITALAR DE NITEROI",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA LA SALLE ENTR SUPL R DR CELESTINO 113 C ENTR, 12 - CENTRO, Niterói",
+      "telefone": "(21) 2729-1000",
+      "lat": -22.8945095,
+      "lng": -43.11711326,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA PEDROLINO WERLING OLIVEIRA",
+      "categoria": "UBS",
+      "endereco": "RUA EMILIO MAURELL FILHO, 77 - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3347-10",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS FLAVIO DO COUTO VIEIRA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA LUCIO JOSE FILHO, S/N - PARQUE ANCHIETA, Rio de Janeiro",
+      "telefone": "(97) 5184-22824557571",
+      "lat": -22.83254,
+      "lng": -43.4135,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MASAO GOTO AP 51",
+      "categoria": "UBS",
+      "endereco": "AV CARLOS PONTES, S/N - JARDIM SULACAP, Rio de Janeiro",
+      "telefone": "(21) 3613-8284",
+      "lat": -22.886986,
+      "lng": -43.399572,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL UNIVERSITARIO ANTONIO PEDRO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MARQUES DO PARANA, 303 - CENTRO, Niterói",
+      "telefone": "(21) 2629-9114",
+      "lat": -22.895500840460503,
+      "lng": -43.1122477899359,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL MIGUEL COUTO AP 21",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARIO RIBEIRO, 117 - GAVEA, Rio de Janeiro",
+      "telefone": "(21) 3111-3711",
+      "lat": -22.90378,
+      "lng": -43.20888,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MANOEL DE ABREU AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA PADRE NOE GUALBERTO, 1 - SANTISSIMO, Rio de Janeiro",
+      "telefone": "(21) 3403-0971",
+      "lat": -22.87478,
+      "lng": -43.53339,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS HENRIQUE MONAT AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO QUAFA, 07 - BANGU, Rio de Janeiro",
+      "telefone": "(36) 1382-74",
+      "lat": -22.853231,
+      "lng": -43.489839,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA ODONTO RADIOLOGICA COPA 500 LTDA",
+      "categoria": "UBS",
+      "endereco": "AV NOSSA SENHORA DE COPACABANA, 500 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 2547-6670",
+      "lat": -22.9708587,
+      "lng": -43.1865421,
+      "publica": true
+    },
+    {
+      "nome": "CLUBE VIDA SAUDE JARDIM BOTANICO",
+      "categoria": "UBS",
+      "endereco": "RUA JARDIM BOTANICO, 660 - JARDIM BOTANICO, Rio de Janeiro",
+      "telefone": "(31) 4227-60",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LUIZ DE MORAES JUNIOR AP 21",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL SEVERIANO, 91 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8330",
+      "lat": -22.95326459,
+      "lng": -43.17674975,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ROGERIO PINTO DA MOTA AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA MAGALHAES GANDAVO PRACA DO BOM CONSELHO, 204 - REALENGO, Rio de Janeiro",
+      "telefone": "(36) 1383-15",
+      "lat": -22.884858,
+      "lng": -43.415344,
+      "publica": true
+    },
+    {
+      "nome": "CSNSC FILIAL 02",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA VISCONDE DE SANTA CRUZ, 172 - ENGENHO NOVO, Rio de Janeiro",
+      "telefone": "(35) 5314-34",
+      "lat": -22.906388,
+      "lng": -43.268305,
+      "publica": true
+    },
+    {
+      "nome": "MMF JOSE MARTI I",
+      "categoria": "UBS",
+      "endereco": "RUA ALBINO PEREIRA, 615 - SAO FRANCISCO, Niterói",
+      "telefone": "(21) 3613-2167",
+      "lat": -22.90897169,
+      "lng": -43.07595704,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CATTAPRETA AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA ENGENHEIRO JOSE BOANERGES CESAR, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3158-1734",
+      "lat": -22.88976,
+      "lng": -43.71755,
+      "publica": true
+    },
+    {
+      "nome": "SOU MAIS CARE",
+      "categoria": "UBS",
+      "endereco": "R HADDOCK LOBO, 356 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.92029706918011,
+      "lng": -43.2180011441744,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF KLEBEL DE OLIVEIRA ROCHA AP 31",
+      "categoria": "UBS",
+      "endereco": "PRACA CLOMIR TELES CERBINO, S/N - OLARIA, Rio de Janeiro",
+      "telefone": "(21) 9859-10019",
+      "lat": -22.850621,
+      "lng": -43.2733690001,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF IVANIR DE MELLO AP 33",
+      "categoria": "UBS",
+      "endereco": "ESTRADA MARECHAL ALENCASTRO, S/N - VILA MILITAR, Rio de Janeiro",
+      "telefone": "(97) 5101-88832293016",
+      "lat": -22.84736,
+      "lng": -43.3966,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR JOAO VASCONCELLOS",
+      "categoria": "UBS",
+      "endereco": "RUA DR MARTINS TORRES, 281 - SANTA ROSA, Niterói",
+      "telefone": "(21) 3613-2179",
+      "lat": -22.8986573,
+      "lng": -43.091194,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ISRAELITA ALBERT SABIN",
+      "categoria": "EMERGENCIA",
+      "endereco": "PROFESSOR GABIZO, 319 - MARACANA, Rio de Janeiro",
+      "telefone": "(21) 2176-8800",
+      "lat": -22.916302288170957,
+      "lng": -43.221116065979004,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR GERALDO CHINI",
+      "categoria": "UBS",
+      "endereco": "RUA E, S/N - SAPE, Niterói",
+      "telefone": "(21) 3613-2184",
+      "lat": -22.8952434,
+      "lng": -43.05725484,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL RIO BOTAFOGO",
+      "categoria": "EMERGENCIA",
+      "endereco": "BARAO DE LUCENA, 95 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3216-8000",
+      "lat": -22.947,
+      "lng": -43.19,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO MEDICO SUBURBANA",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DOM HELDER CAMARA, 9125 - QUINTINO BOCAIUVA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.880751,
+      "lng": -43.2699966,
+      "publica": true
+    },
+    {
+      "nome": "UBS CARLOS ANTONIO DA SILVA",
+      "categoria": "UBS",
+      "endereco": "AVENIDA JANSEN DE MELO, S/N - SAO LOURENCO, Niterói",
+      "telefone": null,
+      "lat": -22.887476,
+      "lng": -43.115244,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MEDALHISTA OLIMPICO MAURICIO SILVA AP 10",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CARLOS MATOSO CORREIA, 0 - BENFICA, Rio de Janeiro",
+      "telefone": "(21) 3952-5488",
+      "lat": -22.876590361676566,
+      "lng": -43.227810859680176,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM CLINICA MEDICA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA INTENDENTE MAGALHAES, 480 - CAMPINHO, Rio de Janeiro",
+      "telefone": "(21) 2450-2405",
+      "lat": -22.880445438274297,
+      "lng": -43.3535099029541,
+      "publica": true
+    },
+    {
+      "nome": "SMS UNIDADES PRISIONAIS DE ATENCAO PRIMARIA AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GUANDU DO SENA, 1902 - GERICINO, Rio de Janeiro",
+      "telefone": "(23) 3348-20",
+      "lat": -22.848936,
+      "lng": -43.486265,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SEMIU",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA VICENTE DE CARVALHO, 1159 - VILA DA PENHA, Rio de Janeiro",
+      "telefone": "(21) 3457-8800",
+      "lat": -22.847434,
+      "lng": -43.305391,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ARTHUR BISPO DO ROSARIO AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA SAMPAIO CORREA, S/N - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-76",
+      "lat": -22.937538693344173,
+      "lng": -43.38994149966739,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ESTIVADORES AP 10",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DO EXERCITO, 99 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(21) 3936-0434",
+      "lat": -22.90158,
+      "lng": -43.22438,
+      "publica": true
+    },
+    {
+      "nome": "LOG HEALTH",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ADOLFO BERGAMINI, 206 - ENGENHO DE DENTRO, Rio de Janeiro",
+      "telefone": "(21) 3899-6342",
+      "lat": -22.9021746,
+      "lng": -43.2966401,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CASA SANTA CRUZ HOSPITAL GERAL ADMINISTRACAO E GE",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA NESTOR, 00131 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9119865,
+      "lng": -43.6052979,
+      "publica": true
+    },
+    {
+      "nome": "SPAZIO ESSENZA",
+      "categoria": "UBS",
+      "endereco": "JOAO CABRAL DE MELLO NETO, 00850 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3550-9457",
+      "lat": -22.810476,
+      "lng": -43.226,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ROMULO CARLOS TEIXEIRA AP 51",
+      "categoria": "UBS",
+      "endereco": "PRACA MAROBA, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8311",
+      "lat": -22.887553,
+      "lng": -43.431542,
+      "publica": true
+    },
+    {
+      "nome": "SEPPEN CGSP RJ AMB UNIDADE MATERNO INFANTIL",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GUANDU DO SENA, 1902 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3465-9712",
+      "lat": -22.90839,
+      "lng": -43.20744,
+      "publica": true
+    },
+    {
+      "nome": "ITAMED CLINICA MEDICA POPULAR VACINACAO",
+      "categoria": "UBS",
+      "endereco": "RUA CEL AGOSTINHO, 76 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2412-9509",
+      "lat": -22.926776865793283,
+      "lng": -43.203392028808594,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JEREMIAS MORAES DA SILVA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA TEIXEIRA RIBEIRO, S/N - MARE, Rio de Janeiro",
+      "telefone": "(21) 9859-10051",
+      "lat": -22.854731,
+      "lng": -43.239575,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF VALTER FELISBINO DE SOUZA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA DIOMEDES TROTA, 259 - RAMOS, Rio de Janeiro",
+      "telefone": "(21) 9859-10053",
+      "lat": -22.8545398,
+      "lng": -43.264916,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MEDALHISTA OLIMPICO RICARDO LUCARELLI SOUZA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA FREI CANECA, S/N - ESTACIO, Rio de Janeiro",
+      "telefone": "(21) 3972-6480",
+      "lat": -22.91455,
+      "lng": -43.20121,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF OLGA PEREIRA PACHECO AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA ANA QUINTAO, 348 - PIEDADE, Rio de Janeiro",
+      "telefone": "(37) 9896-29",
+      "lat": -22.8788771,
+      "lng": -43.3090978,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL GERAL DO RIO DE JANEIRO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV DUQUE DE CAXIAS, 1551 - DEODORO, Rio de Janeiro",
+      "telefone": "(21) 2457-1700",
+      "lat": -22.87625152652,
+      "lng": -43.227875,
+      "publica": true
+    },
+    {
+      "nome": "PMF CONSULTORIO NA RUA",
+      "categoria": "UBS",
+      "endereco": "R VISCONDE DO URUGUAI, 531 - CENTRO, Niterói",
+      "telefone": null,
+      "lat": -22.883,
+      "lng": -43.104,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAO VICENTE DE PAULO",
+      "categoria": "EMERGENCIA",
+      "endereco": "GONCALVES CRESPO, 430 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2563-2121",
+      "lat": -22.9150401,
+      "lng": -43.2189334,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF AMAURY BOTTANY AP 33",
+      "categoria": "UBS",
+      "endereco": "AV MONSENHOR FELIX, 512 - IRAJA, Rio de Janeiro",
+      "telefone": "(97) 5197-697",
+      "lat": -22.8463,
+      "lng": -43.32244,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS SANTA CRUZ",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FELIPE CARDOSO, 759 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 0391-98",
+      "lat": -22.70231651351,
+      "lng": -43.6815356,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL MUNICIPAL OCEANICO DR GILSON CANTARINO HMOGC",
+      "categoria": "EMERGENCIA",
+      "endereco": "DOUTOR RAUL DE OLIVEIRA RODRIGUES, 382 - PIRATININGA, Niterói",
+      "telefone": "(21) 3180-3948",
+      "lat": -22.943388379407434,
+      "lng": -43.061914570933546,
+      "publica": true
+    },
+    {
+      "nome": "MMF ITALO GOMES",
+      "categoria": "UBS",
+      "endereco": "RUA INDIGENA, 200 - SAO LOURENCO, Niterói",
+      "telefone": "(21) 3613-2160",
+      "lat": -22.88809807,
+      "lng": -43.10982704,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DOUTOR MARCOS MORAES",
+      "categoria": "EMERGENCIA",
+      "endereco": "ARISTIDES CAIRE, 00027 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3031-6762",
+      "lat": -22.9000632,
+      "lng": -43.2793465,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CENTRAL DA AERONAUTICA HCA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BARAO DE ITAPAGIPE, 167 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 3501-3100",
+      "lat": -22.900014,
+      "lng": -43.20841026,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H ENGENHO NOVO",
+      "categoria": "UPA",
+      "endereco": "SOUZA BARROS, 70 - ENGENHO NOVO, Rio de Janeiro",
+      "telefone": "(21) 2299-2577",
+      "lat": -22.9009595,
+      "lng": -43.2673882,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H PENHA",
+      "categoria": "UPA",
+      "endereco": "LOBO JUNIOR COM AV BRAZ DE PINA, S/N - PENHA, Rio de Janeiro",
+      "telefone": "(21) 2299-2577",
+      "lat": -22.838389537287703,
+      "lng": -43.286025524139404,
+      "publica": true
+    },
+    {
+      "nome": "MMF FAUSTINO PEREZ",
+      "categoria": "UBS",
+      "endereco": "DANIEL RIENTE, 29 - CARAMUJO, Niterói",
+      "telefone": "(21) 9703-42123",
+      "lat": -22.89369,
+      "lng": -43.06783,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CASA RIO LARANJEIRAS UNIDADE BAMBINA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BAMBINA, 56 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3239-5050",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "MMF ABEL SANTAMARIA",
+      "categoria": "UBS",
+      "endereco": "TRAVESSA CARMITA, S/N - CHARITAS, Niterói",
+      "telefone": "(21) 3613-2157",
+      "lat": -22.93377958,
+      "lng": -43.09745968,
+      "publica": true
+    },
+    {
+      "nome": "MMF CAMILO CIENFUEGOS",
+      "categoria": "UBS",
+      "endereco": "RUA MARIO VIANA, 790 - SANTA ROSA, Niterói",
+      "telefone": "(21) 3613-2177",
+      "lat": -22.90594315,
+      "lng": -43.08569214,
+      "publica": true
+    },
+    {
+      "nome": "MMF CARLOS RAFAEL RODRIGUEZ",
+      "categoria": "UBS",
+      "endereco": "AVENIDA MACHADO, S/N - BARRETO, Niterói",
+      "telefone": "(21) 3613-2159",
+      "lat": -22.86535392,
+      "lng": -43.09531787,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR ABELARDO RAMIREZ",
+      "categoria": "UBS",
+      "endereco": "RUA AURORA RIBEIRO, 05 - MARIA PAULA, Niterói",
+      "telefone": "(21) 3613-2176",
+      "lat": -22.88205458,
+      "lng": -43.03139568,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS VILA DO CEU AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA GUARUJA, 69 - COSMOS, Rio de Janeiro",
+      "telefone": "(21) 4042-1940",
+      "lat": -22.90296,
+      "lng": -43.208005,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL EVANDRO FREIRE AP 31",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA DO GALEAO, 2920 - PORTUGUESA ILHA DO G, Rio de Janeiro",
+      "telefone": "(21) 3812-2400",
+      "lat": -22.80518743242434,
+      "lng": -43.21065545082092,
+      "publica": true
+    },
+    {
+      "nome": "SMS FIOCRUZ ENSP CSE GERMANO SINVAL FARIA AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA LEOPOLDO BULHOES, 1480 - MANGUINHOS, Rio de Janeiro",
+      "telefone": "(25) 9825-19",
+      "lat": -22.877722183976363,
+      "lng": -43.25023412704468,
+      "publica": true
+    },
+    {
+      "nome": "SMS TELESSAUDE RIO",
+      "categoria": "UBS",
+      "endereco": "PRACA DA REPUBLICA, 111 - CENTRO, Rio de Janeiro",
+      "telefone": "(99) 9588-174",
+      "lat": -22.909606,
+      "lng": -43.1768772,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CRISTIANI VIEIRA PINHO AP 51",
+      "categoria": "UBS",
+      "endereco": "PRACA LEALDINA MUNIZ, S/N - BANGU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.888278,
+      "lng": -43.465417,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JOAO CANDIDO AP 31",
+      "categoria": "UBS",
+      "endereco": "AV LOBO JR, 83 - PENHA CIRCULAR, Rio de Janeiro",
+      "telefone": "(21) 9859-10068",
+      "lat": -22.821794,
+      "lng": -43.271385,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ZILDA ARNS AP 31",
+      "categoria": "UBS",
+      "endereco": "ESTRADA ITARARE, 951 - COMPLEXO DO ALEMAO, Rio de Janeiro",
+      "telefone": "(21) 9859-10078",
+      "lat": -22.8636262,
+      "lng": -43.2685351,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF VALERIA GOMES ESTEVES AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA VITORIA REGIA, 4 - SEPETIBA, Rio de Janeiro",
+      "telefone": "(21) 3158-1733",
+      "lat": -22.96142,
+      "lng": -43.70527,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF RECANTO DO TROVADOR AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE DE SANTA ISABEL, 272 - VILA ISABEL, Rio de Janeiro",
+      "telefone": "(21) 2042-9840",
+      "lat": -22.915215,
+      "lng": -43.260968,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ARMANDO PALHARES AGUINAGA AP 51",
+      "categoria": "UBS",
+      "endereco": "AV SANTA CRUZ, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8316",
+      "lat": -22.878972,
+      "lng": -43.429867,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL FRANCISCO DA SILVA TELLES AP 33",
+      "categoria": "EMERGENCIA",
+      "endereco": "UBIRAJARA, 25 - IRAJA, Rio de Janeiro",
+      "telefone": "(02) 1371-5070",
+      "lat": -22.90347,
+      "lng": -43.208575,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DI CAMP",
+      "categoria": "EMERGENCIA",
+      "endereco": "ALBARDAO, 630 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3198-1757",
+      "lat": -22.90458,
+      "lng": -43.57455,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIA DE AZEVEDO RODRIGUES PEREIRA AP 33",
+      "categoria": "UBS",
+      "endereco": "PRACA PROFESSORA SANTINHA, S/N - PARQUE ANCHIETA, Rio de Janeiro",
+      "telefone": "(97) 5279-81330196181",
+      "lat": -22.83389,
+      "lng": -43.40683,
+      "publica": true
+    },
+    {
+      "nome": "MMF JOAO SAMPAIO",
+      "categoria": "UBS",
+      "endereco": "RUA JOSE BENTO VIEIRA FERREIRA, S/N - LARGO DA BATALHA, Niterói",
+      "telefone": "(21) 3613-2181",
+      "lat": -22.90971615,
+      "lng": -43.06898179,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H REALENGO",
+      "categoria": "UPA",
+      "endereco": "RUA MARECHAL JOAQUIM INACIO, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 9956-68593",
+      "lat": -22.8737118,
+      "lng": -43.4316587,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H CAMPO GRANDE II",
+      "categoria": "UPA",
+      "endereco": "AVENIDA CESARIO DE MELO, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(23) 3368-02",
+      "lat": -22.906612588657886,
+      "lng": -43.57450614634033,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CENTRAL DO EXERCITO",
+      "categoria": "EMERGENCIA",
+      "endereco": "FRANCISCO MANUEL, 126 - BENFICA, Rio de Janeiro",
+      "telefone": "(21) 3891-7013",
+      "lat": -22.89400653007362,
+      "lng": -43.243560791015625,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANNA NERY AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA ANA NERI COM RUA GENERAL BELFORD, S/N - ROCHA, Rio de Janeiro",
+      "telefone": "(21) 3936-0267",
+      "lat": -22.900553,
+      "lng": -43.252266,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H SENADOR CAMARA AP 51",
+      "categoria": "UPA",
+      "endereco": "AVENIDA SANTA CRUZ, 6486 - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(21) 2929-49653",
+      "lat": -22.88253108793212,
+      "lng": -43.483275175094604,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO HOSPITALAR AMEP JACAREPAGUA",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARECHAL MIGUEL SALAZAR MENDES DE MORAIS, 254 - TAQUARA, Rio de Janeiro",
+      "telefone": "(21) 8669-1518",
+      "lat": -22.904,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM ANCHIETA",
+      "categoria": "UBS",
+      "endereco": "MARECHAL ALENCASTRO, 3759 - ANCHIETA, Rio de Janeiro",
+      "telefone": "(21) 2455-6565",
+      "lat": -22.825890871663233,
+      "lng": -43.40455770492554,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA A E G SERVICOS MEDICOS",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DAS AMERICAS, 2480 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9986863,
+      "lng": -43.3365719,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA GESTUS SAUDE DA MULHER",
+      "categoria": "UBS",
+      "endereco": "AV DAS AMERICAS, 500 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 9787-74643",
+      "lat": -23.002986749999998,
+      "lng": -43.317115075872564,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA TALAVERA BRUCE",
+      "categoria": "UBS",
+      "endereco": "EST GUANDU DO SENA, 1902 - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3348-19",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MADRE TERESA DE CALCUTA AP 31",
+      "categoria": "UBS",
+      "endereco": "AV ILHA DAS ENXADAS, 100 - BANCARIOS, Rio de Janeiro",
+      "telefone": "(21) 9859-10056",
+      "lat": -22.7867407,
+      "lng": -43.1859683,
+      "publica": true
+    },
+    {
+      "nome": "MMF ENOC JOAQUIM DE OLIVEIRA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA FREI ORLANDO, 169 - JACARE PIRATININGA, Niterói",
+      "telefone": "(21) 3613-2141",
+      "lat": -22.92643297,
+      "lng": -43.04240771,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DO RIO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA GENERAL POLIDORO, 144 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2275-0759",
+      "lat": -22.9562315,
+      "lng": -43.1867821,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF VALDECIR SALUSTIANO CARDOZO AP 52",
+      "categoria": "UBS",
+      "endereco": "PRACA MANOEL MARIZ, S/N - COSMOS, Rio de Janeiro",
+      "telefone": "(21) 2042-9629",
+      "lat": -22.91513059,
+      "lng": -43.61059924,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SAO SEBASTIAO AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA MONSENHOR MANOEL GOMES, 630 - CAJU, Rio de Janeiro",
+      "telefone": "(21) 2042-3602",
+      "lat": -22.8797251,
+      "lng": -43.2161542,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CARIOCA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA BERGAMO, 320 - ROCHA, Rio de Janeiro",
+      "telefone": "(21) 9709-20426",
+      "lat": -22.895056,
+      "lng": -43.246296,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ SANATORIO PENAL",
+      "categoria": "EMERGENCIA",
+      "endereco": "GUANDU DO SENA, 1902 - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3248-26",
+      "lat": -22.84027,
+      "lng": -43.52906,
+      "publica": true
+    },
+    {
+      "nome": "URMED URGENCIAS MEDICAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "JAMBEIRO, 48 - VILA VALQUEIRE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22,
+      "lng": -43,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL PRO CARDIACO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DONA MARIANA, 217 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2528-1442",
+      "lat": -22.7492546,
+      "lng": -43.468639,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DONA ZICA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA JOAO RODRIGUES, 43 - SAO FRANCISCO XAVIER, Rio de Janeiro",
+      "telefone": "(21) 3496-9228",
+      "lat": -22.9014,
+      "lng": -43.243,
+      "publica": true
+    },
+    {
+      "nome": "SMS CSE SAO FRANCISCO DE ASSIS AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA AFONSO CAVALCANTI, 20 - CIDADE NOVA, Rio de Janeiro",
+      "telefone": "(21) 3938-4449",
+      "lat": -22.90925,
+      "lng": -43.20189,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ADELINO SIMOES NOVA SEPETIBA AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA SETE, S/N - SEPETIBA, Rio de Janeiro",
+      "telefone": "(21) 3292-6680",
+      "lat": -22.95601,
+      "lng": -43.68591,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS AGUIAR TORRES AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DE INHOAIBA, 849 - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 2042-9698",
+      "lat": -22.89,
+      "lng": -43.59,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF AUGUSTO BOAL AP 31",
+      "categoria": "UBS",
+      "endereco": "AV GUILHERME MAXWEL, 901 - MARE, Rio de Janeiro",
+      "telefone": "(21) 9859-10058",
+      "lat": -22.8656068097,
+      "lng": -43.2419682697,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF FIORELLO RAYMUNDO AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA ACAFRAO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8286",
+      "lat": -22.867869,
+      "lng": -43.456908,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER REALENGO AP 51",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA NILOPOLIS, 329 - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 2042-2096",
+      "lat": -22.86607,
+      "lng": -43.43868,
+      "publica": true
+    },
+    {
+      "nome": "PLACI BARRA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA LUIS CARLOS PRESTES, 180 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9963598,
+      "lng": -43.3569121,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ERIVALDO FERNANDES NOBREGA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA RIO GRANDE DO SUL, 26 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3798-9325",
+      "lat": -22.8983773,
+      "lng": -43.2785987,
+      "publica": true
+    },
+    {
+      "nome": "INSTITUTO NACIONAL DE DESENVOLVIMENTO SOCIAL INDS",
+      "categoria": "UBS",
+      "endereco": "RUA ALVARENGA PEIXOTO, 25 - VIGARIO GERAL, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.808802231436154,
+      "lng": -43.31132411956787,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL BARRA DAY",
+      "categoria": "EMERGENCIA",
+      "endereco": "ARMANDO LOMBARDI, 01000 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3550-3400",
+      "lat": -23.00616,
+      "lng": -43.31423,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL NAVAL MARCILIO DIAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "CESAR ZAMA, 185 - LINS DE VASCONCELOS, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.47908,
+      "lng": -43.145207,
+      "publica": true
+    },
+    {
+      "nome": "MMF WILLIAN SOLER",
+      "categoria": "UBS",
+      "endereco": "AVENIDA IRENE LOPES SODRE, S/N - ENGENHO DO MATO, Niterói",
+      "telefone": "(21) 3613-2171",
+      "lat": -22.93468856,
+      "lng": -43.00862585,
+      "publica": true
+    },
+    {
+      "nome": "MMF ANTONIO NICO LOPEZ",
+      "categoria": "UBS",
+      "endereco": "AVENIDA PROFESSOR JOAO BRASIL, 1726 - ENGENHOCA, Niterói",
+      "telefone": "(21) 3613-2142",
+      "lat": -22.86661118,
+      "lng": -43.08968536,
+      "publica": true
+    },
+    {
+      "nome": "MMF JOSE SUARES BLANCO",
+      "categoria": "UBS",
+      "endereco": "TRAVESSA JONATHAS BOTELHO, 133 - CUBANGO, Niterói",
+      "telefone": "(21) 3613-2175",
+      "lat": -22.89213509,
+      "lng": -43.0924259,
+      "publica": true
+    },
+    {
+      "nome": "MMF JOSE MARTI II",
+      "categoria": "UBS",
+      "endereco": "RUA ASCENDINO PEREIRA, 335 - SAO FRANCISCO, Niterói",
+      "telefone": "(21) 3613-2169",
+      "lat": -22.91211236,
+      "lng": -43.08059687,
+      "publica": true
+    },
+    {
+      "nome": "MMF COM MANUEL PINEIRO LOSADA",
+      "categoria": "UBS",
+      "endereco": "RUA ASTOR DA COSTA MENEZES, S/N - MARAVISTA, Niterói",
+      "telefone": "(21) 3613-2162",
+      "lat": -22.93688958,
+      "lng": -43.03185168,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED RIO PA BARRA",
+      "categoria": "UPA",
+      "endereco": "AVENIDA DAS AMERICAS, 777 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2483-9439",
+      "lat": -22.9988612,
+      "lng": -43.3681826,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DEOLINDO COUTO AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA SANTO AUGURIO, 40 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3158-9665",
+      "lat": -22.91983,
+      "lng": -43.67527,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HEITOR DOS PRAZERES AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA IGUAPERIBA, 00 - BRAS DE PINA, Rio de Janeiro",
+      "telefone": "(21) 9859-10032",
+      "lat": -22.82309314,
+      "lng": -43.28213743,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SAO GODOFREDO AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA SAO GODOFREDO, 45 - PENHA, Rio de Janeiro",
+      "telefone": "(21) 9859-10048",
+      "lat": -22.8369444,
+      "lng": -43.2777778,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED RIO PA COPACABANA",
+      "categoria": "UPA",
+      "endereco": "RUA SIQUEIRA CAMPOS, 70 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 2483-9920",
+      "lat": -22.9655383,
+      "lng": -43.1885374,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SONIA MARIA FERREIRA MACHADO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA POSSE, S/N - SANTISSIMO, Rio de Janeiro",
+      "telefone": "(21) 2403-1583",
+      "lat": -22.87385,
+      "lng": -43.51849,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANTONIO GONCALVES VILLA SOBRINHO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO CAMPINHO, 2899 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3394-3043",
+      "lat": -22.8922289798,
+      "lng": -43.5904461197,
+      "publica": true
+    },
+    {
+      "nome": "MMF JULIO DIAS GONZALES",
+      "categoria": "UBS",
+      "endereco": "TRAVESSA GEORGE ALAN, S/N - BARRETO, Niterói",
+      "telefone": "(21) 3613-2147",
+      "lat": -22.8699424,
+      "lng": -43.1044869,
+      "publica": true
+    },
+    {
+      "nome": "MMF ERNESTO CHE GUEVARA II",
+      "categoria": "UBS",
+      "endereco": "RUA DEPUTADO JOSE LUIZ ERTHAL, S/N - CAFUBA, Niterói",
+      "telefone": "(21) 3613-2164",
+      "lat": -22.93446221,
+      "lng": -43.07147579,
+      "publica": true
+    },
+    {
+      "nome": "MMF HAIDEE SANTAMARIA",
+      "categoria": "UBS",
+      "endereco": "AV NELSON DE OLIVEIRA E SILVA, 63 - CANTAGALO, Niterói",
+      "telefone": "(21) 3613-2166",
+      "lat": -22.91109753,
+      "lng": -43.04732515,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HERBERT JOSE DE SOUZA AP 32",
+      "categoria": "UBS",
+      "endereco": "AVENIDA PASTOR MARTIN LUTHER KING JUNIOR, 4776 - TOMAS COELHO, Rio de Janeiro",
+      "telefone": "(21) 9787-24046",
+      "lat": -22.8633847,
+      "lng": -43.306754,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ESPANHOL",
+      "categoria": "EMERGENCIA",
+      "endereco": "RIACHUELO, 302 - CENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9133912,
+      "lng": -43.1905616,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H PACIENCIA AP 53",
+      "categoria": "UPA",
+      "endereco": "ESTRADA SANTA EUGENIA, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.927330217184508,
+      "lng": -43.63499164581299,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL COPA DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FIGUEREDO DE MAGALHAES, 875 - COPACABANA, Rio de Janeiro",
+      "telefone": "(25) 4536-00",
+      "lat": -22.87716368,
+      "lng": -43.2275533,
+      "publica": true
+    },
+    {
+      "nome": "POLICLINICA DE BOTAFOGO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA PASTEUR, 72 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(22) 7514-47",
+      "lat": -22.95108266997572,
+      "lng": -43.17871570587158,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARCOLINO CANDAU AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA LAURA DE ARAUJO, 36 - CIDADE NOVA, Rio de Janeiro",
+      "telefone": "(21) 3512-4734",
+      "lat": -22.90991,
+      "lng": -43.20089,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ALBERTO BORGERTH AP 33",
+      "categoria": "UBS",
+      "endereco": "PRACA PATRIARCA, S/N - MADUREIRA, Rio de Janeiro",
+      "telefone": "(97) 5328-69630182836",
+      "lat": -22.87726,
+      "lng": -43.34169,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ITANHANGA AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ITANHANGA, 270 - ITANHANGA, Rio de Janeiro",
+      "telefone": "(20) 4236-59",
+      "lat": -22.9964754,
+      "lng": -43.3143559,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS TIA ALICE AP 32",
+      "categoria": "UBS",
+      "endereco": "R SANTOS MELLO, 73 - SAO FRANCISCO XAVIER, Rio de Janeiro",
+      "telefone": "(21) 3546-6227",
+      "lat": -22.90040395,
+      "lng": -43.2426096,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOSUETE SANTANNA DE OLIVEIRA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA LUIZ COUTINHO CAVALCANTI, S/N - GUADALUPE, Rio de Janeiro",
+      "telefone": "(97) 5236-456997981860",
+      "lat": -22.84876,
+      "lng": -43.37138,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED RIO HOSPITAL BARRA DA TIJUCA",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV AYRTON SENNA, 2550 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3883-1000",
+      "lat": -22.9986146,
+      "lng": -43.364099,
+      "publica": true
+    },
+    {
+      "nome": "PHYSIOFLEX FISIOTERAPIA",
+      "categoria": "UBS",
+      "endereco": "MEDINA, 150 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3627-4771",
+      "lat": -22.900193575083218,
+      "lng": -43.28156232833862,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA ORTOPEDICA BANGU",
+      "categoria": "UBS",
+      "endereco": "RUA SILVA CARDOSO, 111 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3332-3114",
+      "lat": -22.25876652,
+      "lng": -43.45227875,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CHAPEU MANGUEIRA E BABILONIA AP 21",
+      "categoria": "UBS",
+      "endereco": "LADEIRA ARI BARROSO, S/N - LEME, Rio de Janeiro",
+      "telefone": "(21) 3613-8343",
+      "lat": -22.96057728,
+      "lng": -43.16926526,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOSE DE PAULA LOPES PONTES AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA JABURU, S/N - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 2042-9633",
+      "lat": -22.95768,
+      "lng": -43.60797,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF NILDO EYMAR DE ALMEIDA AGUIAR AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL AMERICANO FREIRE, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8294",
+      "lat": -22.863,
+      "lng": -43.444836,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL BALBINO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ANGELICA MOTA, 58 - OLARIA, Rio de Janeiro",
+      "telefone": "(21) 3977-2000",
+      "lat": -22.84738707,
+      "lng": -43.2761764,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ALICE TOLEDO TIBIRICA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA JURITI, S/N - IRAJA, Rio de Janeiro",
+      "telefone": "(97) 5056-05124712927",
+      "lat": -22.8302,
+      "lng": -43.32794,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS IRACI LOPES AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA ANTONIO MENDES, 02 - VIGARIO GERAL, Rio de Janeiro",
+      "telefone": "(21) 9859-10074",
+      "lat": -22.807289,
+      "lng": -43.303859,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL GERAL DE BONSUCESSO RJ",
+      "categoria": "EMERGENCIA",
+      "endereco": "LONDRES, 616 - BONSUCESSO, Rio de Janeiro",
+      "telefone": "(21) 3977-9500",
+      "lat": -22.5282476,
+      "lng": -44.1301272,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DR OSWALDO VILELLA AP 52",
+      "categoria": "UBS",
+      "endereco": "JOMAR MENDES, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2042-1939",
+      "lat": -22.87501,
+      "lng": -43.59632,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DOM HELDER CAMARA AP 21",
+      "categoria": "UBS",
+      "endereco": "RUA VOLUNTARIOS DA PATRIA, 136 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2535-5090",
+      "lat": -22.95189913,
+      "lng": -43.18640979,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MILTON FONTES MAGARAO AP 32",
+      "categoria": "UBS",
+      "endereco": "AV AMARO CAVALCANTI, 1387 - ENGENHO DE DENTRO, Rio de Janeiro",
+      "telefone": "(21) 3111-6708",
+      "lat": -22.8964294,
+      "lng": -43.2912008,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ENIO SERRA",
+      "categoria": "EMERGENCIA",
+      "endereco": "SOARES CABRAL, 36 - LARANJEIRAS, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.156496876652,
+      "lng": -43.227875,
+      "publica": true
+    },
+    {
+      "nome": "MMF TAYSSA ERMINDA ALVES",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO VICOSO JARDIM, S/N - VICOSO JARDIM, Niterói",
+      "telefone": "(21) 3613-2144",
+      "lat": -22.8931484,
+      "lng": -43.08315829,
+      "publica": true
+    },
+    {
+      "nome": "MMF JESUS MONTANE",
+      "categoria": "UBS",
+      "endereco": "RUA ONZE DE AGOSTO, 04 - INGA, Niterói",
+      "telefone": "(21) 3613-2155",
+      "lat": -22.90423298,
+      "lng": -43.12629567,
+      "publica": true
+    },
+    {
+      "nome": "MMF JOSE ANTONIO ECHEVERRIA BIANCHI",
+      "categoria": "UBS",
+      "endereco": "RUA LIONS CLUBE, 37 - SANTA ROSA, Niterói",
+      "telefone": "(21) 3613-2174",
+      "lat": -22.90624858,
+      "lng": -43.09008568,
+      "publica": true
+    },
+    {
+      "nome": "MMF MARIO MUNOZ MONROY",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CARLOS ERMELINDO MARINS, S/N - JURUJUBA, Niterói",
+      "telefone": "(21) 3613-2170",
+      "lat": -22.93307476,
+      "lng": -43.11481393,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARIA AUGUSTA ESTRELLA AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE DE SANTA ISABEL, 56 - VILA ISABEL, Rio de Janeiro",
+      "telefone": "(21) 2042-9685",
+      "lat": -22.9163762642,
+      "lng": -43.2532244659,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JOAO BARROS BARRETO AP 21",
+      "categoria": "UBS",
+      "endereco": "RUA TENREIRO ARANHA, S/N - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 3208-5297",
+      "lat": -22.967126060847374,
+      "lng": -43.18726658821106,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS HARVEY RIBEIRO DE SOUZA FILHO AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA GUIOMAR NOVAES, 133 - RECREIO DOS BANDEIRA, Rio de Janeiro",
+      "telefone": "(34) 1845-18",
+      "lat": -23.02026625,
+      "lng": -43.48254913,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS BUA BOANERGES BORGES DA FONSECA AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA LARANJEIRAS DO SUL, S/N - MAGALHAES BASTOS, Rio de Janeiro",
+      "telefone": "(21) 3613-8312",
+      "lat": -22.876831,
+      "lng": -43.411092,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H ENGENHO DE DENTRO AP 32",
+      "categoria": "UPA",
+      "endereco": "RUA BERNARDO, S/N - ENGENHO DE DENTRO, Rio de Janeiro",
+      "telefone": "(25) 9205-02",
+      "lat": -22.876652,
+      "lng": -43.2278,
+      "publica": true
+    },
+    {
+      "nome": "QUALI DIAGNOSE",
+      "categoria": "EMERGENCIA",
+      "endereco": "BARAO DA TORRE, 00145 - IPANEMA, Rio de Janeiro",
+      "telefone": "(21) 8634-3108",
+      "lat": -22.9833019,
+      "lng": -43.1980047,
+      "publica": true
+    },
+    {
+      "nome": "MARAL SAUDE",
+      "categoria": "UBS",
+      "endereco": "DOUTOR PEREIRA DOS SANTOS, 35 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2298-2181",
+      "lat": -22.9251928,
+      "lng": -43.2334342,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS OSWALDO CRUZ AP 10",
+      "categoria": "UBS",
+      "endereco": "AV HENRIQUE VALADARES, 151 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 2151-1751",
+      "lat": -22.91251,
+      "lng": -43.19034,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS RAUL BARROSO AP 52",
+      "categoria": "UBS",
+      "endereco": "AV ROBERTO BURLE MAX, S/N - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 4042-1985",
+      "lat": -23.0056,
+      "lng": -43.54063,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ILZO MOTTA DE MELLO AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CESARIO DE MELO, 11485 - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3395-6771",
+      "lat": -22.92141,
+      "lng": -43.644471,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ADVENTISTA SILVESTRE",
+      "categoria": "EMERGENCIA",
+      "endereco": "DOS GUARARAPES, 263 - COSME VELHO, Rio de Janeiro",
+      "telefone": "(21) 3034-3000",
+      "lat": -22.94260824536831,
+      "lng": -43.20357173681259,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DR BADIM",
+      "categoria": "EMERGENCIA",
+      "endereco": "SAO FRANCISCO XAVIER, 390 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.914571494609785,
+      "lng": -43.23239306014396,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS PORTUS E QUITANDA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA JORGE NOGUEIRA, S/N - PAVUNA, Rio de Janeiro",
+      "telefone": "(97) 5012-46538353907",
+      "lat": -22.8173,
+      "lng": -43.36651,
+      "publica": true
+    },
+    {
+      "nome": "UNIDADE MUNICIPAL DE URGENCIA DOUTOR MARIO MONTEIRO",
+      "categoria": "UPA",
+      "endereco": "ESTRADA FRANCISCO DA CRUZ NUNES, S/N - CAFUBA, Niterói",
+      "telefone": "(21) 2619-2613",
+      "lat": -22.929069306840738,
+      "lng": -43.06386351585388,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PRESIDIO ELIZABETH SA REGO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, 1905 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4711",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL NITEROI DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "SETE DE SETEMBRO, 301 - SANTA ROSA, Niterói",
+      "telefone": "(21) 2607-9150",
+      "lat": -22.902,
+      "lng": -43.101,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL RIOMAR",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA CANDIDO PORTINARI, 555 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9948924303,
+      "lng": -43.41121118,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DAVID CAPISTRANO FILHO AP 52",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CESARIO DE MELO, S/N - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 3384-1569",
+      "lat": -22.91137083,
+      "lng": -43.53474826,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO DE GINECOLOGIA E OBSTETRICIA DRA ELIZABETH COSTA MART",
+      "categoria": "UBS",
+      "endereco": "AV ERICO VERISSIMO, 1015 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2486-0644",
+      "lat": -23.0127514,
+      "lng": -43.3116701,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA PILON",
+      "categoria": "UBS",
+      "endereco": "REAL GRANDEZA, 254 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2253-8515",
+      "lat": -22.95664005,
+      "lng": -43.19211005486461,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JAMIL HADDAD AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA SOLDADO JOAO ROTELO, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 2410-317833541447",
+      "lat": -22.88345,
+      "lng": -43.63999,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SERGIO AROUCA AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA DO IMPERIO, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3365-1524",
+      "lat": -22.9187,
+      "lng": -43.69421,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL QUALI IPANEMA",
+      "categoria": "EMERGENCIA",
+      "endereco": "BARAO DA TORRE, 145 - IPANEMA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.876491512119475,
+      "lng": -43.228046894073486,
+      "publica": true
+    },
+    {
+      "nome": "SUPREME",
+      "categoria": "UBS",
+      "endereco": "RUA SANTA CLARA, 75 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 3283-3183",
+      "lat": -22.97142085,
+      "lng": -43.1875157051812,
+      "publica": true
+    },
+    {
+      "nome": "MD SAUDE",
+      "categoria": "UBS",
+      "endereco": "AVN N S DE COPACABANA, 462 - COPACABANA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "IMAGEM SOLIDARIA",
+      "categoria": "UBS",
+      "endereco": "AVN VICENTE DE CARVALHO, 1590 - PENHA CIRCULAR, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA SOROCABA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SOROCABA, 464 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2539-9901",
+      "lat": -22.9513122,
+      "lng": -43.1907622,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS SAO MATHEUS",
+      "categoria": "EMERGENCIA",
+      "endereco": "SILVA CARDOSO, 689 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2401-7396",
+      "lat": -22.8818683,
+      "lng": -43.46320942610282,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CANDIDO RIBEIRO DA SILVA FILHO AP 33",
+      "categoria": "UBS",
+      "endereco": "AVENIDA SAO FELIX, 601 - VISTA ALEGRE, Rio de Janeiro",
+      "telefone": "(97) 5215-91831482086",
+      "lat": -22.83269,
+      "lng": -43.31226,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CASA DE PORTUGAL HOSPITAL GERAL ADMINISTRACAO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DO BISPO, S/N - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 2218-5354",
+      "lat": -22.9232868,
+      "lng": -43.2133171,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ENFERMEIRA EDMA VALADAO AP 33",
+      "categoria": "UBS",
+      "endereco": "AV BRASIL, 18476 - ACARI, Rio de Janeiro",
+      "telefone": "(97) 5308-88924752515",
+      "lat": -22.82503,
+      "lng": -43.33788,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ADERSON FERNANDES AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA URURAI, S/N - HONORIO GURGEL, Rio de Janeiro",
+      "telefone": "(97) 5028-52433613432",
+      "lat": -22.83946,
+      "lng": -43.35589,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER CAMPO GRANDE AP 52",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA CESARIO DE MELO, 3215 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(23) 3367-97",
+      "lat": -22.908061044663658,
+      "lng": -43.56238079119834,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM CAMPO GRANDE X",
+      "categoria": "UBS",
+      "endereco": "AUGUSTO DE AZEVEDO SANTOS, 00009 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2471-4580",
+      "lat": -22.23876652,
+      "lng": -43.2697875,
+      "publica": true
+    },
+    {
+      "nome": "MMF RAUL CARLOS PARETO JR",
+      "categoria": "UBS",
+      "endereco": "RUA SA BARRETO, 107 - FONSECA, Niterói",
+      "telefone": "(21) 3613-2149",
+      "lat": -22.88382807,
+      "lng": -43.08290174,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EDNEY CANAZARO DE OLIVEIRA AP 32",
+      "categoria": "UBS",
+      "endereco": "AVENIDA MARECHAL RONDOM C RUA ANTUNES GARCIA, S/N - SAMPAIO, Rio de Janeiro",
+      "telefone": "(21) 3796-0103",
+      "lat": -22.9038569,
+      "lng": -43.2626617,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE GRANDE RIO",
+      "categoria": "EMERGENCIA",
+      "endereco": "OLIVEIRA MELLO, 302 - CORDOVIL, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUN DE CAMPANHA RIOCENTRO COVID 19",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA SALVADOR ALLENDE, 6555 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.976995,
+      "lng": -43.411448,
+      "publica": true
+    },
+    {
+      "nome": "UPA 24 HORAS DO LARGO DA BATALHA",
+      "categoria": "UPA",
+      "endereco": "RUA REVERENDO ARMANDO FERREIRA, 30 - LARGO DA BATALHA, Niterói",
+      "telefone": "(21) 2710-1053",
+      "lat": -22.907492146328,
+      "lng": -43.06724041700363,
+      "publica": true
+    },
+    {
+      "nome": "SERVICO DE SAUDE CONJUNTO CAJU",
+      "categoria": "UBS",
+      "endereco": "CARLOS SEIDL, 188 - CAJU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8756774,
+      "lng": -43.2223819,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ HOSPITAL ESTADUAL EDUARDO RABELLO",
+      "categoria": "EMERGENCIA",
+      "endereco": "DO PRE, S/N - SENADOR VASCONCELOS, Rio de Janeiro",
+      "telefone": "(21) 3408-9190",
+      "lat": -22.8979063,
+      "lng": -43.5415483,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF NELIO DE OLIVEIRA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA RIVADAVIA CORREA, 188 - GAMBOA, Rio de Janeiro",
+      "telefone": "(21) 2516-0620",
+      "lat": -22.89725,
+      "lng": -43.19661,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LOURIVAL FRANCISCO DE OLIVEIRA AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA COMANDANTE GUARANYS, 447 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4231-18",
+      "lat": -22.95157155,
+      "lng": -43.3707443,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR ALOISIO BRAZIL",
+      "categoria": "UBS",
+      "endereco": "AVENIDA PASTOR JOSE GOMES DE SOUZA, S/N - CARAMUJO, Niterói",
+      "telefone": "(21) 3613-2156",
+      "lat": -22.88376314,
+      "lng": -43.06240112,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR CLAUDIO DO AMARAL",
+      "categoria": "UBS",
+      "endereco": "AVENIDA PROFESSOR JOAO BRASIL, S/N - ENGENHOCA, Niterói",
+      "telefone": "(21) 3613-2152",
+      "lat": -22.87255178,
+      "lng": -43.09441458,
+      "publica": true
+    },
+    {
+      "nome": "MEDIARE RECREIO",
+      "categoria": "UBS",
+      "endereco": "AV ALFREDO BALTHAZAR DA SILVEIRA, 520 - RECREIO DOS BANDEIRA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -23.0112355,
+      "lng": -43.4429649,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ENGENHEIRO SANITARISTA PAULO D AGUILA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA JORGE SCHMIDT, 331 - MARECHAL HERMES, Rio de Janeiro",
+      "telefone": "(97) 5270-567",
+      "lat": -22.86427,
+      "lng": -43.37117,
+      "publica": true
+    },
+    {
+      "nome": "PROPE SERVICOS ORTOPEDICOS ESPECIALIZADOS",
+      "categoria": "UBS",
+      "endereco": "RUA DONA MARIANA, 143 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(02) 1221-69900",
+      "lat": -22.9529992835,
+      "lng": -43.188371,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DINIZ BATISTA DOS SANTOS AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA BRIGADEIRO TROMPOWSKY, S/N - MARE, Rio de Janeiro",
+      "telefone": "(21) 9859-10043",
+      "lat": -22.846,
+      "lng": -43.245,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAO LUCAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DR MARCH, 207 - BARRETO, Niterói",
+      "telefone": "(21) 2720-2090",
+      "lat": -22.8653032,
+      "lng": -43.0782543,
+      "publica": true
+    },
+    {
+      "nome": "INTERMEDICA CAMPO GRANDE",
+      "categoria": "UPA",
+      "endereco": "DO CABUCU, 1005 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(11) 3155-2186",
+      "lat": -22.909455437892685,
+      "lng": -43.54868608465528,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM CAMPO GRANDE CGY",
+      "categoria": "UBS",
+      "endereco": "CACHAMORRA, 01755 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2471-4580",
+      "lat": -22.94624115,
+      "lng": -43.55717806595513,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CAMPANHA COVID 19 MARACANA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA PROFESSOR EURICO RABELO, S/N - MARACANA, Rio de Janeiro",
+      "telefone": "(21) 3030-6420",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ODALEA FIRMO DUTRA AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA BOTUCATU, 633 - GRAJAU, Rio de Janeiro",
+      "telefone": "(21) 4042-2093",
+      "lat": -22.9156235298,
+      "lng": -43.26099061,
+      "publica": true
+    },
+    {
+      "nome": "SMS RIO CMS OSCAR CLARK AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL CANABARRO, 345 - MARACANA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.5411,
+      "lng": -43.5429,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CLEMENTINO FRAGA AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA CAICARA, 514 - IRAJA, Rio de Janeiro",
+      "telefone": "(97) 5009-39724823007",
+      "lat": -22.85109,
+      "lng": -43.32677,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL FEDERAL DO ANDARAI",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA GASTAO PENALVA, 119 - ANDARAI, Rio de Janeiro",
+      "telefone": "(21) 2575-7000",
+      "lat": -22.9276592,
+      "lng": -43.2526117526346,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PRESIDIO ARY FRANCO",
+      "categoria": "UBS",
+      "endereco": "RUA VIOLETA, 15 - AGUA SANTA, Rio de Janeiro",
+      "telefone": "(21) 2333-9538",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS BELIZARIO PENNA AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA FRANKLIN, 29 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3407-9209",
+      "lat": -22.89774,
+      "lng": -43.56964,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ALEXANDER FLEMING AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA MARMIARI, S/N - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(33) 3505-94",
+      "lat": -22.889844,
+      "lng": -43.482714,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL UNIVERSITARIO DOS SERVIDORES DO ESTADO",
+      "categoria": "EMERGENCIA",
+      "endereco": "SACADURA CABRAL, 178 - CENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.896888,
+      "lng": -43.190505,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO DE GINECOLOGIA E OBSTETRICIA DRA ELIZABETH COSTA MART",
+      "categoria": "UBS",
+      "endereco": "RUA BACAIRIS, 351 - TAQUARA, Rio de Janeiro",
+      "telefone": "(21) 2486-0644",
+      "lat": -22.7124915,
+      "lng": -43.4016274,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA JOSE ANTONIO DA COSTA BARROS",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3350-59",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE AERONAUTICA DOS AFONSOS",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA MARECHAL FONTENELLE, 1628 - CAMPO DOS AFONSOS, Rio de Janeiro",
+      "telefone": "(32) 8968-00",
+      "lat": -22.88408,
+      "lng": -43.38643,
+      "publica": true
+    },
+    {
+      "nome": "ESSENCIAL HOSPITAL DE TRANSICAO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA RUI BARBOSA, 716 - SAO FRANCISCO, Niterói",
+      "telefone": null,
+      "lat": -22.912274,
+      "lng": -43.077965,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL QUINTA DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ALMIRANTE BALTAZAR, 383 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(21) 3461-3600",
+      "lat": -22.905905963507976,
+      "lng": -43.21903467178345,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CAMPANHA COVID 19 PARQUE DOS ATLETAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA SALVADOR ALENDE, 6500 - RECREIO DOS BANDEIRA, Rio de Janeiro",
+      "telefone": "(32) 3947-00",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H IRAJA",
+      "categoria": "UPA",
+      "endereco": "MONSENHOR FELIX, 380 - IRAJA, Rio de Janeiro",
+      "telefone": "(21) 2481-6010",
+      "lat": -22.8493786,
+      "lng": -43.32506407628851,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H BANGU",
+      "categoria": "UPA",
+      "endereco": "FIGUEIREDO CAMARGO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2419-5657",
+      "lat": -22.871453,
+      "lng": -43.451021,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H TIJUCA",
+      "categoria": "UPA",
+      "endereco": "RUA CONDE DE BONFIM, S/N - TIJUCA, Rio de Janeiro",
+      "telefone": "(23) 3419-21",
+      "lat": -22.922923105919104,
+      "lng": -43.2306432723999,
+      "publica": true
+    },
+    {
+      "nome": "MMF ALBERTO RICARDO HATIN",
+      "categoria": "UBS",
+      "endereco": "RUA MANUEL PACHECO DE CARVALHO, 107 - PIRATININGA, Niterói",
+      "telefone": "(21) 3613-2165",
+      "lat": -22.94237544,
+      "lng": -43.05641968,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR WILSON DE OLIVEIRA",
+      "categoria": "UBS",
+      "endereco": "RUA COSTA MONTEIRO, S/N - ITITIOCA, Niterói",
+      "telefone": "(21) 3613-2180",
+      "lat": -22.89559642,
+      "lng": -43.07763126,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DR EITHEL PINHEIRO DE OLIVEIRA LIMA AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO TAQUARAL, S/N - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(21) 3613-8273",
+      "lat": -22.868219,
+      "lng": -43.484197,
+      "publica": true
+    },
+    {
+      "nome": "INSTITUTO ESTADUAL DE DERMATOLOGIA SANITARIA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA GODOFREDO VIANA, 64 - TANQUE JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(02) 1233-36676",
+      "lat": -22.913839,
+      "lng": -43.366891,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JOSE BREVES DOS SANTOS AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA MAR GRANDE, 10 - CORDOVIL, Rio de Janeiro",
+      "telefone": "(21) 9859-10042",
+      "lat": -22.8159508,
+      "lng": -43.2912092,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NILZA ROSA AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA CASTELNUOVO, 150 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2042-9843",
+      "lat": -22.9422519897,
+      "lng": -43.2431828698,
+      "publica": true
+    },
+    {
+      "nome": "HCJ HOSPITAL DE CLINICAS DE JACAREPAGUA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BACAIRIS, 499 - TAQUARA, Rio de Janeiro",
+      "telefone": "(21) 3987-7000",
+      "lat": -22.9158327,
+      "lng": -43.373597,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SANDRA REGINA SAMPAIO DE SOUZA AP 51",
+      "categoria": "UBS",
+      "endereco": "AVENIDA SANTA CRUZ, S/N - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(21) 3613-8297",
+      "lat": -22.882425,
+      "lng": -43.487383,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ INSTITUTO ESTADUAL DE INFECTOLOGIA SAO SEBASTIAO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SACADURA CABRAL, 178 - SAUDE, Rio de Janeiro",
+      "telefone": "(23) 3271-65",
+      "lat": -22.89417,
+      "lng": -43.18788,
+      "publica": true
+    },
+    {
+      "nome": "MS HOSPITAL DE IPANEMA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ANTONIO PARREIRAS, 67 - IPANEMA, Rio de Janeiro",
+      "telefone": "(21) 3111-2318",
+      "lat": -22.98397500490382,
+      "lng": -43.19577991962433,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL SALGADO FILHO AP 32",
+      "categoria": "EMERGENCIA",
+      "endereco": "ARQUIAS CORDEIRO, 370 - MEIER, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9031514,
+      "lng": -43.2085365,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ HOSPITAL ESTADUAL ANCHIETA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA CARLOS SEIDL, 785 - CAJU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8754893,
+      "lng": -43.2218484,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CARLOS GENTILLE DE MELLO AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA BICUIBA, 181 - ENGENHO NOVO, Rio de Janeiro",
+      "telefone": "(21) 2088-1019",
+      "lat": -22.913033,
+      "lng": -43.274204,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SALLES NETTO AP 10",
+      "categoria": "UBS",
+      "endereco": "PRACA CONDESSA PAULO DE FRONTIN, 52 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 2273-9249",
+      "lat": -22.92497,
+      "lng": -43.20895,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CESAR PERNETTA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA ANA BARBOSA, 21 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3900-6156",
+      "lat": -22.901543,
+      "lng": -43.281001,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NICOLA ALBANO AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA BOA VISTA, 190 - ALTO DA BOA VISTA, Rio de Janeiro",
+      "telefone": "(21) 2042-9842",
+      "lat": -22.9660146781,
+      "lng": -43.2777173265,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF BARBARA STARFIELD AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA VOLTA GRANDE, S/N - DEL CASTILHO, Rio de Janeiro",
+      "telefone": "(21) 3798-9342",
+      "lat": -22.877967,
+      "lng": -43.268802,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS HEITOR BELTRAO AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA DESEMBARGADOR ISIDRO, 144 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2042-9984",
+      "lat": -22.9297709376,
+      "lng": -43.2343499112,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAO LOURENCO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA SANTA CRUZ, 3805 - BANGU, Rio de Janeiro",
+      "telefone": "(33) 3863-00",
+      "lat": -22.890527428753018,
+      "lng": -43.52577209472656,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS WOODROW PIMENTEL PANTOJA AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO MAGARCA, 4435 - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 2394-8360",
+      "lat": -22.9554052725,
+      "lng": -43.6097159642,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LENICE MARIA MONTEIRO COELHO AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA JOSE CARLOS MATTA MACHADO, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3484-0882",
+      "lat": -22.9092,
+      "lng": -43.66418,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE IRAJA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA PEREIRA DE ARAUJO, 44 - IRAJA, Rio de Janeiro",
+      "telefone": "(35) 1206-45",
+      "lat": -22.851705,
+      "lng": -43.326547,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JOSE MESSIAS DO CARMO AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA WALDEMAR DUTRA, 55 - SANTO CRISTO, Rio de Janeiro",
+      "telefone": "(21) 2233-1690",
+      "lat": -22.9007,
+      "lng": -43.20036,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NAGIB JORGE FARAH AP 31",
+      "categoria": "UBS",
+      "endereco": "PRACA SOLDADO MICHEL CHEIB, S/N - JARDIM AMERICA, Rio de Janeiro",
+      "telefone": "(21) 9859-10005",
+      "lat": -22.807804,
+      "lng": -43.324005,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO DE GINECO OBSTETRICIA DRA ELIZABETH COSTA MARTINS",
+      "categoria": "UBS",
+      "endereco": "RUA CONDE DE BONFIM, 297 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2486-0644",
+      "lat": -22.8576717,
+      "lng": -42.2576585,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF PADRE MARCOS VINICIO MIRANDA VIEIRA AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ITANHANGA, S/N - ITANHANGA, Rio de Janeiro",
+      "telefone": "(40) 4225-99",
+      "lat": -22.9905948,
+      "lng": -43.3213203,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LOURENCO DE MELLO AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA CORONEL TITO PORTO CARRERO, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3427-7068",
+      "lat": -22.91783,
+      "lng": -43.64275,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H CIDADE DE DEUS AP 40",
+      "categoria": "UPA",
+      "endereco": "RUA EDGAR WERNECK, S/N - CIDADES DE DEUS, Rio de Janeiro",
+      "telefone": "(21) 2232-3173",
+      "lat": -22.95728,
+      "lng": -43.35958,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOSE ANTONIO CIRAUDO AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA AREIA BRANCA, 1428 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 2394-276632927862",
+      "lat": -22.9381,
+      "lng": -43.68643,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIA SEBASTIANA DE OLIVEIRA AP 31",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DOS MAGISTERIOS, S/N - ILHA DO GOVERNADOR, Rio de Janeiro",
+      "telefone": "(21) 9859-10069",
+      "lat": -22.79504965967112,
+      "lng": -43.1953963637352,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL MUNICIPAL CARLOS TORTELLY",
+      "categoria": "EMERGENCIA",
+      "endereco": "ATHAYDE PARREIRAS, 266 - NITEROI, Niterói",
+      "telefone": "(21) 2729-9342",
+      "lat": -22.893917576889766,
+      "lng": -43.11037838459015,
+      "publica": true
+    },
+    {
+      "nome": "RDB RECURSOS DIAGNOSTICOS DR BALBINO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ANGELICA MOTA, 66 - OLARIA, Rio de Janeiro",
+      "telefone": "(21) 3977-2000",
+      "lat": -22.84738707466027,
+      "lng": -43.27617645263672,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB INSTITUTO PENAL PLACIDO SA CARVALHO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, 900 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4833",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA ESMERALDINO BANDEIRA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, 400 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4813",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ HOSPITAL DR HAMILTON AGOSTINHO VIEIRA CASTRO",
+      "categoria": "EMERGENCIA",
+      "endereco": "GEN EMILIO MOUREL FILHO, 1100 - BANGU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8411113,
+      "lng": -43.4885068,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB INSTITUTO PENAL VICENTE PIRAGIBE",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, 1300 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4793",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA MONIZ SODRE",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4808",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ITAIPU",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA FRANCISCO DA CRUZ NUNES, 5599 - PIRATININGA, Niterói",
+      "telefone": "(21) 2608-5430",
+      "lat": -22.93942433286648,
+      "lng": -43.05816650390625,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANTONIO GONCALVES DA SILVA AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ENGENHO NOVO, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8313",
+      "lat": -22.866117,
+      "lng": -43.425547,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ROSINO BACCARINI AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA ARAQUEM, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8298",
+      "lat": -22.854969,
+      "lng": -43.463397,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS HELIO PELLEGRINO AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA DO MATOSO, 96 - PRACA DA BANDEIRA, Rio de Janeiro",
+      "telefone": "(21) 2042-9986",
+      "lat": -22.914218,
+      "lng": -43.213089,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL PASTEUR",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA AMARO CAVALCANTI, 495 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 2104-4400",
+      "lat": -22.36876652,
+      "lng": -43.24727875,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ILHACOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MANUEL BONFIM, 76 - ZUMBI, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.821173,
+      "lng": -43.1756136,
+      "publica": true
+    },
+    {
+      "nome": "FUNDACAO BELA LOPES DE OLIVEIRA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BARAO DE LUCENA, 95 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(32) 1680-00",
+      "lat": -22.9478932,
+      "lng": -43.190434,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL RAPHAEL DE PAULA SOUZA AP 40",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA DE CURICICA, 2000 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(21) 3413-6433",
+      "lat": -22.955721,
+      "lng": -43.3969139,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ILHA DO GOVERNADOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA DO DENDE, 668 - TAUA, Rio de Janeiro",
+      "telefone": "(32) 1680-00",
+      "lat": -22.7975551,
+      "lng": -43.1924037,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF OLIMPIA ESTEVES AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA OLIMPIA ESTEVES, S/N - PADRE MIGUEL, Rio de Janeiro",
+      "telefone": "(21) 3613-8270",
+      "lat": -22.888497,
+      "lng": -43.446811,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H MANGUINHOS AP 31",
+      "categoria": "UPA",
+      "endereco": "AV DOM HELDER CAMARA, 1390 - BENFICA, Rio de Janeiro",
+      "telefone": "(23) 3224-07",
+      "lat": -22.88349685,
+      "lng": -43.32355672509527,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL UNIVERSITARIO CLEMENTINO FRAGA FILHO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA PROFESSOR RODOLPHO PAULO ROCCO, 255 - ILHA DO FUNDAO, Rio de Janeiro",
+      "telefone": "(21) 3938-2789",
+      "lat": -22.842443446478057,
+      "lng": -43.23738098144531,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA BANDEIRA STAMPA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAUREL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3350-49",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SEPPEN RJ AMBULATORIO CAD PUBLICA JOSE FREDERICO MARQUES",
+      "categoria": "UBS",
+      "endereco": "RUA CELIO NASCIMENTO, S/N - BENFICA, Rio de Janeiro",
+      "telefone": "(23) 3458-29",
+      "lat": -22.888891,
+      "lng": -43.235739,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB CADEIA PUBLICA JOAQUIM FERREIRA DE SOUZA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA GENERAL EMILIO MAUREL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3346-99",
+      "lat": -22.87665,
+      "lng": -43.22787,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF KELLY CRISTINA DE SA LACERDA SILVA AP 51",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CARLOS SAMPAIO CORREA, S/N - SENADOR CAMARA, Rio de Janeiro",
+      "telefone": "(21) 3613-8299",
+      "lat": -22.887414,
+      "lng": -43.481981,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF BIBI VOGEL AP 32",
+      "categoria": "UBS",
+      "endereco": "ESTRADA ADHEMAR BEBIANO, 3686 - ENGENHO DA RAINHA, Rio de Janeiro",
+      "telefone": "(21) 9709-20449",
+      "lat": -22.8653441,
+      "lng": -43.2913272,
+      "publica": true
+    },
+    {
+      "nome": "CASA DE SAUDE SANTA LUCIA",
+      "categoria": "EMERGENCIA",
+      "endereco": "VOLUNTARIOS DA PATRIA, 435 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2203-8655",
+      "lat": -22.898652,
+      "lng": -43.239875,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL AREIA BRANCA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FELIPE CARDOSO, 1025 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 2418-3389",
+      "lat": -22.9225766,
+      "lng": -43.679597,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS GARFIELD DE ALMEIDA AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL PAULO DE OLIVEIRA, 226 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3405-1232",
+      "lat": -22.9230548797,
+      "lng": -43.51838943,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DR MARIO RODRIGUES CID AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA MATUREIA, S/N - COSMOS, Rio de Janeiro",
+      "telefone": "(21) 3402-4261",
+      "lat": -22.8914141796,
+      "lng": -43.6057739002,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS PEDRO NAVA AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA DO PERNAMBUCANO, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 3364-0371",
+      "lat": -22.8544737199,
+      "lng": -43.5413328297,
+      "publica": true
+    },
+    {
+      "nome": "IUN",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA PRESIDENTE PEDREIRA, 26 - INGA, Niterói",
+      "telefone": null,
+      "lat": -22.903409159403683,
+      "lng": -43.12682699535857,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H JACAREPAGUA",
+      "categoria": "UPA",
+      "endereco": "ANDRE ROCHA, 20 - TAQUARA JACAREPAGU, Rio de Janeiro",
+      "telefone": "(21) 2299-2577",
+      "lat": -22.9294573,
+      "lng": -43.37341975,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H MARECHAL HERMES",
+      "categoria": "UPA",
+      "endereco": "RUA XAVIER CURADO, S/N - MAL HERMES, Rio de Janeiro",
+      "telefone": "(21) 9686-72086",
+      "lat": -22.8593527,
+      "lng": -43.3747342,
+      "publica": true
+    },
+    {
+      "nome": "MMF PROFESSOR DR BARROS TERRA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA ALCEBIADES PINTO, S/N - CANTAGALO, Niterói",
+      "telefone": "(21) 3613-2182",
+      "lat": -22.90834408,
+      "lng": -43.04999352,
+      "publica": true
+    },
+    {
+      "nome": "UNIDADE BASICA DE SAUDE DO CENTRO",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE URUGUAI, 531 - CENTRO, Niterói",
+      "telefone": "(21) 2620-8226",
+      "lat": -22.8920525,
+      "lng": -43.1244336,
+      "publica": true
+    },
+    {
+      "nome": "PRONTO SOCORRO CLINICO PRONTOCOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SAO FRANCISCO XAVIER, 26 - TIJUCA, Rio de Janeiro",
+      "telefone": "(02) 1220-49900",
+      "lat": -22.9067678,
+      "lng": -43.2395772,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ERNANI DE PAIVA FERREIRA BRAGA AP 53",
+      "categoria": "UBS",
+      "endereco": "AVENIDA JOAO XXIII, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3395-3412",
+      "lat": -22.90479,
+      "lng": -43.101,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS RENATO ROCCO AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA AIRES DE CASAL, S/N - JACAREZINHO, Rio de Janeiro",
+      "telefone": "(21) 2042-4301",
+      "lat": -22.8922,
+      "lng": -43.262982,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LUIZ CELIO PEREIRA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA DA ABOLICAO, 303 - ABOLICAO, Rio de Janeiro",
+      "telefone": "(37) 9891-26",
+      "lat": -22.888298,
+      "lng": -43.296109,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NECKER PINTO AP 31",
+      "categoria": "UBS",
+      "endereco": "ESTRADA RIO JEQUIA, 428 - ZUMBI, Rio de Janeiro",
+      "telefone": "(21) 9859-10036",
+      "lat": -22.8208592,
+      "lng": -43.1775131,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS EDUARDO A VILHENA AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA JOSE DOS REIS, 951 - PILARES, Rio de Janeiro",
+      "telefone": "(21) 3111-6693",
+      "lat": -22.887752,
+      "lng": -43.293378,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL VITAL",
+      "categoria": "EMERGENCIA",
+      "endereco": "VISCONDE DE SANTA CRUZ, 172 - ENGENHO NOVO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8983527,
+      "lng": -43.5634675,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARIA JOSE DE SOUSA BARBOSA AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO TAQUARAL, 100 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8292",
+      "lat": -22.864247,
+      "lng": -43.474733,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF EPITACIO SOARES REIS AP 33",
+      "categoria": "UBS",
+      "endereco": "AV CHISOSTOMO PIMENTEL DE OLIVEIRA, S/N - PAVUNA, Rio de Janeiro",
+      "telefone": "(97) 5178-05624555671",
+      "lat": -22.81331,
+      "lng": -43.37301,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H ROCHA MIRANDA AP 33",
+      "categoria": "UPA",
+      "endereco": "ESTRADA DO BARRO VERMELHO, S/N - ROCHA MIRANDA, Rio de Janeiro",
+      "telefone": "(35) 1414-87",
+      "lat": -22.8514,
+      "lng": -43.34656,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CARLOS CRUZ LIMA AP 33",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO COLEGIO, 983 - COLEGIO, Rio de Janeiro",
+      "telefone": "(97) 5300-09024733707",
+      "lat": -22.83525,
+      "lng": -43.33098,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CENTRAL DA POLICIA MILITAR DO ESTADO DO RIO DE JANE",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTACIO DE SA, 20 - ESTACIO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.912685,
+      "lng": -43.203847,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DO AMPARO",
+      "categoria": "EMERGENCIA",
+      "endereco": "DA ESTRELA, 27 - RIO COMPRIDO, Rio de Janeiro",
+      "telefone": "(21) 2515-2765",
+      "lat": -22.6502692,
+      "lng": -43.2082276,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DR ALBERT SABIN AP 21",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA GAVEA, 250 - ROCINHA, Rio de Janeiro",
+      "telefone": "(21) 3613-8317",
+      "lat": -22.98596405,
+      "lng": -43.24520621,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS CECILIA DONNANGELO AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DOS BANDEIRANTES, 21136 - VARGEM PEQUENA, Rio de Janeiro",
+      "telefone": "(20) 4236-05",
+      "lat": -22.986838,
+      "lng": -43.4768381,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DA POLICIA MILITAR DE NITEROI",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MARTINS TORRES, 245 - SANTA ROSA, Niterói",
+      "telefone": "(21) 2715-4765",
+      "lat": -22.898268528583223,
+      "lng": -43.09202501664518,
+      "publica": true
+    },
+    {
+      "nome": "UBS ENGENHOCA",
+      "categoria": "UBS",
+      "endereco": "RUA VEREADOR JOSE VICENTE SOBRINHO, 724 - ENGENHOCA, Niterói",
+      "telefone": "(21) 2628-8656",
+      "lat": -22.871133758490327,
+      "lng": -43.09852838516235,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS NOVO PALMARES AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA JACARANDA, 16 - VARGEM PEQUENA, Rio de Janeiro",
+      "telefone": "(20) 4236-17",
+      "lat": -22.98954223735578,
+      "lng": -43.461136657670565,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SANTA MARIA AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO RIO PEQUENO, S/N - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-21",
+      "lat": -22.9158391,
+      "lng": -43.4209125,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24 H BOTAFOGO",
+      "categoria": "UPA",
+      "endereco": "SAO CLEMENTE, S/N - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2299-2577",
+      "lat": -22.9493252,
+      "lng": -43.1860085,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL CLINICA GRAJAU",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA BARAO DO BOM RETIRO, 2484 - GRAJAU, Rio de Janeiro",
+      "telefone": "(21) 2577-1122",
+      "lat": -22.92081337299278,
+      "lng": -43.259031772613525,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DA ORDEM DO CARMO",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA RIACHUELO, 43 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 3861-8950",
+      "lat": -22.9141409,
+      "lng": -43.1814438,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DO MEIER",
+      "categoria": "EMERGENCIA",
+      "endereco": "TENENTE COSTA, 160 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3279-8500",
+      "lat": -22.895844882816085,
+      "lng": -43.27659487724304,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS VILA CANOAS AP 21",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DAS CANOAS, 610 - SAO CONRADO, Rio de Janeiro",
+      "telefone": "(21) 3613-8278",
+      "lat": -22.99536389,
+      "lng": -43.26980653,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF SANTA MARTA AP 21",
+      "categoria": "UBS",
+      "endereco": "RUA SAO CLEMENTE, 312 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8319",
+      "lat": -22.95001,
+      "lng": -43.19259,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ALICE DE JESUS REGO AP 53",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DOS PALMARES, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 2418-4256",
+      "lat": -22.88444,
+      "lng": -43.66632,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL SOUZA AGUIAR AP 10",
+      "categoria": "EMERGENCIA",
+      "endereco": "PRACA DA REPUBLICA, 111 - CENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.90822,
+      "lng": -43.18969,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS PINDARO DE CARVALHO RODRIGUES AP 21",
+      "categoria": "UBS",
+      "endereco": "AV PADRE LEONEL FRANCA, S/N - GAVEA, Rio de Janeiro",
+      "telefone": "(21) 3613-8353",
+      "lat": -22.97971206,
+      "lng": -43.22954461,
+      "publica": true
+    },
+    {
+      "nome": "MAISON REGATO",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL ROCA, 826 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.924,
+      "lng": -43.23379,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO DE CONVIVENCIA LUZ AZUL",
+      "categoria": "UBS",
+      "endereco": "RUA RATCLIF, 84 - RIACHUELO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF GERSON BERGHER AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA CANDIDO BENICIO, S/N - CAMPINHO, Rio de Janeiro",
+      "telefone": "(20) 4236-98",
+      "lat": -22.9158965,
+      "lng": -43.3607955,
+      "publica": true
+    },
+    {
+      "nome": "PLACI BOTAFOGO",
+      "categoria": "EMERGENCIA",
+      "endereco": "GENERAL POLIDORO, 144 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2516-5306",
+      "lat": -22.7096586,
+      "lng": -43.4600852,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF JOSE DE SOUZA HERDY AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA AYRTON SENNA, 2200 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(20) 1849-55",
+      "lat": -22.992491281200927,
+      "lng": -43.36446940898895,
+      "publica": true
+    },
+    {
+      "nome": "TIJUCOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "CONDE DE BONFIM, 143 - TIJUCA, Rio de Janeiro",
+      "telefone": "(39) 7850-0",
+      "lat": -22.9251618,
+      "lng": -43.2262876,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF LECY RANQUINE AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO CAMPINHO, S/N - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 3523-8483",
+      "lat": -22.884885,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MEDALHISTA OLIMPICO BRUNO SCHMIDT AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA MANOEL JULIAO DE MEDEIROS, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2042-9639",
+      "lat": -22.8725500004,
+      "lng": -43.5783230004,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF AGENOR DE MIRANDA ARAUJO NETO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO MATO ALTO, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2042-2460",
+      "lat": -22.9466948754,
+      "lng": -43.5764273078,
+      "publica": true
+    },
+    {
+      "nome": "SMS CSE LAPA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA DO RIACHUELO, 43 - CENTRO, Rio de Janeiro",
+      "telefone": "(32) 3160-15",
+      "lat": -22.9144,
+      "lng": -43.1813,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ADV MARIO PIRES DA SILVA AP 33",
+      "categoria": "UBS",
+      "endereco": "PRACA MARCIA MENDES, S/N - CAMPINHO, Rio de Janeiro",
+      "telefone": "(97) 5106-310",
+      "lat": -22.88333,
+      "lng": -43.35414,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL PANAMERICANO",
+      "categoria": "EMERGENCIA",
+      "endereco": "MOURA BRITO, 138 - TIJUCA, Rio de Janeiro",
+      "telefone": "(99) 8118-321",
+      "lat": -22.9257432,
+      "lng": -43.2275152,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA MEDICA SAUDE BRASIL",
+      "categoria": "UBS",
+      "endereco": "RUA JOSE HIGINO, 276 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.929681935378532,
+      "lng": -43.23847532272339,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM BANGU",
+      "categoria": "UBS",
+      "endereco": "FRANCISCO REAL, 01783 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2471-4580",
+      "lat": -22.8798013,
+      "lng": -43.4625754,
+      "publica": true
+    },
+    {
+      "nome": "ATTIVO MEDICAL",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE DE PIRAJA, 623 - IPANEMA, Rio de Janeiro",
+      "telefone": "(21) 2512-2512",
+      "lat": -22.9801242,
+      "lng": -43.2017921,
+      "publica": true
+    },
+    {
+      "nome": "SESI CINELANDIA",
+      "categoria": "UBS",
+      "endereco": "SANTA LUZIA, 685 - CENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.91087,
+      "lng": -43.174,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS DO INGA",
+      "categoria": "EMERGENCIA",
+      "endereco": "PRESIDENTE PEDREIRA, 20 - INGA, Niterói",
+      "telefone": "(21) 3125-4500",
+      "lat": -22.90340970202172,
+      "lng": -43.12685983068611,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MAESTRO CELESTINO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA LOURENCO MARQUES, 70 - MARECHAL HERMES, Rio de Janeiro",
+      "telefone": "(97) 5007-11630174920",
+      "lat": -22.84831,
+      "lng": -43.36145,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL AMERICAN COR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA ADOLFO BERGAMINI, 206 - ENGENHO DE DENTRO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8014531,
+      "lng": -43.40994,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL ALBERT SCHWEITZER AP 51",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA NILOPOLIS, 329 - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 2042-2096",
+      "lat": -22.86607,
+      "lng": -43.43868,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL DA PIEDADE AP 32",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DA CAPELA, 96 - PIEDADE, Rio de Janeiro",
+      "telefone": "(21) 3111-6540",
+      "lat": -22.891816,
+      "lng": -43.309627,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL FEDERAL CARDOSO FONTES",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA MENEZES CORTES, 3245 - FREGUESIA JPA, Rio de Janeiro",
+      "telefone": "(21) 2425-2255",
+      "lat": -22.925833,
+      "lng": -43.316111,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO MEDICO OSORIO VERGETE",
+      "categoria": "UBS",
+      "endereco": "RUA JARDIM BOTANICO, 674 - JARDIM BOTANICO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.964721,
+      "lng": -43.281054,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB PENITENCIARIA LAERCIO DA COSTA PELEGRINO",
+      "categoria": "UBS",
+      "endereco": "ESTR GENERAL EMILIO MAURELL FILHO, S/N - BANGU, Rio de Janeiro",
+      "telefone": "(23) 3346-80",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS SYLVIO FREDERICO BRAUNER AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA DARWIN BRANDAO, S/N - COSTA BARROS, Rio de Janeiro",
+      "telefone": "(97) 5192-72638358689",
+      "lat": -22.82464,
+      "lng": -43.36076,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL NOSSA SENHORA DA SAUDE",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA DA GAMBOA, 303 - SAUDE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8966702,
+      "lng": -43.1992353,
+      "publica": true
+    },
+    {
+      "nome": "UERJ HOSPITAL UNIV PEDRO ERNESTO",
+      "categoria": "EMERGENCIA",
+      "endereco": "BOULEVARD 28 DE SETEMBRO, 77 - VILA ISABEL, Rio de Janeiro",
+      "telefone": "(21) 2868-8000",
+      "lat": -22.914147982202447,
+      "lng": -43.23744535446167,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS EDGARD MAGALHAES GOMES AP 52",
+      "categoria": "UBS",
+      "endereco": "PRACA FILOMENA CARLOS MAGNO, 0 - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 3377-2850",
+      "lat": -22.903000384238364,
+      "lng": -43.20804834365845,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM CAMPO GRANDE",
+      "categoria": "UBS",
+      "endereco": "CESARIO DE MELO, 03752 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2471-4580",
+      "lat": -22.873249,
+      "lng": -43.777221,
+      "publica": true
+    },
+    {
+      "nome": "SMS UNIDADES PRISIONAIS DE ATENCAO PRIMARIA AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA BARTOLOMEU DE GUSMAO, 100 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": "(23) 3418-40",
+      "lat": -22.905,
+      "lng": -43.23,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL SAO FRANCISCO NA PROVIDENCIA DE DEUS",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA CONDE DE BONFIM, 1033 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3294-4500",
+      "lat": -22.9403293,
+      "lng": -43.2476690167291,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H ROCINHA AP 21",
+      "categoria": "UPA",
+      "endereco": "ESTRADA DA GAVEA, 522 - ROCINHA, Rio de Janeiro",
+      "telefone": "(21) 3613-8280",
+      "lat": -22.98933076582788,
+      "lng": -43.251800537109375,
+      "publica": true
+    },
+    {
+      "nome": "SESI TIJUCA",
+      "categoria": "UBS",
+      "endereco": "RUA MORAIS E SILVA, 53 - MARACANA, Rio de Janeiro",
+      "telefone": "(21) 3872-9703",
+      "lat": -22.9156,
+      "lng": -43.2248,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE FORCA AEREA DO GALEAO",
+      "categoria": "EMERGENCIA",
+      "endereco": "ESTRADA DO GALEAO, 4101 - ILHA DO GOVERNADOR, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.813783,
+      "lng": -43.214967,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL OESTE DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA OLINDA ELLIS, 93 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 2414-3600",
+      "lat": -22.90817725,
+      "lng": -43.5589160236199,
+      "publica": true
+    },
+    {
+      "nome": "NUCLEO DE FONOAUDIOLOGIA",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL ROCA, 685 - TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.924714129752115,
+      "lng": -43.23240011930466,
+      "publica": true
+    },
+    {
+      "nome": "UBS DE PIRATININGA",
+      "categoria": "UBS",
+      "endereco": "RUA DOUTOR MARCOLINO GOMES CANDAU, 111 - PIRATININGA, Niterói",
+      "telefone": null,
+      "lat": -22.9522782,
+      "lng": -43.0930994,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL LOURENCO JORGE AP 40",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV AYRTON SENNA, 2000 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 3111-4612",
+      "lat": -22.9952485,
+      "lng": -43.3643149,
+      "publica": true
+    },
+    {
+      "nome": "CGO CENTRO DE DIAGNOSTICOS",
+      "categoria": "UBS",
+      "endereco": "RUA CONDE DE BONFIM, 297 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2486-0644",
+      "lat": -22.8576717,
+      "lng": -42.2576585,
+      "publica": true
+    },
+    {
+      "nome": "SMS RIO AMB ATENCAO PRIMARIA PRISIONAL AP 51",
+      "categoria": "UBS",
+      "endereco": "GEN EMILIO MAURELL FILHO, 1100 - BANGU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8626399,
+      "lng": -42.5933108,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR ANTONIO PECANHA",
+      "categoria": "UBS",
+      "endereco": "RUA TEIXEIRA DE FREITAS, 380 - FONSECA, Niterói",
+      "telefone": "(21) 3613-2150",
+      "lat": -22.87455133,
+      "lng": -43.07505405,
+      "publica": true
+    },
+    {
+      "nome": "CRIANCA 24 HORAS",
+      "categoria": "EMERGENCIA",
+      "endereco": "DIAS DA CRUZ, 665 - MEIER, Rio de Janeiro",
+      "telefone": "(21) 3978-6200",
+      "lat": -22.9029677,
+      "lng": -43.2824073,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ALVIMAR DE CARVALHO AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA SOLDADO ELISEU HIPOLITO, S/N - PEDRA DE GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 3404-7799",
+      "lat": -22.99734,
+      "lng": -43.62758,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MAIA BITTENCOURT AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO MATO ALTO, 5609 - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 4042-1974",
+      "lat": -22.9921555904,
+      "lng": -43.5929303296,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MOURAO FILHO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA BARRA DE GUARATIBA, 9748 - BARRA DE GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 2042-9681",
+      "lat": -23.0661,
+      "lng": -43.5685,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS ALAMEDA",
+      "categoria": "EMERGENCIA",
+      "endereco": "SAO BOAVENTURA, 321 - FONSECA, Niterói",
+      "telefone": "(21) 3578-3636",
+      "lat": -22.8823573,
+      "lng": -43.1068537,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF RINALDO DE LAMARE AP 21",
+      "categoria": "UBS",
+      "endereco": "AV NIEMEYER, 776 - SAO CONRADO, Rio de Janeiro",
+      "telefone": "(21) 3613-8281",
+      "lat": -22.9933412,
+      "lng": -43.2526851,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H COMPLEXO DO ALEMAO AP 31",
+      "categoria": "UPA",
+      "endereco": "ESTRADA DO ITARARE, 951 - RAMOS, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8655623,
+      "lng": -43.2685842,
+      "publica": true
+    },
+    {
+      "nome": "POLICLINICA PIQUET CARNEIRO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV MARECHAL RONDOM, 381 - SAO FRANCISCO XAVIER, Rio de Janeiro",
+      "telefone": "(21) 2566-7000",
+      "lat": -22.905505,
+      "lng": -43.244131,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS JORGE SALDANHA BANDEIRA DE MELLO AP 40",
+      "categoria": "UBS",
+      "endereco": "AVENIDA GEREMARIO DANTAS, 135 - TANQUE, Rio de Janeiro",
+      "telefone": "(33) 9200-50",
+      "lat": -22.9198094,
+      "lng": -43.3597123,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL ROCHA MAIA AP 21",
+      "categoria": "EMERGENCIA",
+      "endereco": "GENERAL SEVERIANO, 91 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(21) 2295-2295",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARIO VITOR DE ASSIS PACHECO AP 52",
+      "categoria": "UBS",
+      "endereco": "AVENIDA CESARIO DE MELO, 5580 - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 3394-3989",
+      "lat": -22.9105022298,
+      "lng": -43.5840731397,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA DE OLHOS DR ARLINDO PORTES S C",
+      "categoria": "UBS",
+      "endereco": "AVENIDA NOSSA SENHORA COPACABANA, 195 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 9643-87909",
+      "lat": -22.966339,
+      "lng": -43.1789583,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H MARE",
+      "categoria": "UPA",
+      "endereco": "RUA NOVO HORIZONTE, 4880 - MARE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.870075,
+      "lng": -43.243508,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H SANTA CRUZ",
+      "categoria": "UPA",
+      "endereco": "AVENIDA CESARIO DE MELO, 13655 - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(23) 3372-86",
+      "lat": -22.931792021274713,
+      "lng": -43.660766177882756,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H CAMPO GRANDE",
+      "categoria": "UPA",
+      "endereco": "ESTRADA DO MENDANHA, S/N - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(23) 3368-09",
+      "lat": -22.882021454946173,
+      "lng": -43.55640115308438,
+      "publica": true
+    },
+    {
+      "nome": "SES RJ UPA 24H RICARDO DE ALBUQUERQUE",
+      "categoria": "UPA",
+      "endereco": "ESTR MAL ALENCASTRO, S/N - RICARDO DE ALBUQUERQ, Rio de Janeiro",
+      "telefone": "(33) 3948-19",
+      "lat": -22.8362,
+      "lng": -43.39669,
+      "publica": true
+    },
+    {
+      "nome": "MMF SALVADOR ALLENDE",
+      "categoria": "UBS",
+      "endereco": "RUA PADRE JOSE EUGER, S/N - ATALAIA, Niterói",
+      "telefone": "(21) 3613-2183",
+      "lat": -22.89961654,
+      "lng": -43.07966825,
+      "publica": true
+    },
+    {
+      "nome": "MMF VILMA ESPIN",
+      "categoria": "UBS",
+      "endereco": "RUA TENENTE OSORIO, S/N - FONSECA, Niterói",
+      "telefone": "(21) 3613-2153",
+      "lat": -22.87845607,
+      "lng": -43.09211268,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL EGAS MONIZ DA OBRA PORTUGUESA DE ASSISTENCIA",
+      "categoria": "EMERGENCIA",
+      "endereco": "HENRIQUE VALADARES, 00158 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 2509-2997",
+      "lat": -22.912611300000002,
+      "lng": -43.19116814018587,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMBULATORIO INST PENAL OSCAR STEVENSON",
+      "categoria": "UBS",
+      "endereco": "RUA CELIO NASCIMENTO, 1 - BENFICA, Rio de Janeiro",
+      "telefone": "(21) 2332-3586",
+      "lat": -22.8903925,
+      "lng": -43.237592,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF FERNANDO A BRAGA LOPES AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA CARLOS SEIDL, 785 - CAJU, Rio de Janeiro",
+      "telefone": "(21) 3878-5063",
+      "lat": -22.87595,
+      "lng": -43.22247,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF RODOLPHO PERISSE VIDIGAL AP 21",
+      "categoria": "UBS",
+      "endereco": "AV PRESIDENTE JOAO GOULART, 735 - VIDIGAL, Rio de Janeiro",
+      "telefone": "(21) 3613-8318",
+      "lat": -22.99507519,
+      "lng": -43.23921378,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS MARIA APARECIDA DE ALMEIDA AP 53",
+      "categoria": "UBS",
+      "endereco": "PRACA ANTONIO MATTOS AREAS, S/N - PACIENCIA, Rio de Janeiro",
+      "telefone": "(21) 3484-0891",
+      "lat": -22.92245,
+      "lng": -43.6391,
+      "publica": true
+    },
+    {
+      "nome": "SMS UPA 24H VILA KENNEDY AP 51",
+      "categoria": "UPA",
+      "endereco": "PRACA DOLOMITAS, S/N - VILA KENNEDY, Rio de Janeiro",
+      "telefone": "(96) 5233-998",
+      "lat": -22.85476016217078,
+      "lng": -43.49258780479431,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF PADRE JOHN CRIBBIN PADRE JOAO AP 51",
+      "categoria": "UBS",
+      "endereco": "ESTRADA MANOEL NOGUEIRA DE SA, S/N - REALENGO, Rio de Janeiro",
+      "telefone": "(21) 3613-8293",
+      "lat": -22.893536,
+      "lng": -43.419136,
+      "publica": true
+    },
+    {
+      "nome": "SMS HOSPITAL MUNICIPAL RONALDO GAZOLLA AP 33",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV PASTOR MARTIN LUTHER KING, 10976 - ACARI, Rio de Janeiro",
+      "telefone": "(21) 2088-4600",
+      "lat": -22.825198665181972,
+      "lng": -43.34750175476074,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA IPANEMA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA CANNING, 16 - IPANEMA, Rio de Janeiro",
+      "telefone": "(21) 3228-450",
+      "lat": -22.903,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "CLINICA CIRURGICA SANTA BARBARA",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA PAULO BARRETO, 41 - BOTAFOGO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.7104529,
+      "lng": -43.458113,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL ITALIANO",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARECHAL JOFFRE, 30 - GRAJAU, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.903000384238364,
+      "lng": -43.20798397064209,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HELENA BESSERMAN VIANNA AP 40",
+      "categoria": "UBS",
+      "endereco": "VIA LIGHT, S/N - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-45",
+      "lat": -22.973981461421044,
+      "lng": -43.33016395568848,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS DECIO AMARAL FILHO AP 53",
+      "categoria": "UBS",
+      "endereco": "RUA CILON CUNHA BRUM, S/N - SANTA CRUZ, Rio de Janeiro",
+      "telefone": "(21) 3158-5217",
+      "lat": -22.9151548,
+      "lng": -43.6528849,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANA GONZAGA AP 52",
+      "categoria": "UBS",
+      "endereco": "PRACA JOAO WESLEY, 07 - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 2042-9648",
+      "lat": -22.912705,
+      "lng": -43.595099,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS RAPHAEL DE PAULA SOUZA AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DE CURICICA, 2000 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(20) 4236-93",
+      "lat": -22.9540972,
+      "lng": -43.3922857,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ALKINDAR SOARES PEREIRA FILHO AP 52",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DA PEDRA, S/N - GUARATIBA, Rio de Janeiro",
+      "telefone": "(21) 2042-9690",
+      "lat": -22.97575646,
+      "lng": -43.64846671,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL RIOS DOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "DOS TRES RIOS, 1316 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(21) 2283-3448",
+      "lat": -22.9365694,
+      "lng": -43.330511572807694,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO ORTOPEDICO",
+      "categoria": "EMERGENCIA",
+      "endereco": "GAL PEREIRA DA SILVA, 278 - ICARAI, Niterói",
+      "telefone": "(21) 2719-3535",
+      "lat": -22.900609,
+      "lng": -43.108861,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS AMERICO VELOSO AP 31",
+      "categoria": "UBS",
+      "endereco": "RUA GERSON FERREIRA, 100 - RAMOS, Rio de Janeiro",
+      "telefone": "(21) 9859-10035",
+      "lat": -22.8415311,
+      "lng": -43.2489384,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS WALDYR FRANCO AP 51",
+      "categoria": "UBS",
+      "endereco": "PRACA CECILIA PEDRO, 60 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 3613-8310",
+      "lat": -22.88863,
+      "lng": -43.465394,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ADAO PEREIRA NUNES AP 52",
+      "categoria": "UBS",
+      "endereco": "RUA FLORESTAL, S/N - INHOAIBA, Rio de Janeiro",
+      "telefone": "(21) 2409-6691",
+      "lat": -22.9238658262,
+      "lng": -43.6013219378,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS PADRE MIGUEL AP 51",
+      "categoria": "UBS",
+      "endereco": "RUA SANTO EVALDO, S/N - PADRE MIGUEL, Rio de Janeiro",
+      "telefone": "(21) 3613-8275",
+      "lat": -22.872939,
+      "lng": -43.448694,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER LEBLON AP 21",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA MARIO RIBEIRO, 1080 - LEBLON, Rio de Janeiro",
+      "telefone": "(25) 2992-27",
+      "lat": -22.9766497,
+      "lng": -43.2190085,
+      "publica": true
+    },
+    {
+      "nome": "SMS CENTRO DE EMERGENCIA REGIONAL CER CENTRO AP 10",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA FREI CANECA, 50 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 3111-2607",
+      "lat": -22.36554,
+      "lng": -43.208,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANTHIDIO DIAS DA SILVEIRA AP 32",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DOM HELDER CAMARA, S/N - JACAREZINHO, Rio de Janeiro",
+      "telefone": "(21) 3613-8277",
+      "lat": -22.883676,
+      "lng": -43.254109,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF RAIMUNDO ALVES NASCIMENTO AP 33",
+      "categoria": "UBS",
+      "endereco": "RUA MARCOS DE MACEDO, S/N - GUADALUPE, Rio de Janeiro",
+      "telefone": "(97) 5104-01931070882",
+      "lat": -22.84192,
+      "lng": -43.3762,
+      "publica": true
+    },
+    {
+      "nome": "MEDSENIOR RIO DE JANEIRO PS BOTAFOGO",
+      "categoria": "EMERGENCIA",
+      "endereco": "MARQUES DE OLINDA, 12 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(27) 4007-2001",
+      "lat": -22.94379415,
+      "lng": -43.18251208375558,
+      "publica": true
+    },
+    {
+      "nome": "SEPPEN CGSP RJ INSTITUTO PENAL CANDIDO MENDES",
+      "categoria": "UBS",
+      "endereco": "RUA CAMERINO, 41 - CENTRO, Rio de Janeiro",
+      "telefone": "(23) 3255-94",
+      "lat": -22.66558,
+      "lng": -43.28592,
+      "publica": true
+    },
+    {
+      "nome": "CDA ODONTOLOGIA",
+      "categoria": "UBS",
+      "endereco": "AV GEREMARIO DANTAS, 1389 - FREGUESIA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.78291942,
+      "lng": -43.3604494,
+      "publica": true
+    },
+    {
+      "nome": "MEDSENIOR RIO DE JANEIRO",
+      "categoria": "EMERGENCIA",
+      "endereco": "AYRTON SENNA, 05500 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(27) 4007-2001",
+      "lat": -22.965906,
+      "lng": -43.355229,
+      "publica": true
+    },
+    {
+      "nome": "KAIROS",
+      "categoria": "UBS",
+      "endereco": "RUA GENERAL VENANCIO FLORES, 100 - LEBLON, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9841708,
+      "lng": -43.2252586,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED PA BARRA",
+      "categoria": "UPA",
+      "endereco": "AVENIDA DAS AMERICAS, 777 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2483-9439",
+      "lat": -23.0038501,
+      "lng": -43.3257112,
+      "publica": true
+    },
+    {
+      "nome": "DRA DANIELLE LA PORTA PEDIATRIA CARIOLOGIA",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DAS AMERICAS, 12300 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -23.001068699999998,
+      "lng": -43.42141861574239,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL DE CLINICAS RIO MAR BARRA HIG",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA CANDIDO PORTINARI, 555 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.994760570023004,
+      "lng": -43.41188880553362,
+      "publica": true
+    },
+    {
+      "nome": "UNIMED PA COPACABANA",
+      "categoria": "UPA",
+      "endereco": "RUA SIQUEIRA CAMPOS, 70 - COPACABANA, Rio de Janeiro",
+      "telefone": "(21) 2483-9920",
+      "lat": -22.106519655383,
+      "lng": -43.1885374,
+      "publica": true
+    },
+    {
+      "nome": "SULYR REGINA PINHO PSICOLOGA",
+      "categoria": "UBS",
+      "endereco": "AV DAS AMERICAS, 500 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -23.029867,
+      "lng": -43.317151,
+      "publica": true
+    },
+    {
+      "nome": "MCS NUTRICAO",
+      "categoria": "UBS",
+      "endereco": "RUA AARAO REIS, 29 - SANTA TERESA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.7666636,
+      "lng": -43.3134739,
+      "publica": true
+    },
+    {
+      "nome": "UBS DR JOAO DA SILVA VIZELLA",
+      "categoria": "UBS",
+      "endereco": "RUA DR LUIZ PALMIER, 726 - BARRETO, Niterói",
+      "telefone": "(21) 9695-56564",
+      "lat": -22.865068961327466,
+      "lng": -43.09935450553894,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ELIZA ABRANTES AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA AQUIDABA, 1037 - LINS DE VASCONCELOS, Rio de Janeiro",
+      "telefone": "(21) 2592-5363",
+      "lat": -22.910319,
+      "lng": -43.29048,
+      "publica": true
+    },
+    {
+      "nome": "RIO EXAMES CLINICA MEDICA E DIAGNOSTICOS LTDA",
+      "categoria": "UBS",
+      "endereco": "EST DOS BANDEIRANTES, 786 - TAQUARA, Rio de Janeiro",
+      "telefone": "(21) 3030-3662",
+      "lat": -22.930093036139688,
+      "lng": -43.37366359568335,
+      "publica": true
+    },
+    {
+      "nome": "YOHANA FERNANDES FISIOTERAPIA PEDIATRICA GENTIL",
+      "categoria": "UBS",
+      "endereco": "RUA MARLO DA COSTA E SOUZA, 205 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.90062843664216,
+      "lng": -43.208348751068115,
+      "publica": true
+    },
+    {
+      "nome": "SMS CMS ANTONIO RIBEIRO NETTO AP 10",
+      "categoria": "UBS",
+      "endereco": "RUA TREZE DE MAIO, 23 - CENTRO, Rio de Janeiro",
+      "telefone": "(21) 3512-4732",
+      "lat": -22.90926,
+      "lng": -43.17686,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF MARACANA AP 22",
+      "categoria": "UBS",
+      "endereco": "AVENIDA BARTOLOMEU DE GUSMAO, 1001 - SAO CRISTOVAO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.908314,
+      "lng": -43.23137,
+      "publica": true
+    },
+    {
+      "nome": "LARANJEIRAS PLASTIC DAY",
+      "categoria": "EMERGENCIA",
+      "endereco": "SOARES CABRAL, 00038 - LARANJEIRAS, Rio de Janeiro",
+      "telefone": "(21) 4105-9920",
+      "lat": -22.458876652,
+      "lng": -43.227875,
+      "publica": true
+    },
+    {
+      "nome": "MEDICINA E SAUDE DRA GLAUCIA MORAES",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DAS AMERICAS, 1155 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.478876672,
+      "lng": -43.227885,
+      "publica": true
+    },
+    {
+      "nome": "MMF PROFESSORA DRA SATIE MIZUBUTI",
+      "categoria": "UBS",
+      "endereco": "TRAVESSA DO HOLOFOTE, 34 - SANTANA, Niterói",
+      "telefone": null,
+      "lat": -22.8795478,
+      "lng": -43.106856,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ CADEIA PUBLICO CONSTANTINO COKOTOS",
+      "categoria": "UBS",
+      "endereco": "ALEMEDA SAO BOAVENTURA, 773 - NITEROI, Niterói",
+      "telefone": null,
+      "lat": -22.88299,
+      "lng": -43.10365,
+      "publica": true
+    },
+    {
+      "nome": "MMF DR JOSE LUIZ DE O CORTES",
+      "categoria": "UBS",
+      "endereco": "TRAVESSA DONA JULIA, 29 - FONSECA, Niterói",
+      "telefone": "(21) 3613-2187",
+      "lat": -22.8827233,
+      "lng": -43.0976141,
+      "publica": true
+    },
+    {
+      "nome": "REVIT HOSPITAIS",
+      "categoria": "EMERGENCIA",
+      "endereco": "R JARDIM BOTANICO, 660 - JARDIM BOTANICO, Rio de Janeiro",
+      "telefone": "(21) 2508-1637",
+      "lat": -22.0651968197,
+      "lng": -43.225933,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ CASA DO ALBERGADO CRISPIM VENTINO",
+      "categoria": "UBS",
+      "endereco": "RUA CELIO NASCIMENTO, S/N - BENFICA, Rio de Janeiro",
+      "telefone": "(23) 3245-37",
+      "lat": -22.87665,
+      "lng": -43.22787,
+      "publica": true
+    },
+    {
+      "nome": "BBF PSICANALISE",
+      "categoria": "UBS",
+      "endereco": "AV RUI BARBOSA, 500 - FLAMENGO, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9419715,
+      "lng": -43.1735068,
+      "publica": true
+    },
+    {
+      "nome": "GORIN ZAIDHFT",
+      "categoria": "UBS",
+      "endereco": "RUA VISCONDE DE PIRAJA, 547 - IPANEMA, Rio de Janeiro",
+      "telefone": "(21) 9981-1655",
+      "lat": -22.9840115,
+      "lng": -43.2092282,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL BARRA DOR II",
+      "categoria": "EMERGENCIA",
+      "endereco": "AVENIDA NELSON MUFARREJ, 255 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2430-3600",
+      "lat": -22.9841931,
+      "lng": -43.3605513,
+      "publica": true
+    },
+    {
+      "nome": "TRIBELLA FARMACIA DERMATOLOGICA",
+      "categoria": "UBS",
+      "endereco": "AVENIDA DAS AMERICAS, 500 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -23.003433994132156,
+      "lng": -43.31801891326904,
+      "publica": true
+    },
+    {
+      "nome": "HAPPY TOOTH CONSULTORIO DA FAMILIA",
+      "categoria": "UBS",
+      "endereco": "AV EVANDRO LINS E SILVA, 840 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.847876652,
+      "lng": -43.227865,
+      "publica": true
+    },
+    {
+      "nome": "SEAP CGSP RJ AMB INSTITUTO PENAL SANTO EXPEDITO",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO GUANDU DO SENA, 1902 - BANGU, Rio de Janeiro",
+      "telefone": "(21) 2333-4641",
+      "lat": -22.85813,
+      "lng": -43.52999,
+      "publica": true
+    },
+    {
+      "nome": "MARIA CLAUDIA ATENCAO INTEGRAL A SAUDE DA MULHER",
+      "categoria": "UBS",
+      "endereco": "EST DO PAU FERRO, 1390 - FREGUESIA, Rio de Janeiro",
+      "telefone": "(21) 2253-5422",
+      "lat": -22.9308832,
+      "lng": -43.3257752,
+      "publica": true
+    },
+    {
+      "nome": "CENTRO DE NEUROCIRURGIA OBERG LTDA",
+      "categoria": "UBS",
+      "endereco": "R MARQUES DE SAO VICENTE, 52 - GAVEA, Rio de Janeiro",
+      "telefone": "(21) 2216-9900",
+      "lat": -22.9795237,
+      "lng": -43.2345819,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HONORIO JOSE DE ANDRADE AP 32",
+      "categoria": "UBS",
+      "endereco": "RUA DA CAPELA, 96 - PIEDADE, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8918801,
+      "lng": -43.3099739,
+      "publica": true
+    },
+    {
+      "nome": "MARIA EMYLLIA POLESHUCK TERAPEUTA",
+      "categoria": "UBS",
+      "endereco": "LARGO DO MACHADO, 29 - CATETE, Rio de Janeiro",
+      "telefone": "(21) 7278-8745",
+      "lat": -22.9303969,
+      "lng": -43.1776524,
+      "publica": true
+    },
+    {
+      "nome": "MADUREIRA CAMIM",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO PORTELA, 282 - OSWALDO CRUZ, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.87262122214148,
+      "lng": -43.339037642228305,
+      "publica": true
+    },
+    {
+      "nome": "ESPACO AUTODESCOBERTA",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO RIO PEQUENO, 1547 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(21) 9966-23410",
+      "lat": -22.91571,
+      "lng": -43.42731,
+      "publica": true
+    },
+    {
+      "nome": "DLPMS SERVICOS MEDICOS",
+      "categoria": "UBS",
+      "endereco": "AV DAS AMERICAS, 3500 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2428-2031",
+      "lat": -23.0073335,
+      "lng": -43.5501634,
+      "publica": true
+    },
+    {
+      "nome": "AGAPE SAUDE E BEM ESTAR",
+      "categoria": "UBS",
+      "endereco": "AVENIDA LUCIO COSTA, 02900 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.3856876652,
+      "lng": -43.227875,
+      "publica": true
+    },
+    {
+      "nome": "CAMIM RIO DAS PEDRAS",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DE JACAREPAGUA, 3600 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.946675502779293,
+      "lng": -43.33968902467725,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF ANDARAI AP 22",
+      "categoria": "UBS",
+      "endereco": "RUA PAULO BRITO, 409 - ANDARAI, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.9278056,
+      "lng": -43.2537669,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF DYMAS JOSEPH PELLEGRIN AP 40",
+      "categoria": "UBS",
+      "endereco": "RUA SERGIO DE CARVALHO, 75 - ITANHANGA, Rio de Janeiro",
+      "telefone": "(20) 4236-59",
+      "lat": -22.9891325,
+      "lng": -43.2979826,
+      "publica": true
+    },
+    {
+      "nome": "HSS SOLUCOES EM SAUDE E CUIDAR",
+      "categoria": "UBS",
+      "endereco": "AV JOAO CABRAL DE MELLO NETO, 850 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(20) 5126-46",
+      "lat": -22.47876652,
+      "lng": -43.98227875,
+      "publica": true
+    },
+    {
+      "nome": "HEALTHCARE",
+      "categoria": "UBS",
+      "endereco": "AV FRANKLIN ROOSEVELT, 194 - CENTRO, Rio de Janeiro",
+      "telefone": "(20) 5126-46",
+      "lat": -22.9094684,
+      "lng": -43.1699362,
+      "publica": true
+    },
+    {
+      "nome": "MMF JARDIM DAS PAINEIRAS",
+      "categoria": "UBS",
+      "endereco": "ESTR GUILHERMINA BASTOS, 804 - BADU, Niterói",
+      "telefone": null,
+      "lat": -22.9038305,
+      "lng": -43.0517909,
+      "publica": true
+    },
+    {
+      "nome": "D J SAUDE",
+      "categoria": "UBS",
+      "endereco": "ALM SAO BOAVENTURA, 540 - FONSECA, Niterói",
+      "telefone": "(21) 9767-60256",
+      "lat": -22.881336,
+      "lng": -43.096142,
+      "publica": true
+    },
+    {
+      "nome": "NASCER CARIOCA",
+      "categoria": "UBS",
+      "endereco": "R ENGENHEIRO ENALDO CRAVO PEIXOTO, 215 - TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 9928-16369",
+      "lat": -22.922555,
+      "lng": -43.234513,
+      "publica": true
+    },
+    {
+      "nome": "MEDSENIOR",
+      "categoria": "EMERGENCIA",
+      "endereco": "AV CESARIO DE MELO, 2745 - CAMPO GRANDE, Rio de Janeiro",
+      "telefone": "(21) 4007-2001",
+      "lat": -22.905,
+      "lng": -43.561,
+      "publica": true
+    },
+    {
+      "nome": "INSTITUTO MEFIBOSETE ACOLHIMENTO INCLUSAO",
+      "categoria": "UBS",
+      "endereco": "RUA TENENTE FRANCA, 366 - CACHAMBI, Rio de Janeiro",
+      "telefone": "(21) 9956-50038",
+      "lat": -22.900123,
+      "lng": -43.240567,
+      "publica": true
+    },
+    {
+      "nome": "METAMORFOSEABA",
+      "categoria": "UBS",
+      "endereco": "AV BRAZ DE PINA, 2097 - VISTA ALEGRE, Rio de Janeiro",
+      "telefone": "(21) 9587-1898",
+      "lat": -22.831652626844463,
+      "lng": -43.31910354629761,
+      "publica": true
+    },
+    {
+      "nome": "GLORIA DOR OPERACOES HOSPITALARES",
+      "categoria": "EMERGENCIA",
+      "endereco": "RUA SANTO AMARO, 80 - GLORIA, Rio de Janeiro",
+      "telefone": "(21) 3262-2000",
+      "lat": -22.9220574,
+      "lng": -43.1797701,
+      "publica": true
+    },
+    {
+      "nome": "SOPRO LIFE DIAGNOSTICOS E SOLUCOES EM SAUDE",
+      "categoria": "UBS",
+      "endereco": "AVN CANAL DO RIO CACAMBE PAL 38148, 510 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": "(21) 9969-01775",
+      "lat": -22.725487,
+      "lng": -43.410456,
+      "publica": true
+    },
+    {
+      "nome": "NUCLEO DE MEDICINA AVANCADA HAVAI",
+      "categoria": "UPA",
+      "endereco": "RUA GENERAL POLIDORO, 99 - BOTAFOGO, Rio de Janeiro",
+      "telefone": "(11) 4085-9057",
+      "lat": -22.9544359,
+      "lng": -43.1864473,
+      "publica": true
+    },
+    {
+      "nome": "SP SERVICOS MEDICOS",
+      "categoria": "UBS",
+      "endereco": "AV DAS AMERICAS, 17150 - BARRA DA TIJUCA, Rio de Janeiro",
+      "telefone": "(21) 2051-2646",
+      "lat": -22.415616876652,
+      "lng": -43.227875,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF HERCULANO PINHEIRO AP 33",
+      "categoria": "UBS",
+      "endereco": "AV MIN EDGARD ROMERO, 276 - MADUREIRA, Rio de Janeiro",
+      "telefone": "(97) 5328-69630182836",
+      "lat": -22.8704,
+      "lng": -43.33415,
+      "publica": true
+    },
+    {
+      "nome": "FMS ATENCAO PRIMARIA PRISIONAL",
+      "categoria": "UBS",
+      "endereco": "AVENIDA ERNANI DO AMARAL PEIXOTO, 171 - CENTRO, Niterói",
+      "telefone": null,
+      "lat": -22.893383995309442,
+      "lng": -43.12188826106528,
+      "publica": true
+    },
+    {
+      "nome": "HOSPITAL UNIVERSITARIO DE MEDICINA VETERINARIA",
+      "categoria": "UBS",
+      "endereco": "AV ALM ARY PARREIRAS, 503 - ICARAI, Niterói",
+      "telefone": "(21) 9966-68204",
+      "lat": -22.905639127191638,
+      "lng": -43.09828162193298,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF CAMORIM AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO CAMORIM, 205 - JACAREPAGUA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.969006171361617,
+      "lng": -43.41647396008268,
+      "publica": true
+    },
+    {
+      "nome": "PRONTO ATENDIMENTO PENHA",
+      "categoria": "UPA",
+      "endereco": "AV LOBO JUNIOR, 1795 - PENHA CIRCULAR, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.8353292,
+      "lng": -43.282396,
+      "publica": true
+    },
+    {
+      "nome": "SMS CF WALDIR VIEIRA AP 40",
+      "categoria": "UBS",
+      "endereco": "ESTRADA DO ENGENHO VELHO, 1359 - TAQUARA, Rio de Janeiro",
+      "telefone": null,
+      "lat": -22.912273832887433,
+      "lng": -43.388174346191086,
+      "publica": true
+    }
+  ]
+}
