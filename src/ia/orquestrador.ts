@@ -5,6 +5,7 @@ import {
   ehPedidoDiagnostico,
   ehPedidoMedicamento,
 } from './mensagens.js';
+import { responderDaBase, temTopicoRelevante } from './base_conhecimento.js';
 import { aplicarMotor } from './motor_de_regras.js';
 import {
   escolherTemaPergunta, escolherProximaPergunta,
@@ -43,8 +44,6 @@ function ehAgradecimento(texto: string): boolean {
   return /^(obrigad|valeu|brigad|thanks|vlw|muito obrigad)/.test(n);
 }
 
-// [NOVO Bloco 2] Depois de uma orientação, se a pessoa confirmar que seguiu,
-// o bot só encerra com simpatia em vez de reabrir a triagem.
 function ehConfirmacaoOrientacao(texto: string): boolean {
   const n = normalizarTexto(texto);
   return /^(ok|já fui|ja fui|estou indo|cheguei|obrigad|valeu|brigad|entendi|certo|beleza|blz|já chamei|ja chamei|chamei|vou (ligar|chamar)|liguei)\b/.test(n);
@@ -55,14 +54,25 @@ function consolidar(estado: EstadoConversa): RelatoEstruturado {
   return { ...base, texto_original_acumulado: estado.texto_original_acumulado || '' };
 }
 
+// [FIX] Conta sinais_trauma também — antes uma "queda" sozinha podia
+// fazer o bot achar que não havia nada clínico.
 function temSintomaClinico(relato: RelatoEstruturado): boolean {
   return (
     relato.sintomas.length > 0 ||
     relato.sinais_alerta.length > 0 ||
     relato.risco_mental !== 'nao_mencionado' ||
     relato.autodiagnostico_grave !== null ||
-    (relato.sinais_neurologicos || []).length > 0
+    (relato.sinais_neurologicos || []).length > 0 ||
+    (relato.sinais_trauma || []).length > 0 ||
+    (relato.sinais_obstetricos || []).length > 0
   );
+}
+
+// Detecta se a pessoa está perguntando algo (não descrevendo sintoma)
+function parecePergunta(texto: string): boolean {
+  const n = normalizarTexto(texto);
+  return /[?]/.test(texto) ||
+    /\b(o que|como|por que|porque|quando|qual|quais|onde|serve|devo|posso|pra que)\b/.test(n);
 }
 
 // ============================================================
@@ -77,10 +87,10 @@ export async function processarTurno(
   const fase = estado.fase ?? 'inicio';
   const textoNorm = normalizarTexto(textoUsuario);
 
-  // [NOVO Bloco 2] Confirmação pós-orientação → encerramento amigável
+  // Confirmação pós-orientação → encerramento amigável
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
     return {
-      estado: { ...estado, fase: 'encerrado' as any },
+      estado: { ...estado, fase: 'encerrado' },
       resultado: {
         tipo: 'orientacao',
         texto: '💛 Fico à disposição. Cuide-se!',
@@ -216,9 +226,40 @@ export async function processarTurno(
     };
   }
 
-   const descreveQueixaPropria =
+  // ============================================================
+  // BASE DE CONHECIMENTO — antes de desistir, pesquisa
+  // ============================================================
+  // Se a pessoa fez uma PERGUNTA sobre saúde (não descreveu sintoma),
+  // tentamos responder via base de conhecimento antes de cair em "fora de escopo".
+  if (
+    !temSintomaClinico(extraido) &&
+    estado.relatos.length === 0 &&
+    !respostaCurta &&
+    parecePergunta(textoUsuario) &&
+    temTopicoRelevante(textoUsuario)
+  ) {
+    const respostaBase = await responderDaBase(textoUsuario);
+    if (respostaBase) {
+      return {
+        estado: { ...estado, fase: 'orientado' },
+        resultado: {
+          tipo: 'orientacao',
+          texto: `${respostaBase}\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._`,
+          decisao: {
+            categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+            resposta_id: 'base_conhecimento', regra_acionada: 'base_conhecimento',
+            versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['base de conhecimento'],
+          },
+        },
+      };
+    }
+    // Se `responderDaBase` devolveu null, segue o fluxo — provavelmente cai em fora de escopo.
+  }
+
+  const descreveQueixaPropria =
     /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
 
+  // Fora de escopo
   if (
     !temSintomaClinico(extraido) &&
     !descreveQueixaPropria &&
@@ -256,6 +297,7 @@ export async function processarTurno(
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
       gestante: atual.gestante, risco_mental: atual.risco_mental,
       falta_de_ar: atual.falta_de_ar, febre: atual.febre,
+      sinais_trauma: atual.sinais_trauma,
     });
     const pergunta = escolherProximaPergunta(tema, atual, perguntasJaFeitas);
     if (pergunta) {
@@ -280,6 +322,7 @@ export async function processarTurno(
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
       gestante: atual.gestante, risco_mental: atual.risco_mental,
       falta_de_ar: atual.falta_de_ar, febre: atual.febre,
+      sinais_trauma: atual.sinais_trauma,
     });
     const pergunta = escolherProximaPergunta(tema, atual, perguntasJaFeitas);
     if (pergunta && !perguntasJaFeitas.includes(pergunta.id)) {
@@ -319,7 +362,6 @@ export async function processarTurno(
     }
   }
 
-  // Compositor de resposta em blocos
   const mensagemAprovada = mensagemPorId(decisao.resposta_id).texto;
   const mensagem = comporResposta({ relato: atual, decisao, mensagemAprovada });
   registrarDecisao(decisao);
@@ -356,7 +398,7 @@ export async function processarTurnoComRelato(
   // Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoRepresentativo)) {
     return {
-      estado: { ...estado, fase: 'encerrado' as any },
+      estado: { ...estado, fase: 'encerrado' },
       resultado: {
         tipo: 'orientacao',
         texto: '💛 Fico à disposição. Cuide-se!',
@@ -468,6 +510,7 @@ export async function processarTurnoComRelato(
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
       gestante: atual.gestante, risco_mental: atual.risco_mental,
       falta_de_ar: atual.falta_de_ar, febre: atual.febre,
+      sinais_trauma: atual.sinais_trauma,
     });
     const pergunta = escolherProximaPergunta(tema, atual, perguntasJaFeitas);
     if (pergunta) {
@@ -489,6 +532,7 @@ export async function processarTurnoComRelato(
       sintomas: atual.sintomas, idade_grupo: atual.idade_grupo,
       gestante: atual.gestante, risco_mental: atual.risco_mental,
       falta_de_ar: atual.falta_de_ar, febre: atual.febre,
+      sinais_trauma: atual.sinais_trauma,
     });
     const pergunta = escolherProximaPergunta(tema, atual, perguntasJaFeitas);
     if (pergunta && !perguntasJaFeitas.includes(pergunta.id)) {
