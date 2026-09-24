@@ -1,57 +1,75 @@
 
 
-import { GoogleGenAI } from '@google/genai';
+import OpenAI, { toFile } from 'openai';
 
-const PROMPT_TRANSCRICAO = `Transcreva literalmente este áudio em português brasileiro.
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
 
-REGRAS:
-- Devolva APENAS o texto falado, sem comentários, sem aspas, sem introdução.
-- NÃO corrija gramática. NÃO reformule. NÃO traduza.
-- Mantenha gírias, erros e repetições como foram falados ("cê", "tá", "tô", "né").
-- Se houver várias falas, separe por espaço em uma única linha.
-- Se estiver inaudível, só com ruído, ou sem fala inteligível, devolva string vazia.
-- Pode ser fala com sotaque, com pressa, com choro, com barulho de fundo.
-  Faça o melhor esforço para entender o conteúdo clínico.
-- Não adicione pontuação que não foi falada.`;
+const WHISPER_MODEL =
+  process.env.GROQ_WHISPER_MODEL ?? 'whisper-large-v3-turbo';
 
+/**
+ * Transcreve um áudio (buffer OGG/Opus do WhatsApp) usando Groq Whisper.
+ * Devolve string vazia se não conseguir transcrever.
+ */
 export async function transcreverAudio(
   audioBuffer: Buffer,
   mimeType: string = 'audio/ogg; codecs=opus',
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn('⚠️ GEMINI_API_KEY ausente. Transcrição indisponível.');
+  if (!process.env.GROQ_API_KEY) {
+    console.warn('⚠️ [Whisper] GROQ_API_KEY ausente.');
     return '';
   }
 
+  if (!audioBuffer || audioBuffer.length === 0) {
+    console.warn('⚠️ [Whisper] buffer vazio');
+    return '';
+  }
+
+  // Detecta extensão pelo MIME pra o Whisper aceitar sem reclamar
+  const ext = mimeType.includes('mp4')
+    ? 'mp4'
+    : mimeType.includes('mpeg')
+    ? 'mp3'
+    : mimeType.includes('wav')
+    ? 'wav'
+    : 'ogg';
+
   const mimeLimpo = mimeType.split(';')[0].trim();
-  const base64Audio = audioBuffer.toString('base64');
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const arquivo = await toFile(audioBuffer, `audio.${ext}`, {
+      type: mimeLimpo,
+    });
 
-    // gemini-2.5-pro é mais preciso que flash para transcrição com ruído
-    const promessa = ai.models.generateContent({
-      model: 'gemini-2.5-pro',
-      contents: [
-        { inlineData: { mimeType: mimeLimpo, data: base64Audio } },
-        { text: PROMPT_TRANSCRICAO },
-      ],
-      config: {
-        temperature: 0,
-      },
+    console.log(`🎧 [Whisper] enviando ${(audioBuffer.length / 1024).toFixed(1)} KB...`);
+
+    const promessa = groq.audio.transcriptions.create({
+      file: arquivo,
+      model: WHISPER_MODEL,
+      language: 'pt',           // força pt-BR (melhora precisão)
+      response_format: 'text',  // devolve string pura
+      temperature: 0,
     });
 
     const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout transcrição')), 20000),
+      setTimeout(() => rej(new Error('timeout whisper')), 30000),
     );
-    const response = (await Promise.race([promessa, timeout])) as any;
-    const texto = (response.text || '').trim();
 
-    if (texto.length < 2) return '';
+    const resp = (await Promise.race([promessa, timeout])) as any;
+    const texto = (typeof resp === 'string' ? resp : resp?.text ?? '').trim();
+
+    if (!texto) {
+      console.log('⚠️ [Whisper] transcrição vazia');
+      return '';
+    }
+
+    // Remove aspas/backticks que às vezes vêm
     return texto.replace(/^["'`]+|["'`]+$/g, '').trim();
-  } catch (err) {
-    console.error('❌ Transcrição falhou:', err);
+  } catch (err: any) {
+    console.error('❌ [Whisper] falhou:', err?.message || err);
     return '';
   }
 }

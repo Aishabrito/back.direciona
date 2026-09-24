@@ -402,6 +402,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
     // ── ÁUDIO ──
+    // ── ÁUDIO ──
   const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     inc('total_audios');
@@ -409,7 +410,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       await sock.sendPresenceUpdate("composing", sender);
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
-      // [FIX] Timeout de 15s no download — o Baileys trava sem avisar
+      // 1. Baixa com timeout (Baileys às vezes trava sem avisar)
       const buffer = (await Promise.race([
         downloadMediaMessage(
           msg, "buffer", {},
@@ -425,22 +426,31 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
       console.log(`🎤 [${hashSender(sender)}] Áudio (${(buffer.length / 1024).toFixed(1)} KB)`);
 
-      // [FIX] 1. TRANSCREVE (chamada dedicada, só transcrição)
-      const transcricao = await transcreverAudio(buffer, mime);
-      console.log(
-        `📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`,
-      );
+      // 2. Transcreve com Groq Whisper (com retry)
+      let transcricao = await transcreverAudio(buffer, mime);
 
-      // [FIX] 2. Transcrição vazia → pede pra repetir
       if (!transcricao || transcricao.length < 3) {
+        console.log(`⚠️ [${hashSender(sender)}] Whisper vazio, tentando retry...`);
+        await new Promise((r) => setTimeout(r, 500));
+        transcricao = await transcreverAudio(buffer, mime);
+      }
+
+      // 3. Se ainda vazio → pede pra repetir e sai limpo
+      if (!transcricao || transcricao.length < 3) {
+        console.log(`❌ [${hashSender(sender)}] transcrição falhou 2x`);
         await sock.sendMessage(sender, {
-          text: '🎤 Não consegui entender o áudio. Pode repetir em um lugar mais silencioso ou escrever? Em emergência, ligue 192.',
+          text:
+            '🎤 Não consegui entender o áudio mesmo depois de tentar duas vezes. ' +
+            'Pode repetir em um lugar mais silencioso ou escrever? ' +
+            'Em emergência, ligue 192.',
         });
         await sock.sendPresenceUpdate("paused", sender);
         return;
       }
 
-      // [FIX] 3. Passa o TEXTO pelo pipeline normal
+      console.log(`📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`);
+
+      // 4. Pipeline normal de texto (Groq pra extração)
       const relatoDoAudio = await interpretarRelato(transcricao);
 
       const primeiraMensagemAudio = !sessions.has(sender);
@@ -461,7 +471,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
       }
 
-      // [FIX] 4. Mostra a transcrição pro usuário conferir
+      // 5. Mostra o que o bot ouviu (transparência)
       respostaAudio = `_🎤 Ouvi: "${transcricao}"_\n\n${respostaAudio}`;
 
       if (primeiraMensagemAudio) {
@@ -469,11 +479,12 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
 
+      // 6. Responde em áudio (TTS Gemini)
       await responder(sock, sender, respostaAudio, true);
     } catch (err) {
       console.error("❌ Erro ao processar áudio:", err);
       await sock.sendMessage(sender, {
-        text: "🎤 Não consegui entender esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.",
+        text: "🎤 Não consegui processar esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.",
       });
     }
     await sock.sendPresenceUpdate("paused", sender);
