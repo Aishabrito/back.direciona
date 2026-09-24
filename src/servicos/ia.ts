@@ -4,34 +4,38 @@
 
 import OpenAI from 'openai';
 
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
-});
-
 export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
 
-/**
- * Schema opcional pra forçar structured output.
- * Quando fornecido, o Groq rejeita qualquer resposta fora do schema.
- */
+// [FIX] Lazy init — só cria o cliente quando for de fato usar.
+// Sem isso, importar este módulo em ambiente de teste (sem GROQ_API_KEY)
+// explode com "Missing credentials" na hora do import.
+let _groq: OpenAI | null = null;
+
+function getGroq(): OpenAI | null {
+  if (_groq) return _groq;
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return null;
+  _groq = new OpenAI({
+    apiKey: key,
+    baseURL: 'https://api.groq.com/openai/v1',
+  });
+  return _groq;
+}
+
 export type JsonSchema = {
   name: string;
   schema: Record<string, any>;
-  strict?: boolean; // default: true
+  strict?: boolean;
 };
 
-/**
- * Gera uma resposta em texto livre (uso: reformular pergunta, responder RAG).
- * Devolve null se Groq não estiver configurado ou falhar.
- */
 export async function gerarTexto(
   prompt: string,
   systemInstruction?: string,
   timeoutMs = 20000,
   maxTokens?: number,
 ): Promise<string | null> {
-  if (!process.env.GROQ_API_KEY) {
+  const groq = getGroq();
+  if (!groq) {
     console.warn('⚠️ [IA] GROQ_API_KEY ausente. Chamando sem LLM.');
     return null;
   }
@@ -61,24 +65,19 @@ export async function gerarTexto(
   }
 }
 
-/**
- * Gera resposta em JSON.
- * Se `jsonSchema` for passado, usa structured output (strict) — o LLM NÃO
- * consegue devolver campos fora do schema nem valores fora dos enums.
- * Se o modelo/schema não for suportado pelo Groq, cai pra json_object.
- */
 export async function gerarJSON<T = any>(
   prompt: string,
   systemInstruction: string,
   timeoutMs = 20000,
   jsonSchema?: JsonSchema,
 ): Promise<T | null> {
-  if (!process.env.GROQ_API_KEY) {
+  const groq = getGroq();
+  if (!groq) {
     console.warn('⚠️ [IA] GROQ_API_KEY ausente. Chamando sem LLM.');
     return null;
   }
 
-  // ── 1. Tenta com schema fechado (structured output)
+  // ── 1. Tenta com schema fechado
   if (jsonSchema) {
     try {
       const promessa = groq.chat.completions.create({
@@ -111,7 +110,6 @@ export async function gerarJSON<T = any>(
         /json_schema|response_format|structured|unsupported|invalid.*format/i.test(msg);
       if (naoSuportado) {
         console.warn('⚠️ [IA] json_schema não suportado, caindo pra json_object:', msg);
-        // cai pro fallback abaixo
       } else {
         console.error('❌ [IA] json_schema falhou:', msg);
         return null;
@@ -119,7 +117,7 @@ export async function gerarJSON<T = any>(
     }
   }
 
-  // ── 2. Fallback: json_object (comportamento antigo)
+  // ── 2. Fallback: json_object
   try {
     const promessa = groq.chat.completions.create({
       model: GROQ_MODEL,
