@@ -24,7 +24,6 @@ import {
 import { mesclarRelatos } from './validador_de_saida.js';
 import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
-import { classificarIntencao } from './classificador_intencao.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 
 // ────────────────────────────────────────────────────
@@ -95,27 +94,22 @@ function descreveQueixaPropriaRegex(textoNorm: string): boolean {
   return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
 }
 
-
 function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
   const DOENCAS =
     'gripe|influenza|dengue|covid|corona|coronavirus|pneumonia|infarto|avc|derrame|virose|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma';
   const SUSPEITA = 'acho|acredito|penso|imagino|suspeito|desconfio|sera';
   const VERBO_PROPRIO = 'estou\\s+com|to\\s+com|tou\\s+com|tenho|peguei|pega';
 
-  // 1. "meus sintomas são X" / "meus sintomas podem ser X"
   if (/\bmeus?\s+sintomas?\s+(sao|e|eh|podem ser|pode ser)\b/.test(textoNorm)) return true;
 
-  // 2. "acho q estou com X" / "acho que tenho X" / "sera q to com X"
   const re1 = new RegExp(`\\b(${SUSPEITA})\\s+(q|que)?\\s*(${VERBO_PROPRIO})\\b`);
   if (re1.test(textoNorm)) return true;
 
-  // 3. "acho que é X" / "será q é X" / "deve ser X" / "pode ser X"
   const re2 = new RegExp(
     `\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`,
   );
   if (re2.test(textoNorm)) return true;
 
-  // 4. "to achando que X" / "estou pensando que X"
   if (/\b(to|estou|tou)\s+(achando|pensando|suspeitando)\b/.test(textoNorm)) return true;
 
   return false;
@@ -139,6 +133,13 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
     (relato.sinais_trauma || []).length > 0 ||
     (relato.sinais_obstetricos || []).length > 0
   );
+}
+
+// ────────────────────────────────────────────────────
+// [Task 3] Helpers de multi-intent (substituem o classificarIntencao)
+// ────────────────────────────────────────────────────
+function temIntent(relato: RelatoEstruturado, i: string): boolean {
+  return Array.isArray(relato.intencoes) && relato.intencoes.includes(i);
 }
 
 // ============================================================
@@ -280,8 +281,7 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 2.5. [FIX] Bloqueio de diagnóstico ANTES do RAG.
-  // Pega "meus sintomas são de gripe?", "será que é dengue?", "acho que é COVID".
+  // ── 2.5. Bloqueio de diagnóstico ANTES do RAG
   const nivelPre = classificarNivel(extraido);
   const sinalCriticoPre = nivelPre === 'critico';
 
@@ -304,28 +304,31 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 3. Classificação de intenção (com histórico) + RAG
-  const intencao = await classificarIntencao(textoUsuario, historicoFmt);
-  const ehConhecimento = intencao === 'conhecimento';
-  const ehNavegacao = intencao === 'navegacao';
+  // ── 3. MULTI-INTENT — lê direto de extraido.intencoes
+  const temConhecimento = temIntent(extraido, 'conhecimento');
+  const temRelatoIntent = temIntent(extraido, 'relato');
+  const temNavegacao = temIntent(extraido, 'navegacao');
+
   const relatoComoQueixa =
-    intencao === 'relato' || descreveQueixaPropriaRegex(textoNorm);
+    temRelatoIntent || descreveQueixaPropriaRegex(textoNorm);
 
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
 
+  const perguntaRAG = extraido.pergunta || textoUsuario;
+
+  // 3a. Conhecimento puro (sem relato) → RAG
   if (
-    ehConhecimento &&
-    !ehNavegacao &&
-    !relatoComoQueixa &&
+    temConhecimento &&
+    !temNavegacao &&
+    !temRelatoIntent &&
     !sinalCriticoInicial &&
     !respostaCurta
   ) {
-    const temTopico = await temTopicoRelevante(textoUsuario);
+    const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
-      const respostaBase = await responderDaBase(textoUsuario, historicoFmt);
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
       if (respostaBase) {
-        // [FIX] só usa cabeçalho em fallback_direto (tópico curado direto).
         const cabecalho =
           respostaBase.origem === 'fallback_direto' && respostaBase.titulo
             ? `*${respostaBase.titulo}*\n\n`
@@ -348,6 +351,56 @@ async function processarTurnoInterno(
               motivos: respostaBase.bloqueado
                 ? ['base bloqueada por segurança']
                 : ['base de conhecimento'],
+            },
+          },
+        };
+      }
+    }
+  }
+
+  // 3b. Multi-intent: conhecimento + relato → responde pergunta E inicia triagem
+  if (
+    temConhecimento &&
+    temRelatoIntent &&
+    !sinalCriticoInicial &&
+    !respostaCurta
+  ) {
+    const temTopico = await temTopicoRelevante(perguntaRAG);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+      if (respostaBase) {
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
+        const rodape = respostaBase.bloqueado
+          ? '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_'
+          : '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou e se está piorando?_';
+        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+
+        const textoAcumuladoMI = estado.texto_original_acumulado
+          ? `${estado.texto_original_acumulado} ${textoUsuario}`
+          : textoUsuario;
+        const relatosMI = [...estado.relatos, extraido];
+
+        return {
+          estado: {
+            ...estado,
+            relatos: relatosMI,
+            texto_original_acumulado: textoAcumuladoMI,
+            fase: 'coletando',
+          },
+          resultado: {
+            tipo: 'orientacao',
+            texto: mensagem,
+            decisao: {
+              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+              regra_acionada: 'base_conhecimento_multi',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+              motivos: respostaBase.bloqueado
+                ? ['base bloqueada por segurança', 'multi-intent']
+                : ['base de conhecimento', 'multi-intent'],
             },
           },
         };
@@ -393,7 +446,7 @@ async function processarTurnoInterno(
     }
   }
 
-  // ── 6. Bloqueios (medicamento — diagnóstico já foi tratado no bloco 2.5)
+  // ── 6. Bloqueio de medicamento
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -484,7 +537,7 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 10. Consolida relato
+  // ── 10. Consolida relato (triagem normal)
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -635,7 +688,7 @@ async function processarTurnoComRelatoInterno(
     };
   }
 
-  // ── 2.5. [FIX] Bloqueio de diagnóstico ANTES do RAG (mesmo tratamento do fluxo de texto)
+  // ── 2.5. Bloqueio de diagnóstico
   const nivelPre = classificarNivel(relatoPronto);
   const sinalCriticoPre = nivelPre === 'critico';
 
@@ -657,23 +710,26 @@ async function processarTurnoComRelatoInterno(
     };
   }
 
-  const intencao = await classificarIntencao(textoRepresentativo, historicoFmt);
-  const ehConhecimento = intencao === 'conhecimento';
-  const ehNavegacao = intencao === 'navegacao';
+  // ── 3. MULTI-INTENT (áudio)
+  const temConhecimento = temIntent(relatoPronto, 'conhecimento');
+  const temRelatoIntent = temIntent(relatoPronto, 'relato');
+  const temNavegacao = temIntent(relatoPronto, 'navegacao');
+
   const relatoComoQueixa =
-    intencao === 'relato' || descreveQueixaPropriaRegex(textoNorm);
+    temRelatoIntent || descreveQueixaPropriaRegex(textoNorm);
   const nivelInicial = classificarNivel(relatoPronto);
   const sinalCriticoInicial = nivelInicial === 'critico';
+  const perguntaRAG = relatoPronto.pergunta || textoRepresentativo;
 
   if (
-    ehConhecimento &&
-    !ehNavegacao &&
-    !relatoComoQueixa &&
+    temConhecimento &&
+    !temNavegacao &&
+    !temRelatoIntent &&
     !sinalCriticoInicial
   ) {
-    const temTopico = await temTopicoRelevante(textoRepresentativo);
+    const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
-      const respostaBase = await responderDaBase(textoRepresentativo, historicoFmt);
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
       if (respostaBase) {
         const cabecalho =
           respostaBase.origem === 'fallback_direto' && respostaBase.titulo
@@ -697,6 +753,48 @@ async function processarTurnoComRelatoInterno(
               motivos: respostaBase.bloqueado
                 ? ['base bloqueada por segurança']
                 : ['base de conhecimento'],
+            },
+          },
+        };
+      }
+    }
+  }
+
+  if (temConhecimento && temRelatoIntent && !sinalCriticoInicial) {
+    const temTopico = await temTopicoRelevante(perguntaRAG);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+      if (respostaBase) {
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
+        const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou e se está piorando?_';
+        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+
+        const textoAcumuladoMI = estado.texto_original_acumulado
+          ? `${estado.texto_original_acumulado} ${textoRepresentativo}`
+          : textoRepresentativo;
+        const relatosMI = [...estado.relatos, relatoPronto];
+
+        return {
+          estado: {
+            ...estado,
+            relatos: relatosMI,
+            texto_original_acumulado: textoAcumuladoMI,
+            fase: 'coletando',
+          },
+          resultado: {
+            tipo: 'orientacao',
+            texto: mensagem,
+            decisao: {
+              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+              regra_acionada: 'base_conhecimento_multi',
+              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+              motivos: respostaBase.bloqueado
+                ? ['base bloqueada por segurança', 'multi-intent']
+                : ['base de conhecimento', 'multi-intent'],
             },
           },
         };

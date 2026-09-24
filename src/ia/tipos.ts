@@ -75,9 +75,7 @@ export type RelatoEstruturado = {
   autodiagnostico_grave: string | null;
   texto_original_acumulado: string;
 
-  // [Task 1] Intenção detectada pelo extrator (structured output).
-  // Ainda não usada no roteamento — Task 2 vai consumir.
-  intencao?: string;
+    pergunta?: string;
 };
 
 export type DecisaoRegras = {
