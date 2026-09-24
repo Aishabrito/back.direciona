@@ -1,10 +1,9 @@
 // src/ia/base_conhecimento.ts
-// Pesquisa na base usando busca vetorial (semântica). Encontra tópicos
-// relevantes mesmo quando o usuário usa palavras diferentes das cadastradas.
+// Pesquisa na base usando busca vetorial (semântica) + resposta via Groq.
 
-import { GoogleGenAI } from '@google/genai';
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
 import { gerarEmbedding } from '../servicos/embeddings.js';
+import { gerarTexto } from '../servicos/ia.js';
 import { normalizarTexto } from './normalizar.js';
 import baseLocal from '../regras/base_conhecimento.json';
 
@@ -29,16 +28,12 @@ type ResultadoDb = {
 
 async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
   if (!sqlCliente) {
-    console.log(`⚠️ [RAG] sqlCliente NULO — busque vetorial pulada`);
+    console.log(`⚠️ [RAG] sqlCliente NULO`);
     return [];
   }
 
   const vetor = await gerarEmbedding(pergunta);
-  if (!vetor) {
-    console.log(`⚠️ [RAG] embedding retornou null para "${pergunta}"`);
-    return [];
-  }
-  console.log(`🧮 [RAG] embedding gerado com ${vetor.length} dimensões`);
+  if (!vetor) return [];
 
   const vetorStr = `[${vetor.join(',')}]`;
 
@@ -52,11 +47,8 @@ async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
       LIMIT ${k}
     `) as ResultadoDb[];
 
-    console.log(`🔍 [RAG] "${pergunta}" → ${linhas.length} candidatos, top similaridade: ${linhas[0]?.similaridade?.toFixed(3) ?? 'n/a'}`);
-
-    const filtradas = linhas.filter((l) => l.similaridade > 0.5);
-    console.log(`   Após filtro >0.5: ${filtradas.length}`);
-    return filtradas;
+    console.log(`🔍 [RAG] "${pergunta}" → ${linhas.length} candidatos, top: ${linhas[0]?.similaridade?.toFixed(3) ?? 'n/a'}`);
+    return linhas.filter((l) => l.similaridade > 0.5);
   } catch (err: any) {
     console.error(`❌ [RAG] busca vetorial FALHOU:`, err?.message || err);
     return [];
@@ -93,75 +85,69 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 }
 
 // ────────────────────────────────────────────────────
+// Resposta direta (fallback se LLM falha)
+// ────────────────────────────────────────────────────
+function montarRespostaDireta(topico: { titulo: string; conteudo: string }): string {
+  const paragrafos = topico.conteudo.split('\n\n').filter(Boolean);
+  const trecho = paragrafos.slice(0, 2).join('\n\n');
+  return `*${topico.titulo}*\n\n${trecho}`;
+}
+
+// ────────────────────────────────────────────────────
 // API pública
 // ────────────────────────────────────────────────────
 export async function responderDaBase(pergunta: string): Promise<string | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.log(`⚠️ [RAG] GEMINI_API_KEY ausente`);
-    return null;
-  }
-
   let contextoTexto = '';
+  let primeiroTopico: { titulo: string; conteudo: string } | null = null;
+
   const candidatosVetoriais = await buscarTopK(pergunta, 5);
 
   if (candidatosVetoriais.length > 0) {
     contextoTexto = candidatosVetoriais
       .map((t) => `### ${t.titulo}\n${t.conteudo}`)
       .join('\n\n---\n\n');
+    primeiroTopico = candidatosVetoriais[0];
     console.log(`✅ [RAG] usando ${candidatosVetoriais.length} tópicos vetoriais`);
   } else {
     const candidatosLocais = buscarLocalKeyword(pergunta, 3);
     if (candidatosLocais.length === 0) {
-      console.log(`❌ [RAG] sem tópicos (nem vetorial nem local) para "${pergunta}"`);
+      console.log(`❌ [RAG] sem tópicos para "${pergunta}"`);
       return null;
     }
     contextoTexto = candidatosLocais
       .map((t) => `### ${t.titulo}\n${t.conteudo}`)
       .join('\n\n---\n\n');
+    primeiroTopico = candidatosLocais[0];
     console.log(`🔄 [RAG] usando fallback keyword: ${candidatosLocais.length} tópicos`);
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const promessa = ai.models.generateContent({
-      model: 'gemini-3.6-flash-lite',
-      contents: `PERGUNTA DO USUÁRIO:
+  const prompt = `PERGUNTA DO USUÁRIO:
 "${pergunta}"
 
 BASE DE CONHECIMENTO (use SOMENTE isto):
-${contextoTexto}
+${contextoTexto}`;
 
-Responda à pergunta em português, de forma clara e acolhedora, como se fosse um agente do SUS explicando para um usuário comum. Se a base não tiver a informação para responder, devolva EXATAMENTE a string NAO_ENCONTRADO e nada mais.`,
-      config: { temperature: 0 },
-    });
+  const systemInstruction = `Você é um agente do SUS explicando para um usuário comum.
+Responda à pergunta em português, de forma clara e acolhedora.
+Se a base não tiver a informação suficiente, devolva EXATAMENTE a string NAO_ENCONTRADO e nada mais.`;
 
-    const timeout = new Promise<never>((_, rej) =>
-      setTimeout(() => rej(new Error('timeout base')), 20000),
-    );
-    const resp = (await Promise.race([promessa, timeout])) as any;
-    const texto = (resp.text || '').trim();
+  const texto = await gerarTexto(prompt, systemInstruction, 20000);
 
-    if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO')) {
-      console.log(`❌ [RAG] Gemini devolveu NAO_ENCONTRADO`);
-      return null;
-    }
-    if (texto.length < 20) {
-      console.log(`❌ [RAG] resposta curta demais (${texto.length} chars)`);
-      return null;
-    }
-    console.log(`✅ [RAG] resposta gerada (${texto.length} chars)`);
-    return texto;
-  } catch (err: any) {
-    console.error('❌ [RAG] Gemini falhou:', err?.message || err);
-    return null;
+  if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO')) {
+    console.log(`⚠️ [RAG] Groq sem resposta, usando tópico direto`);
+    return primeiroTopico ? montarRespostaDireta(primeiroTopico) : null;
   }
+  if (texto.length < 20) {
+    console.log(`⚠️ [RAG] resposta curta, usando tópico direto`);
+    return primeiroTopico ? montarRespostaDireta(primeiroTopico) : null;
+  }
+
+  console.log(`✅ [RAG] resposta gerada pelo Groq (${texto.length} chars)`);
+  return texto;
 }
 
 export async function temTopicoRelevante(pergunta: string): Promise<boolean> {
   const vetoriais = await buscarTopK(pergunta, 1);
   if (vetoriais.length > 0) return true;
-  const local = buscarLocalKeyword(pergunta, 1);
-  console.log(`🔎 [RAG] temTopicoRelevante("${pergunta}") = ${local.length > 0} (fallback local)`);
-  return local.length > 0;
+  return buscarLocalKeyword(pergunta, 1).length > 0;
 }
