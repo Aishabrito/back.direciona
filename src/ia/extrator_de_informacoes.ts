@@ -95,8 +95,20 @@ function extrairIdade(n: string): { grupo: RelatoEstruturado['idade_grupo']; num
   if (achada) {
     numerica = achada.unidade.startsWith('mes') ? Math.max(0, Math.round(achada.valor / 12)) : achada.valor;
   }
+
+  // [FIX] "meu filho/filha" sem idade numérica é sinal de criança provável.
+  // O bot vai perguntar a idade em seguida (perguntas.ts → tema 'crianca').
+  const mencionaFilho = contemAlgum(n, [
+    'meu filho', 'minha filha', 'nosso filho', 'nossa filha',
+    'o filho', 'a filha', 'meu menino', 'minha menina',
+  ]);
+
   const bebe = ehBebe(n, numerica);
-  const crianca = !bebe && (contemAlgum(n, ['crianca', 'menino', 'menina']) || (numerica !== null && numerica < 12));
+  const crianca = !bebe && (
+    contemAlgum(n, ['crianca', 'menino', 'menina']) ||
+    (numerica !== null && numerica < 12) ||
+    (mencionaFilho && numerica === null)
+  );
   const adolescente = !bebe && !crianca && (contemAlgum(n, ['adolescente']) || (numerica !== null && numerica < 18));
   const idoso = !bebe && !crianca && !adolescente &&
     (contemAlgum(n, ['idoso', 'velhinho']) || (numerica !== null && numerica >= 65));
