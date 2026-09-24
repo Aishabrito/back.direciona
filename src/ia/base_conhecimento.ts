@@ -1,9 +1,6 @@
 // src/ia/base_conhecimento.ts
 // Pesquisa na base usando busca vetorial (semântica). Encontra tópicos
 // relevantes mesmo quando o usuário usa palavras diferentes das cadastradas.
-//
-// Fallback: se o Supabase não estiver disponível, cai no JSON local
-// com busca por palavra-chave (comportamento antigo).
 
 import { GoogleGenAI } from '@google/genai';
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
@@ -12,15 +9,16 @@ import { normalizarTexto } from './normalizar.js';
 import baseLocal from '../regras/base_conhecimento.json';
 
 // ────────────────────────────────────────────────────
-// Cliente DB — registrado pelo bot.ts no boot
+// Cliente DB
 // ────────────────────────────────────────────────────
 let sqlCliente: Sql | null = null;
 export function registrarClienteDb(sql: Sql | null): void {
   sqlCliente = sql;
+  console.log(`📌 [RAG] cliente DB ${sql ? 'registrado' : 'NULO'}`);
 }
 
 // ────────────────────────────────────────────────────
-// Busca vetorial (principal)
+// Busca vetorial
 // ────────────────────────────────────────────────────
 type ResultadoDb = {
   id: string;
@@ -30,10 +28,17 @@ type ResultadoDb = {
 };
 
 async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
-  if (!sqlCliente) return [];
+  if (!sqlCliente) {
+    console.log(`⚠️ [RAG] sqlCliente NULO — busque vetorial pulada`);
+    return [];
+  }
 
   const vetor = await gerarEmbedding(pergunta);
-  if (!vetor) return [];
+  if (!vetor) {
+    console.log(`⚠️ [RAG] embedding retornou null para "${pergunta}"`);
+    return [];
+  }
+  console.log(`🧮 [RAG] embedding gerado com ${vetor.length} dimensões`);
 
   const vetorStr = `[${vetor.join(',')}]`;
 
@@ -47,16 +52,19 @@ async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
       LIMIT ${k}
     `) as ResultadoDb[];
 
-    // Só considera tópicos com similaridade decente (>0.6)
-    return linhas.filter((l) => l.similaridade > 0.6);
-  } catch (err) {
-    console.error('❌ Busca vetorial falhou:', err);
+    console.log(`🔍 [RAG] "${pergunta}" → ${linhas.length} candidatos, top similaridade: ${linhas[0]?.similaridade?.toFixed(3) ?? 'n/a'}`);
+
+    const filtradas = linhas.filter((l) => l.similaridade > 0.5);
+    console.log(`   Após filtro >0.5: ${filtradas.length}`);
+    return filtradas;
+  } catch (err: any) {
+    console.error(`❌ [RAG] busca vetorial FALHOU:`, err?.message || err);
     return [];
   }
 }
 
 // ────────────────────────────────────────────────────
-// Fallback: busca por keyword no JSON local
+// Fallback keyword
 // ────────────────────────────────────────────────────
 type TopicoLocal = {
   id: string;
@@ -87,30 +95,31 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 // ────────────────────────────────────────────────────
 // API pública
 // ────────────────────────────────────────────────────
-
-/**
- * Responde uma pergunta de saúde usando a base de conhecimento.
- * Tenta busca vetorial (Supabase); se falhar, cai em keyword local.
- */
 export async function responderDaBase(pergunta: string): Promise<string | null> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.log(`⚠️ [RAG] GEMINI_API_KEY ausente`);
+    return null;
+  }
 
-  // 1. Tenta busca vetorial
   let contextoTexto = '';
-  let candidatosVetoriais = await buscarTopK(pergunta, 5);
+  const candidatosVetoriais = await buscarTopK(pergunta, 5);
 
   if (candidatosVetoriais.length > 0) {
     contextoTexto = candidatosVetoriais
       .map((t) => `### ${t.titulo}\n${t.conteudo}`)
       .join('\n\n---\n\n');
+    console.log(`✅ [RAG] usando ${candidatosVetoriais.length} tópicos vetoriais`);
   } else {
-    // 2. Fallback: keyword local
     const candidatosLocais = buscarLocalKeyword(pergunta, 3);
-    if (candidatosLocais.length === 0) return null;
+    if (candidatosLocais.length === 0) {
+      console.log(`❌ [RAG] sem tópicos (nem vetorial nem local) para "${pergunta}"`);
+      return null;
+    }
     contextoTexto = candidatosLocais
       .map((t) => `### ${t.titulo}\n${t.conteudo}`)
       .join('\n\n---\n\n');
+    console.log(`🔄 [RAG] usando fallback keyword: ${candidatosLocais.length} tópicos`);
   }
 
   try {
@@ -134,18 +143,25 @@ Responda à pergunta em português, de forma clara e acolhedora, como se fosse u
     const texto = (resp.text || '').trim();
 
     if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO')) {
+      console.log(`❌ [RAG] Gemini devolveu NAO_ENCONTRADO`);
       return null;
     }
-    return texto.length > 20 ? texto : null;
-  } catch (err) {
-    console.error('❌ Base de conhecimento falhou:', err);
+    if (texto.length < 20) {
+      console.log(`❌ [RAG] resposta curta demais (${texto.length} chars)`);
+      return null;
+    }
+    console.log(`✅ [RAG] resposta gerada (${texto.length} chars)`);
+    return texto;
+  } catch (err: any) {
+    console.error('❌ [RAG] Gemini falhou:', err?.message || err);
     return null;
   }
 }
 
-/** Verifica rapidamente se vale a pena consultar a base. */
 export async function temTopicoRelevante(pergunta: string): Promise<boolean> {
   const vetoriais = await buscarTopK(pergunta, 1);
   if (vetoriais.length > 0) return true;
-  return buscarLocalKeyword(pergunta, 1).length > 0;
+  const local = buscarLocalKeyword(pergunta, 1);
+  console.log(`🔎 [RAG] temTopicoRelevante("${pergunta}") = ${local.length > 0} (fallback local)`);
+  return local.length > 0;
 }
