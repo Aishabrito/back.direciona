@@ -235,8 +235,8 @@ export async function processarTurno(
     !temSintomaClinico(extraido) &&
     estado.relatos.length === 0 &&
     !respostaCurta &&
-    parecePergunta(textoUsuario) &&
-    temTopicoRelevante(textoUsuario)
+      parecePergunta(textoUsuario) &&
+    (await temTopicoRelevante(textoUsuario))
   ) {
     const respostaBase = await responderDaBase(textoUsuario);
     if (respostaBase) {

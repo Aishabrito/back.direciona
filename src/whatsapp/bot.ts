@@ -5,6 +5,7 @@ import makeWASocket, {
   makeCacheableSignalKeyStore,
   downloadMediaMessage,
 } from "@whiskeysockets/baileys";
+import { registrarClienteDb } from "../ia/base_conhecimento.js";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import dotenv from "dotenv";
@@ -250,10 +251,11 @@ export async function startWhatsAppBot(): Promise<void> {
     return;
   }
 
-  if (!sqlCliente) {
-    sqlCliente = await criarClienteDb();
-  }
-  const sql = sqlCliente;
+if (!sqlCliente) {
+  sqlCliente = await criarClienteDb();
+}
+const sql = sqlCliente;
+registrarClienteDb(sql);  
 
   if (!botIniciado) {
     await baixarSessaoParaDisco(sql);
