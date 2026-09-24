@@ -96,12 +96,5 @@ export function comporResposta(params: {
 
   blocos.push(mensagemAprovada);
 
- // Em emergência, "por que" é ruído cognitivo. A pessoa precisa agir.
-  // Em agendamento (baixa gravidade), "por que" também atrapalha — ela já vai à UBS.
-  // Nos níveis intermediários (UPA_AGORA / HOJE), o motivo ajuda a pessoa a entender
-  // e a justificar a ida ao serviço.
-  const motivo = blocoMotivos(decisao);
-  if (motivo && nivel !== 'AGENDAR' && nivel !== 'SAMU_AGORA') blocos.push(motivo);
-
   return blocos.join('\n\n');
 }
