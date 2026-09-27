@@ -57,13 +57,29 @@ function formatarHistorico(historico: MensagemHistorico[] | undefined): string {
     .join('\n');
 }
 
-const SAUDACOES = ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'opa', 'tudo bem', 'eae'];
+// ────────────────────────────────────────────────────
+// Detecções simples
+// ────────────────────────────────────────────────────
+const SAUDACOES_BASE = [
+  'oi', 'ola', 'opa', 'eai', 'eae', 'oie', 'oii', 'e ai',
+  'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'tudo bom',
+];
+
+// [FIX] Colapsa letras repetidas: "oiii" → "oi", "olaaa" → "ola"
+function colapsarLetras(texto: string): string {
+  return texto.replace(/(.)\1+/g, '$1');
+}
 
 function ehSaudacao(texto: string): boolean {
   const n = normalizarTexto(texto);
   const palavras = n.split(/\s+/).filter(Boolean);
   if (palavras.length === 0 || palavras.length > 4) return false;
-  return SAUDACOES.some((s) => n === s || n.startsWith(s + ' '));
+
+  const colapsado = colapsarLetras(n);
+  return SAUDACOES_BASE.some((s) => {
+    const sColapsado = colapsarLetras(s);
+    return colapsado === sColapsado || colapsado.startsWith(sColapsado + ' ');
+  });
 }
 
 function ehAgradecimento(texto: string): boolean {
@@ -84,6 +100,12 @@ function parecePergunta(texto: string): boolean {
 
 function descreveQueixaPropriaRegex(textoNorm: string): boolean {
   return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
+}
+
+// [FIX] Detecta frases vagas de mal-estar sem sintoma específico.
+// Ex: "estou passando mal", "não estou bem", "me sinto ruim", "tô mal"
+function descreveMalEstarVago(textoNorm: string): boolean {
+  return /\b(estou|to|tou|me sinto|sinto|ando|venho)\b[^.!?]{0,25}\b(mal|ruim|doente|pessimo|péssimo|muito mal|muito ruim|nao estou bem|não estou bem|nao to bem|não to bem|nao tou bem|não tou bem|nao estou nada bem|passando mal|me sentindo mal|me sentindo ruim)\b/i.test(textoNorm);
 }
 
 function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
@@ -623,6 +645,37 @@ async function processarTurnoInterno(
     };
   }
 
+  // [FIX] Mal-estar vago → inicia triagem em vez de fora de escopo
+  // Ex: "estou passando mal", "não estou bem", "tô mal"
+  const respondendoTriagemAgora = fase === 'coletando' && !!estado.ultimaPergunta;
+  if (
+    descreveMalEstarVago(textoNorm) &&
+    estado.relatos.length === 0 &&
+    !respondendoTriagemAgora &&
+    !respostaCurta
+  ) {
+    const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
+    if (pergunta) {
+      return {
+        estado: {
+          ...estado,
+          fase: 'coletando',
+          temaPergunta: 'vago',
+          rodadasPerguntas: 1,
+          perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
+          ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
+          texto_original_acumulado: textoUsuario,
+        },
+        resultado: {
+          tipo: 'perguntas',
+          tema: 'vago',
+          perguntas: [pergunta.texto],
+          texto: `Entendi. ${pergunta.texto}`,
+        },
+      };
+    }
+  }
+
   // ── 8. Reset de contexto
   const respondendoTriagem = fase === 'coletando' && !!estado.ultimaPergunta;
 
@@ -630,6 +683,7 @@ async function processarTurnoInterno(
     !temSintomaClinico(extraido) &&
     !parecePergunta(textoUsuario) &&
     !relatoComoQueixa &&
+    !descreveMalEstarVago(textoNorm) &&
     !respostaCurta &&
     !respondendoTriagem;
 
@@ -652,6 +706,7 @@ async function processarTurnoInterno(
   if (
     !temSintomaClinico(extraido) &&
     !relatoComoQueixa &&
+    !descreveMalEstarVago(textoNorm) &&
     estado.relatos.length === 0 &&
     !respostaCurta &&
     !respondendoTriagem
@@ -1038,10 +1093,39 @@ async function processarTurnoComRelatoInterno(
 
   const respondendoTriagemAudio = fase === 'coletando' && !!estado.ultimaPergunta;
 
+  // [FIX] Mal-estar vago em áudio também inicia triagem
+  if (
+    descreveMalEstarVago(textoNorm) &&
+    estado.relatos.length === 0 &&
+    !respondendoTriagemAudio
+  ) {
+    const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
+    if (pergunta) {
+      return {
+        estado: {
+          ...estado,
+          fase: 'coletando',
+          temaPergunta: 'vago',
+          rodadasPerguntas: 1,
+          perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
+          ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
+          texto_original_acumulado: textoRepresentativo,
+        },
+        resultado: {
+          tipo: 'perguntas',
+          tema: 'vago',
+          perguntas: [pergunta.texto],
+          texto: `Entendi. ${pergunta.texto}`,
+        },
+      };
+    }
+  }
+
   if (
     !temSintomaClinico(relatoPronto) &&
     estado.relatos.length === 0 &&
     !parecePergunta(textoRepresentativo) &&
+    !descreveMalEstarVago(textoNorm) &&
     !respondendoTriagemAudio
   ) {
     return {
