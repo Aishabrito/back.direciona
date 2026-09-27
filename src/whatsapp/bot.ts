@@ -17,7 +17,12 @@ import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/o
 
 import { mensagemPorId } from "../ia/mensagens.js";
 import { reformularPergunta } from "../ia/reformulador_pergunta.js";
-import type { EstadoConversa } from "../ia/tipos.js";
+import { interpretarRespostaCurta } from "../ia/perguntas.js";
+import {
+  RELATO_VAZIO,
+  type EstadoConversa,
+  type RelatoEstruturado,
+} from "../ia/tipos.js";
 import {
   buscarUnidades, formatarUnidades, type TipoUsuario,
 } from "../servicos/geolocalizacao.js";
@@ -37,7 +42,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 // ─── URL pública (usada no QR code e no health check) ───
 const PUBLIC_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
 
-// ─── [FIX] Handlers globais — silencia erros cosméticos do Baileys ───
+// ─── Handlers globais — silencia erros cosméticos do Baileys ───
 process.on('unhandledRejection', (err: any) => {
   const msg = err?.message || String(err);
   if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
@@ -62,7 +67,7 @@ const LOCALIZACAO_VALIDA_MS = 30 * 60 * 1000;
 
 const filas = new Map<string, Promise<void>>();
 
-// [Bloco 2] Rate limit do Gemini por usuário (30 chamadas/hora)
+// Rate limit do Gemini por usuário (30 chamadas/hora)
 const contadorGemini = new Map<string, number>();
 const LIMITE_GEMINI_POR_HORA = 30;
 
@@ -82,7 +87,7 @@ function podeChamarGemini(sender: string): boolean {
   return true;
 }
 
-// [Bloco 2] LGPD: hash do remetente para logs
+// LGPD: hash do remetente para logs
 function hashSender(sender: string): string {
   return createHash('sha256').update(sender).digest('hex').slice(0, 8);
 }
@@ -123,8 +128,42 @@ const comandosReset = [
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
 
-// ─── [FIX Bug 1] Carrega estado do banco antes de criar novo ───
-// Sem isso, o histórico morre a cada restart do bot.
+// ─── Tolerância a typos nos comandos de reset ───
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const custo = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + custo,
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+function ehComandoReset(entrada: string): boolean {
+  const norm = entrada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  if (norm.startsWith('/')) {
+    return levenshtein(norm, '/reset') <= 2 || levenshtein(norm, '/start') <= 2;
+  }
+  for (const cmd of comandosReset) {
+    const alvo = cmd.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (norm === alvo) return true;
+    const palavras = norm.split(/\s+/).filter(Boolean);
+    if (palavras.length <= 2 && levenshtein(norm, alvo) <= 2) return true;
+  }
+  return false;
+}
+
+// ─── Carrega estado do banco antes de criar novo ───
 async function obterOuCriarEstado(
   sender: string,
 ): Promise<{ estado: EstadoConversa; primeiraVez: boolean }> {
@@ -330,7 +369,6 @@ export async function startWhatsAppBot(): Promise<void> {
     if (qr) {
       setQrCode(qr);
       console.log("\n📲 *NOVO QR CODE GERADO!*");
-      // [FIX Bug 2] usa PUBLIC_URL em vez de URL hardcoded do Render
       console.log(`👉 Abra no navegador: ${PUBLIC_URL}/qr`);
       console.log("⏳ Escaneie em até 20 segundos!\n");
     }
@@ -425,7 +463,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       return;
     }
 
-    // [FIX Bug 1] carrega do banco se não estiver em memória
     const { estado } = await obterOuCriarEstado(sender);
     const aguardando = estado.aguardandoLocalizacao;
     if (aguardando?.ativo) {
@@ -449,7 +486,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       await sock.sendPresenceUpdate("composing", sender);
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
-      // 1. Baixa com timeout
       const buffer = (await Promise.race([
         downloadMediaMessage(
           msg, "buffer", {},
@@ -465,7 +501,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
       console.log(`🎤 [${hashSender(sender)}] Áudio (${(buffer.length / 1024).toFixed(1)} KB)`);
 
-      // 2. Transcreve com Groq Whisper (com retry)
       let transcricao = await transcreverAudio(buffer, mime);
 
       if (!transcricao || transcricao.length < 3) {
@@ -474,7 +509,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         transcricao = await transcreverAudio(buffer, mime);
       }
 
-      // 3. Se ainda vazio → pede pra repetir
       if (!transcricao || transcricao.length < 3) {
         console.log(`❌ [${hashSender(sender)}] transcrição falhou 2x`);
         await sock.sendMessage(sender, {
@@ -489,18 +523,31 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
       console.log(`📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`);
 
-      // [FIX Bug 1 + Bug 3] carrega estado ANTES pra ter histórico disponível
-      const { estado: estadoAtualAudio, primeiraVez: primeiraMensagemAudio } =
-        await obterOuCriarEstado(sender);
+      const { estado: estadoAtualAudio } = await obterOuCriarEstado(sender);
+      const primeiraMensagemAudio = (estadoAtualAudio.historico?.length ?? 0) === 0;
 
-      // [FIX Bug 3] passa histórico pro extrator no áudio também
       const historicoFmt = estadoAtualAudio.historico?.length
         ? estadoAtualAudio.historico
             .map((m) => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
             .join('\n')
         : undefined;
 
-      const relatoDoAudio = await interpretarRelato(transcricao, historicoFmt);
+      // [FIX] Antes de mandar pro extrator, checa se é resposta curta a uma
+      // pergunta de triagem ("2 dias", "sim", "tosse"). Se for, usa o atalho
+      // rápido — igual ao fluxo de texto faz. Reduz latência e evita cair
+      // em fora-de-escopo quando o LLM extrator não pega bem respostas curtas.
+      const respostaCurtaAudio = interpretarRespostaCurta(
+        transcricao,
+        estadoAtualAudio.ultimaPergunta,
+      );
+
+      const relatoDoAudio = respostaCurtaAudio
+        ? ({
+            ...RELATO_VAZIO,
+            ...respostaCurtaAudio,
+            texto_original_acumulado: '',
+          } as RelatoEstruturado)
+        : await interpretarRelato(transcricao, historicoFmt);
 
       const { resultado, estado: novoEstado } = await processarTurnoComRelato(
         transcricao, relatoDoAudio, estadoAtualAudio,
@@ -545,11 +592,21 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   console.log(`\n📩 [${hashSender(sender)}] ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
   const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  // ── RESET ──
-  if (comandosReset.some((cmd) => textoLimpo === cmd.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) {
-    sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-    if (sqlCliente) await apagarEstado(sqlCliente, sender);
-    await sock.sendMessage(sender, { text: `🔄 Reiniciado.\n\n${MENSAGEM_BOAS_VINDAS}` });
+  // ── RESET (com tolerância a typos) ──
+  if (ehComandoReset(cleanText)) {
+    const estadoReset = JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa;
+    estadoReset.historico = [
+      { role: 'user', content: '/reset', ts: Date.now() },
+      { role: 'assistant', content: '🔄 Reiniciado.', ts: Date.now() },
+    ];
+    sessions.set(sender, estadoReset);
+    if (sqlCliente) await salvarEstado(sqlCliente, sender, estadoReset);
+
+    await sock.sendMessage(sender, {
+      text:
+        '🔄 *Reiniciado.*\n\n' +
+        'Me conta o que está acontecendo ou o que você está sentindo que eu te oriento onde buscar atendimento.',
+    });
     return;
   }
 
@@ -615,7 +672,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   if (pedidoLoc) {
-    // [FIX Bug 1] carrega do banco se não estiver em memória
     const { estado } = await obterOuCriarEstado(sender);
     if (locGuardada) {
       await executarBusca(sock, sender, estado, locGuardada.lat, locGuardada.lng, pedidoLoc);
@@ -633,9 +689,8 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   // ── TRIAGEM ──
   await sock.sendPresenceUpdate("composing", sender);
 
-  // [FIX Bug 1] carrega estado do banco se não estiver em memória
-  const { estado: estadoAtualProcesso, primeiraVez: primeiraMensagem } =
-    await obterOuCriarEstado(sender);
+  const { estado: estadoAtualProcesso } = await obterOuCriarEstado(sender);
+  const primeiraMensagem = (estadoAtualProcesso.historico?.length ?? 0) === 0;
 
   const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
   if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
@@ -643,7 +698,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
   sessions.set(sender, novoEstado);
 
-  // [Bloco 2] Persiste estado
   if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
 
   let mensagemFinal = resultado.texto;
