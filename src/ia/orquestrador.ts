@@ -1,5 +1,7 @@
 // src/ia/orquestrador.ts
-// Onda B + guarda crítica regex independente do LLM.
+// Onda B: LLM decide o roteamento principal.
+// Guarda crítica regex roda ANTES do LLM, com permissão de triagem
+// em casos ambíguos (desmaio, terceiro, dor torácica isolada, etc).
 
 import { registrarDecisao } from './auditoria.js';
 import { interpretarRelato } from './extrator_de_informacoes.js';
@@ -27,7 +29,11 @@ import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 import { escolherAleatorio, DESPEDIDAS, ABERTURAS_RAG } from './variacao.js';
-import { detectarCriticoRegex } from './guarda_critica.js';
+import {
+  detectarCriticoRegex,
+  permiteTriagemAntes,
+  perguntaTriagemCritica,
+} from './guarda_critica.js';
 
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
@@ -60,7 +66,7 @@ function formatarHistorico(historico: MensagemHistorico[] | undefined): string {
 }
 
 // ────────────────────────────────────────────────────
-// Detecções (usadas como FALLBACK quando o LLM falha)
+// Detecções (FALLBACK quando o LLM falha)
 // ────────────────────────────────────────────────────
 const SAUDACOES_BASE = [
   'oi', 'ola', 'opa', 'eai', 'eae', 'oie', 'oii', 'e ai',
@@ -271,7 +277,8 @@ function respostaIniciaTriagem(
   };
 }
 
-// [GUARDA CRÍTICA] Resposta de emergência — acionada pela guarda regex
+// [GUARDA CRÍTICA] Resposta de emergência.
+// Nunca nomeia doença — apenas direciona ao serviço.
 function respostaEmergenciaGuard(
   estado: EstadoConversa,
   motivo: string,
@@ -281,23 +288,23 @@ function respostaEmergenciaGuard(
 
   const textos: Record<string, string> = {
     suicidio:
-      '💛 Estou aqui com você. Se você está pensando em se machucar, ligue agora para o *CVV 188* — atendimento 24h, gratuito e sigiloso. Em emergência, ligue *192 (SAMU)* ou vá a uma UPA.',
+      '💛 Estou aqui com você. Se você está pensando em se machucar, ligue agora para o *CVV 188* (24h, gratuito, sigiloso). Em emergência, ligue *192 (SAMU)* ou vá a uma UPA.',
     dor_toracica:
-      '⚠️ *Dor no peito é emergência.* Ligue *192 (SAMU)* agora. Não espere passar. Não dirija sozinho.',
+      '⚠️ Esse sintoma precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Não espere passar. Não dirija sozinho.',
     falta_de_ar:
-      '⚠️ *Falta de ar é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA mais próxima.',
+      '⚠️ Esse sintoma precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá imediatamente à UPA mais próxima.',
     avc:
-      '⚠️ *Sinais de AVC.* Ligue *192 (SAMU)* agora. Anote a hora que começou — isso ajuda muito no tratamento.',
+      '⚠️ Esses sinais precisam de atendimento imediato. Ligue *192 (SAMU)* agora. Se possível, anote a hora que começou.',
     desmaio:
-      '⚠️ *Perda de consciência é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
+      '⚠️ Essa situação precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
     convulsao:
-      '⚠️ *Convulsão é emergência.* Ligue *192 (SAMU)* agora. Proteja a cabeça, não coloque nada na boca.',
+      '⚠️ Essa situação precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Proteja a cabeça, não coloque nada na boca.',
     sangramento:
-      '⚠️ *Sangramento importante é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
+      '⚠️ Esse sintoma precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
     bebe_febre:
-      '⚠️ *Bebê pequeno com febre precisa de avaliação imediata.* Vá agora a uma UPA ou ligue *192 (SAMU)*.',
+      '⚠️ Bebê pequeno com febre precisa de avaliação imediata. Vá agora a uma UPA ou ligue *192 (SAMU)*.',
     obstetrico:
-      '⚠️ *Sinal de risco na gravidez.* Procure imediatamente a maternidade de referência ou ligue *192 (SAMU)*.',
+      '⚠️ Essa situação precisa de avaliação imediata. Procure a maternidade de referência ou ligue *192 (SAMU)*.',
   };
 
   const texto = textos[categoria] ?? '⚠️ Seus sintomas exigem atendimento imediato. Ligue *192 (SAMU)* ou vá a uma UPA agora.';
@@ -440,7 +447,7 @@ export async function processarTurnoComRelato(
 }
 
 // ============================================================
-// PROCESSAR TURNO — interno (texto) — LLM-first
+// PROCESSAR TURNO — interno (texto)
 // ============================================================
 async function processarTurnoInterno(
   textoUsuario: string,
@@ -459,9 +466,43 @@ async function processarTurnoInterno(
   const textoNorm = normalizarTexto(textoUsuario);
   const historicoFmt = formatarHistorico(estado.historico);
 
-  // ── 0. GUARDA CRÍTICA (roda ANTES do LLM)
+  // ── 0. GUARDA CRÍTICA
   const guarda = detectarCriticoRegex(textoUsuario);
   if (guarda.critico) {
+    const permitirTriagem = permiteTriagemAntes(textoUsuario, guarda.categoria, guarda.terceiro);
+
+    if (!permitirTriagem) {
+      incDecisao('SAMU_AGORA');
+      incDestino('SAMU_192_PRONTO_SOCORRO');
+      return respostaEmergenciaGuard(estado, guarda.motivo, guarda.categoria);
+    }
+
+    const perguntaCritica = perguntaTriagemCritica(guarda.categoria, guarda.terceiro);
+    if (perguntaCritica) {
+      console.log(`🟡 [guarda] triagem crítica antes: ${guarda.categoria} (terceiro: ${guarda.terceiro})`);
+      return {
+        estado: {
+          ...estado,
+          fase: 'coletando',
+          temaPergunta: 'vago',
+          rodadasPerguntas: 1,
+          perguntasJaFeitas: [],
+          ultimaPergunta: {
+            id: `crit_${guarda.categoria}`,
+            campoAlvo: 'sintomas',
+            texto: perguntaCritica,
+          },
+          texto_original_acumulado: textoUsuario,
+        },
+        resultado: {
+          tipo: 'perguntas',
+          tema: 'vago',
+          perguntas: [perguntaCritica],
+          texto: perguntaCritica,
+        },
+      };
+    }
+
     incDecisao('SAMU_AGORA');
     incDestino('SAMU_192_PRONTO_SOCORRO');
     return respostaEmergenciaGuard(estado, guarda.motivo, guarda.categoria);
@@ -903,9 +944,43 @@ async function processarTurnoComRelatoInterno(
   const textoNorm = normalizarTexto(textoRepresentativo);
   const historicoFmt = formatarHistorico(estado.historico);
 
-  // ── 0. GUARDA CRÍTICA (áudio também)
+  // ── 0. GUARDA CRÍTICA (áudio)
   const guardaAudio = detectarCriticoRegex(textoRepresentativo);
   if (guardaAudio.critico) {
+    const permitirTriagem = permiteTriagemAntes(textoRepresentativo, guardaAudio.categoria, guardaAudio.terceiro);
+
+    if (!permitirTriagem) {
+      incDecisao('SAMU_AGORA');
+      incDestino('SAMU_192_PRONTO_SOCORRO');
+      return respostaEmergenciaGuard(estado, guardaAudio.motivo, guardaAudio.categoria);
+    }
+
+    const perguntaCritica = perguntaTriagemCritica(guardaAudio.categoria, guardaAudio.terceiro);
+    if (perguntaCritica) {
+      console.log(`🟡 [guarda/áudio] triagem crítica antes: ${guardaAudio.categoria}`);
+      return {
+        estado: {
+          ...estado,
+          fase: 'coletando',
+          temaPergunta: 'vago',
+          rodadasPerguntas: 1,
+          perguntasJaFeitas: [],
+          ultimaPergunta: {
+            id: `crit_${guardaAudio.categoria}`,
+            campoAlvo: 'sintomas',
+            texto: perguntaCritica,
+          },
+          texto_original_acumulado: textoRepresentativo,
+        },
+        resultado: {
+          tipo: 'perguntas',
+          tema: 'vago',
+          perguntas: [perguntaCritica],
+          texto: perguntaCritica,
+        },
+      };
+    }
+
     incDecisao('SAMU_AGORA');
     incDestino('SAMU_192_PRONTO_SOCORRO');
     return respostaEmergenciaGuard(estado, guardaAudio.motivo, guardaAudio.categoria);
