@@ -76,7 +76,12 @@ const comandosReset = [
   "/reset", "reset", "reiniciar", "comecar de novo", "começar de novo", "comecar dnv",
   "vamos comecar dnv", "vamos começar de novo", "voltar pro inicio", "voltar para o inicio",
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
+  "recomecar", "recomeçar", "novo atendimento", "nova consulta", "voltar ao começo", "voltar pro começo",
 ];
+
+// Rodapé das respostas que fecham um atendimento: a pessoa não precisa saber de /reset.
+const RODAPE_RECOMECAR = '↩️ _Para começar um novo atendimento, é só mandar *início*._';
+const ACOES_QUE_FECHAM = new Set(['emergencia', 'orientar', 'responder_rag']);
 
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
@@ -635,6 +640,9 @@ async function processarTexto(sock: Sock, sender: string, cleanText: string, vei
       mensagemFinal = resultado.acao === 'conversa' ? boasVindas : `${boasVindas}\n\n---\n\n${mensagemFinal}`;
     }
     mensagemFinal = oferecerLocalizacao(novoEstado, resultado, mensagemFinal);
+    if (resultado.acao && ACOES_QUE_FECHAM.has(resultado.acao)) {
+      mensagemFinal = `${mensagemFinal}\n\n${RODAPE_RECOMECAR}`;
+    }
 
     await persistir(sender, novoEstado);
     pararDigitando();
