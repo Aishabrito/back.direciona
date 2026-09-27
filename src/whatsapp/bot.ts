@@ -46,7 +46,7 @@ const PUBLIC_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
 process.on('unhandledRejection', (err: any) => {
   const msg = err?.message || String(err);
   if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
-    return; // ruído esperado em reconexões
+    return;
   }
   console.error('❌ Unhandled rejection:', err);
 });
@@ -163,6 +163,13 @@ function ehComandoReset(entrada: string): boolean {
   return false;
 }
 
+// ─── Comando /apagar (LGPD) ───
+function ehComandoApagar(entrada: string): boolean {
+  const n = entrada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  return /^\/?(apagar|excluir)( meus? (dados|dados|historico|conversa))?$/.test(n)
+    || /^(apagar|excluir) (meus? )?(dados|historico|conversa)$/.test(n);
+}
+
 // ─── Carrega estado do banco antes de criar novo ───
 async function obterOuCriarEstado(
   sender: string,
@@ -212,6 +219,22 @@ function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: s
 }
 
 type Sock = ReturnType<typeof makeWASocket>;
+
+// [FIX] Mantém "digitando..." a cada 3s enquanto processa.
+// WhatsApp corta o status após ~5s. Sem isso, o usuário acha que travou.
+function iniciarDigitando(sock: Sock, sender: string): () => void {
+  let ativo = true;
+  const tick = async () => {
+    if (!ativo) return;
+    try { await sock.sendPresenceUpdate("composing", sender); } catch {}
+    if (ativo) setTimeout(tick, 3000);
+  };
+  tick();
+  return () => {
+    ativo = false;
+    try { sock.sendPresenceUpdate("paused", sender).catch(() => {}); } catch {}
+  };
+}
 
 async function executarBusca(
   sock: Sock, sender: string, estado: EstadoConversa,
@@ -482,8 +505,8 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     inc('total_audios');
+    const pararDigitandoAudio = iniciarDigitando(sock, sender);
     try {
-      await sock.sendPresenceUpdate("composing", sender);
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
       const buffer = (await Promise.race([
@@ -511,13 +534,13 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
       if (!transcricao || transcricao.length < 3) {
         console.log(`❌ [${hashSender(sender)}] transcrição falhou 2x`);
+        pararDigitandoAudio();
         await sock.sendMessage(sender, {
           text:
             '🎤 Não consegui entender o áudio mesmo depois de tentar duas vezes. ' +
             'Pode repetir em um lugar mais silencioso ou escrever? ' +
             'Em emergência, ligue 192.',
         });
-        await sock.sendPresenceUpdate("paused", sender);
         return;
       }
 
@@ -532,10 +555,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
             .join('\n')
         : undefined;
 
-      // [FIX] Antes de mandar pro extrator, checa se é resposta curta a uma
-      // pergunta de triagem ("2 dias", "sim", "tosse"). Se for, usa o atalho
-      // rápido — igual ao fluxo de texto faz. Reduz latência e evita cair
-      // em fora-de-escopo quando o LLM extrator não pega bem respostas curtas.
       const respostaCurtaAudio = interpretarRespostaCurta(
         transcricao,
         estadoAtualAudio.ultimaPergunta,
@@ -568,14 +587,15 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
 
+      pararDigitandoAudio();
       await responder(sock, sender, respostaAudio, true);
     } catch (err) {
       console.error("❌ Erro ao processar áudio:", err);
+      pararDigitandoAudio();
       await sock.sendMessage(sender, {
         text: "🎤 Não consegui processar esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.",
       });
     }
-    await sock.sendPresenceUpdate("paused", sender);
     return;
   }
 
@@ -591,6 +611,29 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   console.log(`\n📩 [${hashSender(sender)}] ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
   const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // ── APAGAR DADOS (LGPD) ──
+  if (ehComandoApagar(cleanText)) {
+    try {
+      if (sqlCliente) {
+        await apagarEstado(sqlCliente, sender);
+      }
+      sessions.delete(sender);
+      await sock.sendMessage(sender, {
+        text:
+          '🗑️ *Seus dados foram apagados.*\n\n' +
+          'Removi o histórico desta conversa e o estado associado ao seu número. ' +
+          'Se quiser recomeçar do zero, mande qualquer mensagem.',
+      });
+    } catch (err) {
+      console.error('❌ Erro ao apagar dados:', err);
+      await sock.sendMessage(sender, {
+        text:
+          '⚠️ Não consegui apagar agora. Tente de novo em alguns minutos ou mande /reset para limpar a conversa local.',
+      });
+    }
+    return;
+  }
 
   // ── RESET (com tolerância a typos) ──
   if (ehComandoReset(cleanText)) {
@@ -687,7 +730,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   // ── TRIAGEM ──
-  await sock.sendPresenceUpdate("composing", sender);
+  const pararDigitando = iniciarDigitando(sock, sender);
 
   const { estado: estadoAtualProcesso } = await obterOuCriarEstado(sender);
   const primeiraMensagem = (estadoAtualProcesso.historico?.length ?? 0) === 0;
@@ -716,6 +759,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
 
+  pararDigitando();
   await responder(sock, sender, mensagemFinal, false);
-  await sock.sendPresenceUpdate("paused", sender);
 }

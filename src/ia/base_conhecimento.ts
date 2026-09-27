@@ -1,6 +1,5 @@
 // src/ia/base_conhecimento.ts
-// RAG: busca vetorial (semântica) + resposta via Groq.
-// Devolve estrutura + passa por 2 camadas anti-diagnóstico antes de sair.
+// RAG com cache em memória (TTL 1h) e judge condicional (só clínico).
 
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
 import { gerarEmbedding } from '../servicos/embeddings.js';
@@ -8,26 +7,54 @@ import { gerarTexto } from '../servicos/ia.js';
 import { normalizarTexto } from './normalizar.js';
 import baseLocal from '../regras/base_conhecimento.json';
 
-// ────────────────────────────────────────────────────
-// Cliente DB
-// ────────────────────────────────────────────────────
 let sqlCliente: Sql | null = null;
 export function registrarClienteDb(sql: Sql | null): void {
   sqlCliente = sql;
   console.log(`📌 [RAG] cliente DB ${sql ? 'registrado' : 'NULO'}`);
 }
 
-// ────────────────────────────────────────────────────
-// Tipo público
-// ────────────────────────────────────────────────────
 export type RespostaEstruturada = {
   titulo: string;
   corpo: string;
   topico_id: string;
-  origem: 'vetorial' | 'keyword' | 'fallback_direto';
+  origem: 'vetorial' | 'keyword' | 'fallback_direto' | 'cache';
   similaridade?: number;
   bloqueado?: boolean;
 };
+
+// ────────────────────────────────────────────────────
+// CACHE — TTL 1h, limite 500 entradas
+// ────────────────────────────────────────────────────
+type CacheEntry = { resposta: RespostaEstruturada | null; expiraEm: number };
+const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_MAX = 500;
+const cacheRAG = new Map<string, CacheEntry>();
+
+function chaveCache(pergunta: string): string {
+  return normalizarTexto(pergunta).slice(0, 200);
+}
+
+function getCache(chave: string): CacheEntry | null {
+  const e = cacheRAG.get(chave);
+  if (!e) return null;
+  if (Date.now() > e.expiraEm) {
+    cacheRAG.delete(chave);
+    return null;
+  }
+  return e;
+}
+
+function setCache(chave: string, resposta: RespostaEstruturada | null): void {
+  if (cacheRAG.size >= CACHE_MAX) {
+    let maisAntigo = '';
+    let menorTs = Infinity;
+    for (const [k, v] of cacheRAG.entries()) {
+      if (v.expiraEm < menorTs) { menorTs = v.expiraEm; maisAntigo = k; }
+    }
+    if (maisAntigo) cacheRAG.delete(maisAntigo);
+  }
+  cacheRAG.set(chave, { resposta, expiraEm: Date.now() + CACHE_TTL_MS });
+}
 
 // ────────────────────────────────────────────────────
 // Busca vetorial
@@ -40,10 +67,7 @@ type ResultadoDb = {
 };
 
 async function buscarTopK(pergunta: string, k = 5): Promise<ResultadoDb[]> {
-  if (!sqlCliente) {
-    console.log(`⚠️ [RAG] sqlCliente NULO`);
-    return [];
-  }
+  if (!sqlCliente) return [];
   const vetor = await gerarEmbedding(pergunta);
   if (!vetor) return [];
   const vetorStr = `[${vetor.join(',')}]`;
@@ -98,8 +122,26 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 }
 
 // ────────────────────────────────────────────────────
-// LLM-judge (Camada 3 — semântica)
+// JUDGE CONDICIONAL — só roda pra tópicos clínicos
 // ────────────────────────────────────────────────────
+const PREFIXOS_SERVICO = [
+  'o_que_e_sus', 'como_', 'conecte_', 'farmacia_', 'medicamento_uso',
+  'ouvidoria', 'direitos_', 'agente_', 'estrategia_', 'nasf', 'melhor_',
+  'academia_', 'vigilancia_', 'vacinas_', 'vacina', 'doacao_', 'transplante_',
+  'pre_natal_detalhado', 'amamentacao_dificuldades', 'saude_idoso', 'saude_deficiente',
+  'saude_indigena', 'atendimento_domiciliar', 'cuidados_paliativos', 'ciatox',
+  'regulacao_', 'notificacao_', 'violencia_contra', 'violencia_idoso',
+  'gravidez_adolescencia', 'hiv_tratamento', 'caps_', 'atendimento_psi',
+  'como_conseguir', 'tempo_espera', 'saude_mental_atendimento',
+  'saude_do_homem', 'saude_da_mulher', 'planejamento_familiar',
+];
+
+function ehTopicoServico(id: string): boolean {
+  return PREFIXOS_SERVICO.some((p) => id.startsWith(p)) ||
+    id === 'cartao_sus' || id === 'saude_bucal' || id === 'vacinacao' ||
+    id === 'aleitamento' || id === 'diferenca_ubs_upa_samu';
+}
+
 const JUDGE_SYSTEM = `Você analisa respostas de um assistente do SUS.
 
 Pergunta-chave: a resposta proposta sugere que o USUÁRIO TEM alguma doença específica,
@@ -123,7 +165,7 @@ async function respostaTemDiagnostico(pergunta: string, resposta: string): Promi
     return limpo.startsWith('SIM');
   } catch (err: any) {
     console.error(`❌ [RAG/judge] falha:`, err?.message || err);
-    return true; // conservador
+    return true;
   }
 }
 
@@ -134,9 +176,6 @@ function respostaSeguraGenerica(): string {
   );
 }
 
-// ────────────────────────────────────────────────────
-// System prompt do RAG — CONCISO
-// ────────────────────────────────────────────────────
 const RAG_SYSTEM = `Você é um assistente do SUS que explica informações GERAIS sobre saúde e serviços públicos.
 
 REGRAS ABSOLUTAS:
@@ -158,9 +197,6 @@ ESTILO — MUITO IMPORTANTE:
 Exemplo BOM (pergunta "quantos graus é febre?"):
 "Febre é a partir de ~38°C. Em adultos, procure uma UPA se passar de 39°C, durar mais de 3 dias ou vier com falta de ar, manchas ou confusão."
 
-Exemplo RUIM:
-"Olá! A febre é o aumento da temperatura corporal, geralmente considerada a partir de aproximadamente 38°C... [3 parágrafos gigantes repetindo tudo]"
-
 O QUE VOCÊ PODE FAZER:
 - Explicar informações gerais (ex: "febre é temperatura acima de 38°C").
 - Explicar diferenças entre serviços do SUS (UBS, UPA, SAMU, CAPS).
@@ -168,44 +204,33 @@ O QUE VOCÊ PODE FAZER:
 
 Se a base não tiver a informação, devolva EXATAMENTE: NAO_ENCONTRADO`;
 
-// ────────────────────────────────────────────────────
-// [CAMADA 5] Filtro determinístico anti-diagnóstico.
-// Rede de segurança caso o LLM-judge falhe.
-// Não bloqueia explicação educativa ("dengue é transmitida por...").
-// Bloqueia associação sintoma ↔ doença ("seus sintomas são de X").
-// ────────────────────────────────────────────────────
 const DOENCAS_DIAGNOSTICAS =
   'gripe|influenza|dengue|zika|chikungunya|covid|coronavirus|pneumonia|infarto|avc|derrame|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma|hepatite|tuberculose|hanseniase';
 
 function respostaDiagnosticaRegex(resposta: string): boolean {
   const padroes = [
-    // "você pode estar com X", "você tem X"
     /\b(voc[eê]|o senhor|a senhora)\b[^.!?]{0,40}\b(pode|deve|parece|provavelmente|possivelmente)\b[^.!?]{0,30}\b(ter|estar com|ser)\b/i,
-    // "seus sintomas são de X" / "seus sintomas indicam X"
     /\b(seus?|os)\s+sintomas?\b[^.!?]{0,40}\b(s[aã]o|indicam|sugerem|apontam|revelam|batem com|cursam com)\b/i,
-    // "isso é X" / "isso pode ser X" com doença
     new RegExp(`\\b(isso|isto|esse quadro|esse caso)\\b[^.!?]{0,30}\\b(é|eh|pode ser|deve ser|parece)\\b[^.!?]{0,20}\\b(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
-    // "quadro de X" / "caso de X" (quando ligado ao usuário)
     new RegExp(`\\b(quadro|caso|suspeita)\\s+de\\s+(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
-    // "o diagnóstico é", "diagnóstico provável"
     /\b(diagn[oó]stico|progn[oó]stico)\b[^.!?]{0,30}\b(é|eh|prov[aá]vel|sugere|indica)\b/i,
-    // "provavelmente é X", "possivelmente é X" + doença
     new RegExp(`\\b(provavelmente|possivelmente|aparentemente|talvez)\\b[^.!?]{0,30}\\b(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
   ];
-
-  for (const p of padroes) {
-    if (p.test(resposta)) return true;
-  }
+  for (const p of padroes) if (p.test(resposta)) return true;
   return false;
 }
 
-// ────────────────────────────────────────────────────
-// API pública
-// ────────────────────────────────────────────────────
 export async function responderDaBase(
   pergunta: string,
   historicoFormatado?: string,
 ): Promise<RespostaEstruturada | null> {
+  const chave = chaveCache(pergunta);
+  const cacheado = getCache(chave);
+  if (cacheado) {
+    console.log(`⚡ [RAG/cache] hit para "${pergunta.slice(0, 40)}"`);
+    return cacheado.resposta ? { ...cacheado.resposta, origem: 'cache' } : null;
+  }
+
   let contextoTexto = '';
   let topicoBase: { id: string; titulo: string; conteudo: string; similaridade?: number } | null = null;
   let origem: RespostaEstruturada['origem'] = 'vetorial';
@@ -215,17 +240,17 @@ export async function responderDaBase(
   if (candidatosVetoriais.length > 0) {
     contextoTexto = candidatosVetoriais.map((t) => `### ${t.titulo}\n${t.conteudo}`).join('\n\n---\n\n');
     topicoBase = candidatosVetoriais[0];
-    console.log(`✅ [RAG] usando ${candidatosVetoriais.length} tópicos vetoriais`);
   } else {
     const candidatosLocais = buscarLocalKeyword(pergunta, 3);
     if (candidatosLocais.length === 0) {
       console.log(`❌ [RAG] sem tópicos para "${pergunta}"`);
+      setCache(chave, null);
       return null;
     }
     contextoTexto = candidatosLocais.map((t) => `### ${t.titulo}\n${t.conteudo}`).join('\n\n---\n\n');
     topicoBase = candidatosLocais[0];
     origem = 'keyword';
-    console.log(`🔄 [RAG] usando fallback keyword: ${candidatosLocais.length} tópicos`);
+    console.log(`🔄 [RAG] fallback keyword: ${candidatosLocais.length} tópicos`);
   }
 
   const prompt = `PERGUNTA DO USUÁRIO:
@@ -242,58 +267,65 @@ ${contextoTexto}`;
 
   if (!texto || texto === 'NAO_ENCONTRADO' || texto.includes('NAO_ENCONTRADO') || texto.length < 20) {
     console.log(`⚠️ [RAG] resposta insuficiente, usando tópico direto`);
-    if (!topicoBase) return null;
+    if (!topicoBase) { setCache(chave, null); return null; }
     const paragrafos = topicoBase.conteudo.split('\n\n').filter(Boolean);
-    return {
+    const resposta: RespostaEstruturada = {
       titulo: topicoBase.titulo,
       corpo: paragrafos.slice(0, 2).join('\n\n'),
       topico_id: topicoBase.id,
       origem: 'fallback_direto',
     };
+    setCache(chave, resposta);
+    return resposta;
   }
 
-  // [FIX] Corte de tamanho — pergunta curta não merece resposta gigante
   let textoFinal = texto;
   if (texto.length > 800 && pergunta.length < 80) {
     const paragrafos = texto.split(/\n\n+/);
     textoFinal = paragrafos.slice(0, 3).join('\n\n');
-    console.log(`✂️ [RAG] resposta cortada: ${texto.length} → ${textoFinal.length} chars`);
   }
 
-  // ── [CAMADA 5] Regex determinístico — ANTES do LLM judge
-  // É rápido, não depende do LLM e pega os casos óbvios.
   if (respostaDiagnosticaRegex(textoFinal)) {
-    console.warn(`🚫 [RAG/regex] bloqueado: "${textoFinal.slice(0, 80)}..."`);
-    return {
+    console.warn(`🚫 [RAG/regex] bloqueado`);
+    const resposta: RespostaEstruturada = {
       titulo: '',
       corpo: respostaSeguraGenerica(),
       topico_id: topicoBase?.id ?? 'seguro_generico',
       origem,
       bloqueado: true,
     };
+    setCache(chave, resposta);
+    return resposta;
   }
 
-  // ── [CAMADA 3] LLM-judge — pega o que o regex deixou passar
-  const suspeito = await respostaTemDiagnostico(pergunta, textoFinal);
-  if (suspeito) {
-    console.warn(`🚫 [RAG/judge] bloqueado: "${textoFinal.slice(0, 80)}..."`);
-    return {
-      titulo: '',
-      corpo: respostaSeguraGenerica(),
-      topico_id: topicoBase?.id ?? 'seguro_generico',
-      origem,
-      bloqueado: true,
-    };
+  const topicoId = topicoBase?.id ?? '';
+  if (!ehTopicoServico(topicoId)) {
+    const suspeito = await respostaTemDiagnostico(pergunta, textoFinal);
+    if (suspeito) {
+      console.warn(`🚫 [RAG/judge] bloqueado`);
+      const resposta: RespostaEstruturada = {
+        titulo: '',
+        corpo: respostaSeguraGenerica(),
+        topico_id: topicoId || 'seguro_generico',
+        origem,
+        bloqueado: true,
+      };
+      setCache(chave, resposta);
+      return resposta;
+    }
+  } else {
+    console.log(`⏭️ [RAG/judge] pulado — tópico de serviço: ${topicoId}`);
   }
 
-  console.log(`✅ [RAG] resposta aprovada pelas 2 camadas (${textoFinal.length} chars)`);
-  return {
+  const resposta: RespostaEstruturada = {
     titulo: topicoBase?.titulo ?? '',
     corpo: textoFinal,
-    topico_id: topicoBase?.id ?? 'desconhecido',
+    topico_id: topicoId || 'desconhecido',
     origem,
     similaridade: topicoBase?.similaridade,
   };
+  setCache(chave, resposta);
+  return resposta;
 }
 
 export async function temTopicoRelevante(pergunta: string): Promise<boolean> {

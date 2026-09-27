@@ -26,9 +26,6 @@ import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 
-// ────────────────────────────────────────────────────
-// Estado inicial
-// ────────────────────────────────────────────────────
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
   rodadasPerguntas: 0,
@@ -38,9 +35,6 @@ export const ESTADO_INICIAL: EstadoConversa = {
   historico: [],
 };
 
-// ────────────────────────────────────────────────────
-// Histórico — helpers
-// ────────────────────────────────────────────────────
 const MAX_HISTORICO = 12;
 
 function appendHistorico(
@@ -62,9 +56,6 @@ function formatarHistorico(historico: MensagemHistorico[] | undefined): string {
     .join('\n');
 }
 
-// ────────────────────────────────────────────────────
-// Detecções simples
-// ────────────────────────────────────────────────────
 const SAUDACOES = ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'e ai', 'opa', 'tudo bem', 'eae'];
 
 function ehSaudacao(texto: string): boolean {
@@ -101,23 +92,14 @@ function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
   const VERBO_PROPRIO = 'estou\\s+com|to\\s+com|tou\\s+com|tenho|peguei|pega';
 
   if (/\bmeus?\s+sintomas?\s+(sao|e|eh|podem ser|pode ser)\b/.test(textoNorm)) return true;
-
   const re1 = new RegExp(`\\b(${SUSPEITA})\\s+(q|que)?\\s*(${VERBO_PROPRIO})\\b`);
   if (re1.test(textoNorm)) return true;
-
-  const re2 = new RegExp(
-    `\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`,
-  );
+  const re2 = new RegExp(`\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`);
   if (re2.test(textoNorm)) return true;
-
   if (/\b(to|estou|tou)\s+(achando|pensando|suspeitando)\b/.test(textoNorm)) return true;
-
   return false;
 }
 
-// ────────────────────────────────────────────────────
-// Consolidação
-// ────────────────────────────────────────────────────
 function consolidar(estado: EstadoConversa): RelatoEstruturado {
   const base = estado.relatos.reduce((acc, item) => mesclarRelatos(acc, item), { ...RELATO_VAZIO });
   return { ...base, texto_original_acumulado: estado.texto_original_acumulado || '' };
@@ -135,50 +117,77 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
   );
 }
 
-// ────────────────────────────────────────────────────
-// [Task 3] Helpers de multi-intent
-// ────────────────────────────────────────────────────
 function temIntent(relato: RelatoEstruturado, i: string): boolean {
   return Array.isArray(relato.intencoes) && relato.intencoes.includes(i);
 }
 
 // ============================================================
-// WRAPPERS PÚBLICOS — gerenciam histórico + logging
+// WRAPPERS PÚBLICOS — try/catch + histórico + log
 // ============================================================
+
+function respostaFallbackTurno(estado: EstadoConversa, erro: any): {
+  resultado: TurnoResultado;
+  estado: EstadoConversa;
+} {
+  console.error('❌ [orquestrador] erro no turno:', erro?.message || erro);
+  return {
+    resultado: {
+      tipo: 'orientacao',
+      texto:
+        '⚠️ Estou com dificuldade técnica no momento. ' +
+        'Se for urgente (falta de ar, dor no peito, desmaio, confusão), ligue 192 agora. ' +
+        'Senão, tente de novo em 1 minuto.',
+      decisao: {
+        categoria_interna: 'fora_do_escopo',
+        destino: 'FALLBACK',
+        resposta_id: 'erro_tecnico',
+        regra_acionada: 'erro_tecnico',
+        versao_regras: VERSAO_REGRAS,
+        nivel: 'AGENDAR',
+        motivos: ['erro técnico'],
+      },
+    },
+    estado,
+  };
+}
 
 export async function processarTurno(
   textoUsuario: string,
   estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
-  const timer = iniciarTimer();
-  const faseAnterior = estadoEntrada.fase ?? 'inicio';
+  try {
+    const timer = iniciarTimer();
+    const faseAnterior = estadoEntrada.fase ?? 'inicio';
 
-  const estadoComUser = appendHistorico(estadoEntrada, 'user', textoUsuario);
-  const { resultado, estado } = await processarTurnoInterno(textoUsuario, estadoComUser);
+    const estadoComUser = appendHistorico(estadoEntrada, 'user', textoUsuario);
+    const { resultado, estado } = await processarTurnoInterno(textoUsuario, estadoComUser);
 
-  const estadoFinal = appendHistorico(
-    { ...estado, historico: estadoComUser.historico ?? [] },
-    'assistant',
-    resultado.texto,
-  );
+    const estadoFinal = appendHistorico(
+      { ...estado, historico: estadoComUser.historico ?? [] },
+      'assistant',
+      resultado.texto,
+    );
 
-  const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
+    const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
 
-  logTurno({
-    ts: new Date().toISOString(),
-    texto_usuario: textoUsuario.slice(0, 200),
-    tamanho_historico: estadoFinal.historico?.length ?? 0,
-    regra_acionada: decisao?.regra_acionada,
-    nivel: decisao?.nivel,
-    destino: decisao?.destino,
-    resposta_id: decisao?.resposta_id,
-    bloqueado: decisao?.resposta_id === 'base_bloqueada',
-    fase_anterior: faseAnterior,
-    fase_nova: estadoFinal.fase,
-    latencia_ms: timer(),
-  });
+    logTurno({
+      ts: new Date().toISOString(),
+      texto_usuario: textoUsuario.slice(0, 200),
+      tamanho_historico: estadoFinal.historico?.length ?? 0,
+      regra_acionada: decisao?.regra_acionada,
+      nivel: decisao?.nivel,
+      destino: decisao?.destino,
+      resposta_id: decisao?.resposta_id,
+      bloqueado: decisao?.resposta_id === 'base_bloqueada',
+      fase_anterior: faseAnterior,
+      fase_nova: estadoFinal.fase,
+      latencia_ms: timer(),
+    });
 
-  return { resultado, estado: estadoFinal };
+    return { resultado, estado: estadoFinal };
+  } catch (err) {
+    return respostaFallbackTurno(estadoEntrada, err);
+  }
 }
 
 export async function processarTurnoComRelato(
@@ -186,39 +195,43 @@ export async function processarTurnoComRelato(
   relatoPronto: RelatoEstruturado,
   estadoEntrada: EstadoConversa,
 ): Promise<{ resultado: TurnoResultado; estado: EstadoConversa }> {
-  const timer = iniciarTimer();
-  const faseAnterior = estadoEntrada.fase ?? 'inicio';
+  try {
+    const timer = iniciarTimer();
+    const faseAnterior = estadoEntrada.fase ?? 'inicio';
 
-  const estadoComUser = appendHistorico(estadoEntrada, 'user', textoRepresentativo);
-  const { resultado, estado } = await processarTurnoComRelatoInterno(
-    textoRepresentativo,
-    relatoPronto,
-    estadoComUser,
-  );
+    const estadoComUser = appendHistorico(estadoEntrada, 'user', textoRepresentativo);
+    const { resultado, estado } = await processarTurnoComRelatoInterno(
+      textoRepresentativo,
+      relatoPronto,
+      estadoComUser,
+    );
 
-  const estadoFinal = appendHistorico(
-    { ...estado, historico: estadoComUser.historico ?? [] },
-    'assistant',
-    resultado.texto,
-  );
+    const estadoFinal = appendHistorico(
+      { ...estado, historico: estadoComUser.historico ?? [] },
+      'assistant',
+      resultado.texto,
+    );
 
-  const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
+    const decisao = resultado.tipo === 'orientacao' ? resultado.decisao : undefined;
 
-  logTurno({
-    ts: new Date().toISOString(),
-    texto_usuario: textoRepresentativo.slice(0, 200),
-    tamanho_historico: estadoFinal.historico?.length ?? 0,
-    regra_acionada: decisao?.regra_acionada,
-    nivel: decisao?.nivel,
-    destino: decisao?.destino,
-    resposta_id: decisao?.resposta_id,
-    bloqueado: decisao?.resposta_id === 'base_bloqueada',
-    fase_anterior: faseAnterior,
-    fase_nova: estadoFinal.fase,
-    latencia_ms: timer(),
-  });
+    logTurno({
+      ts: new Date().toISOString(),
+      texto_usuario: textoRepresentativo.slice(0, 200),
+      tamanho_historico: estadoFinal.historico?.length ?? 0,
+      regra_acionada: decisao?.regra_acionada,
+      nivel: decisao?.nivel,
+      destino: decisao?.destino,
+      resposta_id: decisao?.resposta_id,
+      bloqueado: decisao?.resposta_id === 'base_bloqueada',
+      fase_anterior: faseAnterior,
+      fase_nova: estadoFinal.fase,
+      latencia_ms: timer(),
+    });
 
-  return { resultado, estado: estadoFinal };
+    return { resultado, estado: estadoFinal };
+  } catch (err) {
+    return respostaFallbackTurno(estadoEntrada, err);
+  }
 }
 
 // ============================================================
@@ -241,7 +254,6 @@ async function processarTurnoInterno(
   const textoNorm = normalizarTexto(textoUsuario);
   const historicoFmt = formatarHistorico(estado.historico);
 
-  // ── 1. Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
     return {
       estado: { ...estado, fase: 'encerrado' },
@@ -262,7 +274,6 @@ async function processarTurnoInterno(
     ? ({ ...RELATO_VAZIO, ...respostaCurta, texto_original_acumulado: '' } as RelatoEstruturado)
     : await interpretarRelato(textoUsuario, historicoFmt);
 
-  // ── 2. Novo caso
   const ehNovoCaso = /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
 
   if (fase === 'orientado' && ehNovoCaso) {
@@ -281,7 +292,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 2.5. Bloqueio de diagnóstico ANTES do RAG
   const nivelPre = classificarNivel(extraido);
   const sinalCriticoPre = nivelPre === 'critico';
 
@@ -304,7 +314,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 3. MULTI-INTENT — lê direto de extraido.intencoes
   const temConhecimento = temIntent(extraido, 'conhecimento');
   const temRelatoIntent = temIntent(extraido, 'relato');
   const temNavegacao = temIntent(extraido, 'navegacao');
@@ -314,16 +323,12 @@ async function processarTurnoInterno(
 
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
-
   const perguntaRAG = extraido.pergunta || textoUsuario;
 
-  // 3a. Conhecimento puro (sem relato) → RAG
+  // 3a. Conhecimento puro
   if (
-    temConhecimento &&
-    !temNavegacao &&
-    !temRelatoIntent &&
-    !sinalCriticoInicial &&
-    !respostaCurta
+    temConhecimento && !temNavegacao && !temRelatoIntent &&
+    !sinalCriticoInicial && !respostaCurta
   ) {
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
@@ -358,13 +363,8 @@ async function processarTurnoInterno(
     }
   }
 
-  // 3b. Multi-intent: conhecimento + relato → responde pergunta E inicia triagem
-  if (
-    temConhecimento &&
-    temRelatoIntent &&
-    !sinalCriticoInicial &&
-    !respostaCurta
-  ) {
+  // 3b. Multi-intent: conhecimento + relato
+  if (temConhecimento && temRelatoIntent && !sinalCriticoInicial && !respostaCurta) {
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
       const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -477,7 +477,6 @@ async function processarTurnoInterno(
     }
   }
 
-  // ── 4. Agradecimento
   if (fase === 'orientado' && ehAgradecimento(textoUsuario) && !temSintomaClinico(extraido)) {
     return {
       estado: { ...estado, fase: 'orientado' },
@@ -496,7 +495,6 @@ async function processarTurnoInterno(
   const nivel = classificarNivel(extraido);
   const sinalCritico = nivel === 'critico';
 
-  // ── 5. FAQ
   if (!temSintomaClinico(extraido) && !respostaCurta) {
     const faqEncontrada = checarFaq(textoUsuario);
     if (faqEncontrada) {
@@ -515,7 +513,6 @@ async function processarTurnoInterno(
     }
   }
 
-  // ── 6. Bloqueio de medicamento
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -531,7 +528,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 7. Saudação inicial
   if (
     estado.relatos.length === 0 &&
     ehSaudacao(textoUsuario) &&
@@ -563,9 +559,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 8. Reset de contexto
-  // [FIX] Se está no meio de uma triagem (fase 'coletando' + ultimaPergunta),
-  // NUNCA cai em fora de escopo — apenas continua o fluxo.
   const respondendoTriagem = fase === 'coletando' && !!estado.ultimaPergunta;
 
   const nadaClinico =
@@ -590,7 +583,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 9. Fora de escopo inicial
   if (
     !temSintomaClinico(extraido) &&
     !relatoComoQueixa &&
@@ -612,7 +604,6 @@ async function processarTurnoInterno(
     };
   }
 
-  // ── 10. Consolida relato (triagem normal)
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -763,7 +754,6 @@ async function processarTurnoComRelatoInterno(
     };
   }
 
-  // ── 2.5. Bloqueio de diagnóstico
   const nivelPre = classificarNivel(relatoPronto);
   const sinalCriticoPre = nivelPre === 'critico';
 
@@ -785,7 +775,6 @@ async function processarTurnoComRelatoInterno(
     };
   }
 
-  // ── 3. MULTI-INTENT (áudio)
   const temConhecimento = temIntent(relatoPronto, 'conhecimento');
   const temRelatoIntent = temIntent(relatoPronto, 'relato');
   const temNavegacao = temIntent(relatoPronto, 'navegacao');
@@ -796,13 +785,7 @@ async function processarTurnoComRelatoInterno(
   const sinalCriticoInicial = nivelInicial === 'critico';
   const perguntaRAG = relatoPronto.pergunta || textoRepresentativo;
 
-  // 3a. Conhecimento puro
-  if (
-    temConhecimento &&
-    !temNavegacao &&
-    !temRelatoIntent &&
-    !sinalCriticoInicial
-  ) {
+  if (temConhecimento && !temNavegacao && !temRelatoIntent && !sinalCriticoInicial) {
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
       const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -836,12 +819,7 @@ async function processarTurnoComRelatoInterno(
     }
   }
 
-  // 3b. Multi-intent (áudio): conhecimento + relato → RAG + triagem
-  if (
-    temConhecimento &&
-    temRelatoIntent &&
-    !sinalCriticoInicial
-  ) {
+  if (temConhecimento && temRelatoIntent && !sinalCriticoInicial) {
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
       const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -954,7 +932,6 @@ async function processarTurnoComRelatoInterno(
     }
   }
 
-  // [FIX] Se está no meio de uma triagem, NÃO cai em áudio vazio
   const respondendoTriagemAudio = fase === 'coletando' && !!estado.ultimaPergunta;
 
   if (
