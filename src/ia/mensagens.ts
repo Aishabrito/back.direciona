@@ -1,6 +1,6 @@
 import mensagens from '../respostas/mensagens_aprovadas.json';
 import type { MensagemAprovada } from './tipos.js';
-import { contemAlgum, normalizarTexto } from './normalizar.js';
+import { normalizarTexto } from './normalizar.js';
 
 // Blocklist enxuta. Termos como "infarto"/"avc"/"derrame" podem aparecer
 // em mensagens de emergência (aprovadas). "vaga" saiu porque casava com "devagar".
@@ -24,36 +24,4 @@ export function sanitizarTextoGerado(texto: string): string {
     return mensagemPorId('fallback_001').texto;
   }
   return texto;
-}
-
-// Mantido para compatibilidade. Não é mais chamado em templates aprovados.
-export function sanitizarResposta(texto: string, _idMensagem?: string): string {
-  return texto;
-}
-
-
-export function ehPedidoDiagnostico(texto: string): boolean {
-  const n = normalizarTexto(texto);
-  return /\b(o que (eu )?tenho|oq (eu )?tenho|qual (a )?(minha )?doenca|qual (o )?(meu )?problema|me diagnostica|me da um diagnostico|pode ser (o )?que|sera (o )?que (eu )?tenho|isso (e|eh) (o )?que|meus sintomas (sao|são|e|eh)|meus? sintomas? (podem|pode) ser|tenho (isso|aquilo|o que))\b/.test(n);
-}
-
-export function ehPedidoMedicamento(texto: string): boolean {
-  const n = ` ${normalizarTexto(texto)} `;
-
-  // Precisa ter (a) verbo direto pedindo indicação E (b) menção a medicamento
-  const pedidoDireto =
-    /\bme (passa|indica|receita|da|receite)\b/.test(n) ||
-    /\bposso tomar\b/.test(n) ||
-    /\bo que (eu )?(tomo|posso tomar)\b/.test(n) ||
-    /\bqual (remedio|medicamento|dose|antiinflamatorio)\b/.test(n) ||
-    /\bquanto (eu )?tomo\b/.test(n) ||
-    /\bquantas gotas\b/.test(n) ||
-    /\bpreciso de (uma )?receita\b/.test(n);
-
-  const nomeDeRemedio =
-    /\b(dipirona|paracetamol|ibuprofeno|aspirina|aas|antibiotico|antiinflamatorio|remedio|medicamento|comprimido|dose)\b/.test(n);
-
-  // "posso tomar banho?" — pedidoDireto casa, mas não tem nomeDeRemedio.
-  // "tomei antibiotico ontem" — nomeDeRemedio casa, mas não tem pedidoDireto.
-  return pedidoDireto && nomeDeRemedio;
 }

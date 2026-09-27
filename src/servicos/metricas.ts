@@ -4,14 +4,15 @@ export const metricas = {
   total_audios: 0,
   total_fotos_sem_legenda: 0,
 
-  gemini_texto_ok: 0,
-  gemini_texto_timeout: 0,
-  gemini_texto_erro: 0,
-  local_only: 0, // quando o extrator local já resolveu, sem chamar Gemini
+  decisor_llm: 0,         // turnos decididos pelo LLM
+  decisor_fallback: 0,    // LLM falhou → caminho determinístico
+  guarda_regex: 0,        // guarda crítica escalou antes do LLM
+  validacao_alterou: 0,   // validação final mexeu na decisão
+  reformulacoes: 0,       // usuário repetiu/reformulou (resposta anterior falhou)
+  escalonamentos: 0,      // 3ª reformulação → encaminhado a canal humano
+  llm_tokens_in: 0,
+  llm_tokens_out: 0,
 
-  gemini_audio_ok: 0,
-  gemini_audio_timeout: 0,
-  gemini_audio_erro: 0,
   gemini_tts_ok: 0,
   gemini_tts_erro: 0,
 
@@ -19,14 +20,8 @@ export const metricas = {
   google_places_falha: 0,
   nominatim_falha: 0,
 
-  // Distribuição de decisões por nível
-  decisoes: {
-    SAMU_AGORA: 0,
-    UPA_AGORA: 0,
-    HOJE: 0,
-    AGENDAR: 0,
-    FALLBACK: 0,
-  } as Record<string, number>,
+  // Distribuição por ação do decisor
+  decisoes: {} as Record<string, number>,
 
   // Por destino
   destinos: {} as Record<string, number>,

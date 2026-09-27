@@ -21,6 +21,7 @@ export const DESTINOS = [
   'UPA_24H', 'UBS_CLINICA_DA_FAMILIA',
   'MATERNIDADE_PRONTO_SOCORRO_OBSTETRICO',
   'CAPS_OU_SERVICO_DE_SAUDE_MENTAL',
+  'CVV_188',
   'FALLBACK',
 ] as const;
 
@@ -74,11 +75,6 @@ export type RelatoEstruturado = {
   alergia_grave: FlagTriState;
   autodiagnostico_grave: string | null;
   texto_original_acumulado: string;
-
-  // [Task 3] Multi-intent: lista de intenções presentes na mensagem.
-  intencoes?: string[];
-  // [Task 3] Pergunta de conhecimento específica, quando houver.
-  pergunta?: string;
 };
 
 export type DecisaoRegras = {
@@ -97,9 +93,49 @@ export type MensagemAprovada = {
   texto: string;
 };
 
+// ═══════════════════════════════════════════════════════════
+// DECISÃO DO TURNO (LLM decisor → validação final)
+// ═══════════════════════════════════════════════════════════
+export const ACOES = ['emergencia', 'perguntar', 'orientar', 'responder_rag', 'conversa', 'fora_escopo'] as const;
+export type Acao = (typeof ACOES)[number];
+
+export const DESTINOS_DECISOR = ['SAMU_192', 'UPA', 'UBS', 'CVV', 'CAPS', 'MATERNIDADE', 'NENHUM'] as const;
+export type DestinoDecisor = (typeof DESTINOS_DECISOR)[number];
+
+export type FatosUsuario = {
+  idade?: number;
+  idade_grupo?: IdadeGrupo;
+  gestante?: boolean;
+  doencas_cronicas?: string[];
+  mora_em?: string;
+  pessoa_atendida?: string; // "própria pessoa", "mãe", "filho"...
+};
+
+export type MemoriaUsuario = {
+  fatos: FatosUsuario;
+  resumo?: string;
+  turnosDesdeResumo: number;
+};
+
+export type OrigemDecisao = 'llm' | 'guarda' | 'fallback' | 'escalonamento';
+
+export type Decisao = {
+  acao: Acao;
+  texto: string;
+  destino: DestinoDecisor;
+  pergunta_proxima: string;
+  pergunta_rag: string;
+  motivo_interno: string;
+  origem: OrigemDecisao;
+  fatos_novos?: FatosUsuario;
+  resumo?: string;
+  // Id da mensagem aprovada usada (guarda/fallback). Define a oferta de localização no bot.
+  resposta_id?: string;
+};
+
 export type TurnoResultado =
-  | { tipo: 'orientacao'; texto: string; decisao: DecisaoRegras }
-  | { tipo: 'perguntas'; texto: string; perguntas: string[]; tema: string };
+  | { tipo: 'orientacao'; texto: string; decisao: DecisaoRegras; acao?: Acao }
+  | { tipo: 'perguntas'; texto: string; perguntas: string[]; tema: string; acao?: Acao };
 
 export type UltimaPergunta = {
   id: string;
@@ -125,7 +161,13 @@ export type EstadoConversa = {
     aguardandoTexto?: boolean;
   };
   ultimaLocalizacao?: { lat: number; lng: number; em: number };
+  // Fatos que o bot aprendeu sobre o usuário (sobrevivem entre casos).
+  memoria?: MemoriaUsuario;
+  // Quantas vezes seguidas o usuário repetiu/reformulou a mesma coisa.
+  falhasSeguidas?: number;
 };
+
+export const MEMORIA_VAZIA: MemoriaUsuario = { fatos: {}, turnosDesdeResumo: 0 };
 
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
@@ -134,6 +176,8 @@ export const ESTADO_INICIAL: EstadoConversa = {
   fase: 'inicio',
   perguntasJaFeitas: [],
   historico: [],
+  memoria: { fatos: {}, turnosDesdeResumo: 0 },
+  falhasSeguidas: 0,
 };
 
 export const RELATO_VAZIO: RelatoEstruturado = {

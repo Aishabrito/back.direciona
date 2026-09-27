@@ -1,35 +1,31 @@
 // src/index.ts
+// dotenv PRIMEIRO: os módulos abaixo leem process.env ao carregar.
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import QRCode from 'qrcode';
 import { rotasApi } from './api/rotas.js';
 import { startWhatsAppBot } from './whatsapp/bot.js';
+import { getQrCode } from './servicos/qr.js';
 
-dotenv.config();
-
-// [FIX] Não deixa o processo morrer por promise rejeitada ou exceção não capturada
-process.on('unhandledRejection', (err) => {
+// Não deixa o processo morrer por promise rejeitada ou exceção não capturada.
+// Erros de sessão do Baileys (Bad MAC etc.) são ruído conhecido e não são logados.
+const RUIDO_BAILEYS = /Bad MAC|Unsupported state|Connection Closed|Precondition Required/i;
+process.on('unhandledRejection', (err: any) => {
+  if (RUIDO_BAILEYS.test(err?.message || String(err))) return;
   console.error('❌ Unhandled rejection:', err);
 });
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (err: any) => {
+  if (RUIDO_BAILEYS.test(err?.message || String(err))) return;
   console.error('❌ Uncaught exception:', err);
 });
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-
-// ============================================================
-// QR CODE — variável em memória que o bot atualiza
-// ============================================================
-let qrCodeString: string | null = null;
-
-export function setQrCode(qr: string | null) {
-  qrCodeString = qr;
-}
+app.use(express.json({ limit: '100kb' }));
 
 app.get('/qr', async (_req, res) => {
+  const qrCodeString = getQrCode();
   if (!qrCodeString) {
     return res
       .status(404)

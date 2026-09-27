@@ -2,10 +2,10 @@
 
 import { createHash } from 'crypto';
 import type { Sql } from './persistencia_sessao.js';
-import { ESTADO_INICIAL } from '../ia/orquestrador.js';
 import type { EstadoConversa } from '../ia/tipos.js';
 
-const VERSAO_ESTADO = 1;
+// v2: memória estruturada + decisor LLM (estados v1 são descartados).
+const VERSAO_ESTADO = 2;
 
 function hashSender(sender: string): string {
   return createHash('sha256').update(sender).digest('hex').slice(0, 16);
