@@ -95,7 +95,7 @@ function levenshtein(a: string, b: string): number {
 }
 
 function semAcento(t: string): string {
-  return t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[.!]+$/, "").trim();
+  return t.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/[.!]+$/, "").trim();
 }
 
 // Tolerância a erro de digitação SÓ em comandos com "/" ou frases longas.
@@ -115,7 +115,7 @@ export function ehComandoReset(entrada: string): boolean {
 }
 
 function ehComandoApagar(entrada: string): boolean {
-  const n = entrada.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const n = entrada.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").trim();
   return /^\/?(apagar|excluir)( meus? (dados|historico|conversa))?$/.test(n)
     || /^(apagar|excluir) (meus? )?(dados|historico|conversa)$/.test(n);
 }
@@ -146,7 +146,7 @@ async function obterOuCriarEstado(
 }
 
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
-  const n = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const n = texto.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
   if (/\b(dif[a-z]{3,}|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) return null;
 
   const temVerboLocal =
@@ -506,7 +506,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
 async function processarTexto(sock: Sock, sender: string, cleanText: string, veioDeAudio: boolean): Promise<void> {
   console.log(`\n📩 [${hashSender(sender)}]${veioDeAudio ? ' (áudio)' : ''} ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
-  const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
   const prefixoAudio = veioDeAudio ? `_🎤 Ouvi: "${cleanText}"_\n\n` : '';
 
   // ── APAGAR DADOS (LGPD) ──
