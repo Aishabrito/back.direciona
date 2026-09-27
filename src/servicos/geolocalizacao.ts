@@ -37,7 +37,7 @@ const MIRRORS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ];
-const USER_AGENT = 'DirecionaSUSBot/1.0 (contato: aisha.paola14@gmail.com)';
+const USER_AGENT = 'DirecionaAiBot/1.0 (contato: aisha.paola14@gmail.com)';
 
 const PENALIDADE_ESPECIALIZADA_M = 10_000;
 const PENALIDADE_SEM_NOME_M = 3_000;

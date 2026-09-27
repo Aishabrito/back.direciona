@@ -1,7 +1,7 @@
 {
   "name": "direciona-sus-bot",
   "version": "1.0.0",
-  "description": "Bot do WhatsApp com a mesma lógica do app Direciona SUS",
+  "description": "Bot do WhatsApp com a mesma lógica do app Direciona.Ai",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

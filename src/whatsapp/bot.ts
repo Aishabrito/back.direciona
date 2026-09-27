@@ -67,7 +67,7 @@ setInterval(() => {
 }, 5 * 60 * 1000).unref?.();
 
 const MENSAGEM_BOAS_VINDAS =
-  "Olá! Sou o assistente virtual do *Direciona SUS* 🏥\n\n" +
+  "Olá! Sou o assistente virtual do *Direciona.Ai* 🏥\n\n" +
   "Meu papel é orientar qual serviço do SUS você deve procurar (UBS, UPA, Pronto-Socorro ou SAMU 192).\n\n" +
   "Por favor, me conte em detalhes: *o que está acontecendo ou o que você está sentindo?*\n" +
   '_(Se quiser, você também pode tirar dúvidas como: "qual a diferença entre UBS e UPA?")_';
@@ -334,7 +334,7 @@ export async function startWhatsAppBot(): Promise<void> {
       keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }) as any),
     },
     logger: pino({ level: "silent" }) as any,
-    browser: ["Direciona SUS", "Chrome", "1.0.0"],
+    browser: ["Direciona.Ai", "Chrome", "1.0.0"],
   });
 
   socketAtual = sock;

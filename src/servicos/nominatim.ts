@@ -7,7 +7,7 @@ export type CoordenadasTexto = {
   display: string;
 };
 
-const USER_AGENT = 'DirecionaSUSBot/1.0 (contato: aisha.paola14@gmail.com)';
+const USER_AGENT = 'DirecionaAiBot/1.0 (contato: aisha.paola14@gmail.com)';
 
 export async function buscarCoordenadasPorTexto(
   endereco: string,

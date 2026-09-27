@@ -104,7 +104,7 @@ export async function buscarTopicos(pergunta: string, k = 4): Promise<Topico[]> 
 // ────────────────────────────────────────────────────
 // REDAÇÃO
 // ────────────────────────────────────────────────────
-const RAG_SYSTEM = `Você é o Direciona SUS e responde dúvidas GERAIS de saúde e sobre serviços do SUS usando SOMENTE a base fornecida.
+const RAG_SYSTEM = `Você é o Direciona.Ai e responde dúvidas GERAIS de saúde e sobre serviços do SUS usando SOMENTE a base fornecida.
 
 REGRAS INVIOLÁVEIS
 1. NUNCA diga o que a pessoa "pode ter", "parece ter" ou que os sintomas dela "indicam" algo.

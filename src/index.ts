@@ -58,7 +58,7 @@ app.use('/api', rotasApi);
 
 const PORTA = Number(process.env.PORT) || 3000;
 app.listen(PORTA, '0.0.0.0', () => {
-  console.log(`🚀 API do Direciona SUS rodando na porta ${PORTA}`);
+  console.log(`🚀 API do Direciona.Ai rodando na porta ${PORTA}`);
   console.log(`📡 Health check: http://localhost:${PORTA}/health`);
   console.log(`📲 QR Code: http://localhost:${PORTA}/qr`);
 });
