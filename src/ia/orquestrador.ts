@@ -1,4 +1,5 @@
 // src/ia/orquestrador.ts
+// Onda B + guarda crítica regex independente do LLM.
 
 import { registrarDecisao } from './auditoria.js';
 import { interpretarRelato } from './extrator_de_informacoes.js';
@@ -26,6 +27,7 @@ import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 import { escolherAleatorio, DESPEDIDAS, ABERTURAS_RAG } from './variacao.js';
+import { detectarCriticoRegex } from './guarda_critica.js';
 
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
@@ -58,23 +60,21 @@ function formatarHistorico(historico: MensagemHistorico[] | undefined): string {
 }
 
 // ────────────────────────────────────────────────────
-// Detecções simples
+// Detecções (usadas como FALLBACK quando o LLM falha)
 // ────────────────────────────────────────────────────
 const SAUDACOES_BASE = [
   'oi', 'ola', 'opa', 'eai', 'eae', 'oie', 'oii', 'e ai',
   'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'tudo bom',
 ];
 
-// [FIX] Colapsa letras repetidas: "oiii" → "oi", "olaaa" → "ola"
 function colapsarLetras(texto: string): string {
   return texto.replace(/(.)\1+/g, '$1');
 }
 
-function ehSaudacao(texto: string): boolean {
+function ehSaudacaoRegex(texto: string): boolean {
   const n = normalizarTexto(texto);
   const palavras = n.split(/\s+/).filter(Boolean);
   if (palavras.length === 0 || palavras.length > 4) return false;
-
   const colapsado = colapsarLetras(n);
   return SAUDACOES_BASE.some((s) => {
     const sColapsado = colapsarLetras(s);
@@ -82,30 +82,18 @@ function ehSaudacao(texto: string): boolean {
   });
 }
 
-function ehAgradecimento(texto: string): boolean {
+function ehAgradecimentoRegex(texto: string): boolean {
   const n = normalizarTexto(texto);
   return /^(obrigad|valeu|brigad|thanks|vlw|muito obrigad)/.test(n);
 }
 
-function ehConfirmacaoOrientacao(texto: string): boolean {
+function ehConfirmacaoOrientacaoRegex(texto: string): boolean {
   const n = normalizarTexto(texto);
   return /^(ok|já fui|ja fui|estou indo|cheguei|obrigad|valeu|brigad|entendi|certo|beleza|blz|já chamei|ja chamei|chamei|vou (ligar|chamar)|liguei)\b/.test(n);
 }
 
-function parecePergunta(texto: string): boolean {
-  if (/\?/.test(texto)) return true;
-  const n = normalizarTexto(texto);
-  return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera)\b/.test(n);
-}
-
-function descreveQueixaPropriaRegex(textoNorm: string): boolean {
-  return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
-}
-
-// [FIX] Detecta frases vagas de mal-estar sem sintoma específico.
-// Ex: "estou passando mal", "não estou bem", "me sinto ruim", "tô mal"
-function descreveMalEstarVago(textoNorm: string): boolean {
-  return /\b(estou|to|tou|me sinto|sinto|ando|venho)\b[^.!?]{0,25}\b(mal|ruim|doente|pessimo|péssimo|muito mal|muito ruim|nao estou bem|não estou bem|nao to bem|não to bem|nao tou bem|não tou bem|nao estou nada bem|passando mal|me sentindo mal|me sentindo ruim)\b/i.test(textoNorm);
+function ehNovoCasoRegex(textoNorm: string): boolean {
+  return /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
 }
 
 function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
@@ -115,21 +103,30 @@ function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
   const VERBO_PROPRIO = 'estou\\s+com|to\\s+com|tou\\s+com|tenho|peguei|pega';
 
   if (/\bmeus?\s+sintomas?\s+(sao|e|eh|podem ser|pode ser)\b/.test(textoNorm)) return true;
-
   const re1 = new RegExp(`\\b(${SUSPEITA})\\s+(q|que)?\\s*(${VERBO_PROPRIO})\\b`);
   if (re1.test(textoNorm)) return true;
-
   const re2 = new RegExp(`\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`);
   if (re2.test(textoNorm)) return true;
-
   if (/\b(to|estou|tou)\s+(achando|pensando|suspeitando)\b/.test(textoNorm)) return true;
-
   const re3 = new RegExp(`\\b(e|eh|seria|sera)\\s+(${DOENCAS})\\b`);
   if (re3.test(textoNorm)) return true;
-
   if (/\b(isso|isto|esse|essa)\s+(e|eh|é)\s+(grave|serio|sério|perigoso|ruim|mau)\b/.test(textoNorm)) return true;
 
   return false;
+}
+
+function descreveMalEstarVago(textoNorm: string): boolean {
+  return /\b(estou|to|tou|me sinto|sinto|ando|venho)\b[^.!?]{0,25}\b(mal|ruim|doente|pessimo|péssimo|muito mal|muito ruim|nao estou bem|não estou bem|nao to bem|não to bem|nao tou bem|não tou bem|nao estou nada bem|passando mal|me sentindo mal|me sentindo ruim)\b/i.test(textoNorm);
+}
+
+function descreveQueixaPropriaRegex(textoNorm: string): boolean {
+  return /\b(estou|to|tou|sinto|senti|me sinto|tenho|ando|venho)\b.{0,40}\b(com|sentindo|me sentindo|tendo|ficando)\b/.test(textoNorm);
+}
+
+function parecePergunta(texto: string): boolean {
+  if (/\?/.test(texto)) return true;
+  const n = normalizarTexto(texto);
+  return /\b(o que|oq|como|por que|porque|pq|quando|qdo|qnd|qual|quais|quanto|quantos|quantas|quem|onde|kd|serve|devo|posso|pra que|me explica|explica|me fala sobre|fala sobre|significa|eh|sera|tem como|existe)\b/.test(n);
 }
 
 function consolidar(estado: EstadoConversa): RelatoEstruturado {
@@ -149,23 +146,192 @@ function temSintomaClinico(relato: RelatoEstruturado): boolean {
   );
 }
 
-function temIntent(relato: RelatoEstruturado, i: string): boolean {
-  return Array.isArray(relato.intencoes) && relato.intencoes.includes(i);
-}
-
 const PALAVRAS_VAZIAS = new Set([
   'isso', 'isto', 'aquilo', 'esse', 'essa', 'este', 'esta',
   'aquele', 'aquela', 'papo', 'reto', 'coisa', 'negocio', 'negócio',
-  'grave', 'serio', 'serio', 'perigoso', 'ruim', 'mau',
+  'grave', 'serio', 'perigoso', 'ruim', 'mau',
+  'qual', 'quais', 'quanto', 'quantos', 'quantas', 'quem',
+  'minha', 'meu', 'seu', 'sua', 'nossa', 'nosso',
+  'idade', 'nome', 'telefone', 'endereco', 'endereço',
+  'flamengo', 'corinthians', 'palmeiras', 'libertadores', 'brasileirao', 'brasileirão',
+  'capital', 'franca', 'frança', 'piada', 'tempo', 'previsao', 'previsão',
 ]);
 
+const SUBSTANTIVOS_CLINICOS = /\b(febre|dor|tosse|falta de ar|desmaio|convuls|sangramento|mancha|vomit|diarr|nausea|náusea|tontura|cefaleia|pressao|pressão|açúcar|acucar|glicemia|infec|alergia|queimad|trauma|fratura|entorse|covid|dengue|gripe|zika|chikungunya|pneumonia|asma|bronquite|tubercul|hanseniase|hanseníase|hepatite|hipertens|diabetes|cancer|câncer|avc|infarto|derrame|meningite|apendicite|convulsao|convulsão|anemia|colesterol|obesidade|desidrat|insolacao|insolação|hipotermia|caps|sus|ubs|upa|samu|vacin|cartao|cartão|consulta|exame|medicamento|remedio|remédio)\b/i;
+
 function perguntaTemConteudoMinimo(pergunta: string): boolean {
+  if (SUBSTANTIVOS_CLINICOS.test(pergunta)) return true;
   const palavrasSignificativas = pergunta
     .toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .split(/\s+/)
     .filter((p) => p.length > 3 && !PALAVRAS_VAZIAS.has(p));
-  return palavrasSignificativas.length >= 3;
+  return palavrasSignificativas.length >= 2;
+}
+
+// ============================================================
+// RESPONDEDORES AUXILIARES
+// ============================================================
+
+function decisaoBase(respostaId: string, regra: string, motivos: string[] = []) {
+  return {
+    categoria_interna: 'fora_do_escopo' as const,
+    destino: 'FALLBACK' as const,
+    resposta_id: respostaId,
+    regra_acionada: regra,
+    versao_regras: VERSAO_REGRAS,
+    nivel: 'AGENDAR' as const,
+    motivos,
+  };
+}
+
+function respostaDespedida(estado: EstadoConversa) {
+  return {
+    estado: { ...estado, fase: 'encerrado' as const },
+    resultado: {
+      tipo: 'orientacao' as const,
+      texto: escolherAleatorio(DESPEDIDAS),
+      decisao: decisaoBase('encerramento_001', 'despedida', ['despedida']),
+    },
+  };
+}
+
+function respostaForaEscopo(estado: EstadoConversa, reset: boolean = false) {
+  const msg = mensagemPorId('fora_escopo_001');
+  return {
+    estado: reset ? { ...ESTADO_INICIAL, historico: estado.historico ?? [] } : estado,
+    resultado: {
+      tipo: 'orientacao' as const,
+      texto: msg.texto,
+      decisao: decisaoBase('fora_escopo_001', 'fora_do_escopo', ['fora de escopo']),
+    },
+  };
+}
+
+function respostaRecusaDiagnostico(estado: EstadoConversa) {
+  const msg = mensagemPorId('recusa_diagnostico');
+  return {
+    estado,
+    resultado: {
+      tipo: 'orientacao' as const,
+      texto: msg.texto,
+      decisao: decisaoBase('recusa_diagnostico', 'bloqueio_diagnostico', ['bloqueio']),
+    },
+  };
+}
+
+function respostaRecusaMedicamento(estado: EstadoConversa) {
+  const msg = mensagemPorId('recusa_medicamento');
+  return {
+    estado,
+    resultado: {
+      tipo: 'orientacao' as const,
+      texto: msg.texto,
+      decisao: decisaoBase('recusa_medicamento', 'bloqueio_medicamento', ['bloqueio']),
+    },
+  };
+}
+
+function respostaPerguntaVaga(estado: EstadoConversa) {
+  return {
+    estado: { ...estado, fase: 'coletando' as const },
+    resultado: {
+      tipo: 'orientacao' as const,
+      texto: 'Pode me contar um pouco mais? Sobre o que você quer saber exatamente?',
+      decisao: decisaoBase('vago_contexto', 'rag_pergunta_vaga', ['pergunta vaga']),
+    },
+  };
+}
+
+function respostaIniciaTriagem(
+  estado: EstadoConversa,
+  perguntasJaFeitas: string[],
+  textoUsuario: string,
+  prefixo?: string,
+) {
+  const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
+  if (!pergunta) return null;
+
+  return {
+    estado: {
+      ...estado,
+      fase: 'coletando' as const,
+      temaPergunta: 'vago',
+      rodadasPerguntas: 1,
+      perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
+      ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
+      texto_original_acumulado: textoUsuario,
+    },
+    resultado: {
+      tipo: 'perguntas' as const,
+      tema: 'vago',
+      perguntas: [pergunta.texto],
+      texto: prefixo ? `${prefixo} ${pergunta.texto}` : pergunta.texto,
+    },
+  };
+}
+
+// [GUARDA CRÍTICA] Resposta de emergência — acionada pela guarda regex
+function respostaEmergenciaGuard(
+  estado: EstadoConversa,
+  motivo: string,
+  categoria: string,
+): { resultado: TurnoResultado; estado: EstadoConversa } {
+  console.warn(`🚨 [guarda] crítico detectado: ${categoria} (${motivo})`);
+
+  const textos: Record<string, string> = {
+    suicidio:
+      '💛 Estou aqui com você. Se você está pensando em se machucar, ligue agora para o *CVV 188* — atendimento 24h, gratuito e sigiloso. Em emergência, ligue *192 (SAMU)* ou vá a uma UPA.',
+    dor_toracica:
+      '⚠️ *Dor no peito é emergência.* Ligue *192 (SAMU)* agora. Não espere passar. Não dirija sozinho.',
+    falta_de_ar:
+      '⚠️ *Falta de ar é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA mais próxima.',
+    avc:
+      '⚠️ *Sinais de AVC.* Ligue *192 (SAMU)* agora. Anote a hora que começou — isso ajuda muito no tratamento.',
+    desmaio:
+      '⚠️ *Perda de consciência é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
+    convulsao:
+      '⚠️ *Convulsão é emergência.* Ligue *192 (SAMU)* agora. Proteja a cabeça, não coloque nada na boca.',
+    sangramento:
+      '⚠️ *Sangramento importante é emergência.* Ligue *192 (SAMU)* agora ou vá imediatamente à UPA.',
+    bebe_febre:
+      '⚠️ *Bebê pequeno com febre precisa de avaliação imediata.* Vá agora a uma UPA ou ligue *192 (SAMU)*.',
+    obstetrico:
+      '⚠️ *Sinal de risco na gravidez.* Procure imediatamente a maternidade de referência ou ligue *192 (SAMU)*.',
+  };
+
+  const texto = textos[categoria] ?? '⚠️ Seus sintomas exigem atendimento imediato. Ligue *192 (SAMU)* ou vá a uma UPA agora.';
+
+  const comLocalizacao = texto +
+    '\n\n📍 *Quer saber a UPA ou hospital mais próximo?*\n' +
+    'Responda *"sim"* e me mande sua localização (📎 → Localização) ou escreva seu *bairro e cidade*.';
+
+  const estadoApos: EstadoConversa = {
+    relatos: [],
+    rodadasPerguntas: 0,
+    texto_original_acumulado: '',
+    fase: 'orientado',
+    perguntasJaFeitas: [],
+    historico: estado.historico,
+    aguardandoLocalizacao: { ativo: true, tipo: 'HOSPITAL', mensagemOriginal: comLocalizacao },
+  };
+
+  return {
+    estado: estadoApos,
+    resultado: {
+      tipo: 'orientacao',
+      texto: comLocalizacao,
+      decisao: {
+        categoria_interna: 'emergencia',
+        destino: 'SAMU_192_PRONTO_SOCORRO',
+        resposta_id: `guarda_${categoria}`,
+        regra_acionada: `guarda_critica_${categoria}`,
+        versao_regras: VERSAO_REGRAS,
+        nivel: 'SAMU_AGORA',
+        motivos: [motivo],
+      },
+    },
+  };
 }
 
 // ============================================================
@@ -184,15 +350,7 @@ function respostaFallbackTurno(estado: EstadoConversa, erro: any): {
         '⚠️ Estou com dificuldade técnica no momento. ' +
         'Se for urgente (falta de ar, dor no peito, desmaio, confusão), ligue 192 agora. ' +
         'Senão, tente de novo em 1 minuto.',
-      decisao: {
-        categoria_interna: 'fora_do_escopo',
-        destino: 'FALLBACK',
-        resposta_id: 'erro_tecnico',
-        regra_acionada: 'erro_tecnico',
-        versao_regras: VERSAO_REGRAS,
-        nivel: 'AGENDAR',
-        motivos: ['erro técnico'],
-      },
+      decisao: decisaoBase('erro_tecnico', 'erro_tecnico', ['erro técnico']),
     },
     estado,
   };
@@ -282,7 +440,7 @@ export async function processarTurnoComRelato(
 }
 
 // ============================================================
-// PROCESSAR TURNO — interno (texto)
+// PROCESSAR TURNO — interno (texto) — LLM-first
 // ============================================================
 async function processarTurnoInterno(
   textoUsuario: string,
@@ -297,150 +455,118 @@ async function processarTurnoInterno(
     fase = 'inicio';
   }
 
-  const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
+  let perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const textoNorm = normalizarTexto(textoUsuario);
   const historicoFmt = formatarHistorico(estado.historico);
 
-  // ── 1. Confirmação pós-orientação
-  if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
-    return {
-      estado: { ...estado, fase: 'encerrado' },
-      resultado: {
-        tipo: 'orientacao',
-        texto: escolherAleatorio(DESPEDIDAS),
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento_001', regra_acionada: 'confirmacao_orientacao',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['confirmação'],
-        },
-      },
-    };
+  // ── 0. GUARDA CRÍTICA (roda ANTES do LLM)
+  const guarda = detectarCriticoRegex(textoUsuario);
+  if (guarda.critico) {
+    incDecisao('SAMU_AGORA');
+    incDestino('SAMU_192_PRONTO_SOCORRO');
+    return respostaEmergenciaGuard(estado, guarda.motivo, guarda.categoria);
   }
 
+  // ── 1. Confirmação pós-orientação
+  if (fase === 'orientado' && ehConfirmacaoOrientacaoRegex(textoUsuario)) {
+    return respostaDespedida(estado);
+  }
+
+  // ── 2. Extração via LLM
   const respostaCurta = interpretarRespostaCurta(textoUsuario, estado.ultimaPergunta);
   const extraido = respostaCurta
     ? ({ ...RELATO_VAZIO, ...respostaCurta, texto_original_acumulado: '' } as RelatoEstruturado)
     : await interpretarRelato(textoUsuario, historicoFmt);
 
-  const ehNovoCaso = /\b(novo caso|outra coisa|agora e outro|mudando de assunto|deixa eu perguntar outra|outro sintoma|comecar de novo|começar de novo)\b/.test(textoNorm);
-
-  if (fase === 'orientado' && ehNovoCaso) {
+  // ── 3. Novo caso
+  if (fase === 'orientado' && ehNovoCasoRegex(textoNorm)) {
     const msg = mensagemPorId('novo_caso_001');
     return {
       estado: { ...ESTADO_INICIAL, historico: estado.historico ?? [] },
       resultado: {
         tipo: 'orientacao',
         texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'novo_caso_001', regra_acionada: 'novo_caso',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['novo caso'],
-        },
+        decisao: decisaoBase('novo_caso_001', 'novo_caso', ['novo caso']),
       },
     };
   }
 
-  // ── 2.5. Bloqueio de diagnóstico
+  // ── 4. Reset pós-orientado
+  if (fase === 'orientado' && estado.relatos.length > 0) {
+    const pareceContinuacao =
+      ehConfirmacaoOrientacaoRegex(textoUsuario) ||
+      ehAgradecimentoRegex(textoUsuario) ||
+      ehNovoCasoRegex(textoNorm) ||
+      (estado.ultimaPergunta ? !!respostaCurta : false);
+
+    if (!pareceContinuacao) {
+      console.log(`🔄 [orq] reset pós-orientado: "${textoUsuario.slice(0, 40)}"`);
+      estado = { ...ESTADO_INICIAL, historico: [] };
+      fase = 'inicio';
+      perguntasJaFeitas = [];
+    }
+  }
+
+  // ── 5. Segurança
   const nivelPre = classificarNivel(extraido);
   const sinalCriticoPre = nivelPre === 'critico';
 
-  if (
-    !sinalCriticoPre &&
-    !respostaCurta &&
-    (ehPedidoDiagnostico(textoUsuario) || pedidoDiagnosticoAmplo(textoNorm))
-  ) {
-    const msg = mensagemPorId('recusa_diagnostico');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
+  if (!sinalCriticoPre && !respostaCurta) {
+    if (ehPedidoDiagnostico(textoUsuario) || pedidoDiagnosticoAmplo(textoNorm)) {
+      return respostaRecusaDiagnostico(estado);
+    }
+    if (ehPedidoMedicamento(textoUsuario)) {
+      return respostaRecusaMedicamento(estado);
+    }
   }
 
-  // ── 3. Multi-intent
-  const temConhecimento = temIntent(extraido, 'conhecimento');
-  const temRelatoIntent = temIntent(extraido, 'relato');
-  const temNavegacao = temIntent(extraido, 'navegacao');
+  // ── 6. LLM DECIDE
+  const intencoes = extraido.intencoes ?? [];
+  const temConhecimento = intencoes.includes('conhecimento');
+  const temNavegacao = intencoes.includes('navegacao');
+  const temRelatoIntent = intencoes.includes('relato');
+  const temSaudacaoIntent = intencoes.includes('saudacao');
+  const temAgradecimentoIntent = intencoes.includes('agradecimento');
+  const temOutroIntent = intencoes.includes('outro');
 
-  const relatoComoQueixa =
-    temRelatoIntent || descreveQueixaPropriaRegex(textoNorm);
-
+  const temSintoma = temSintomaClinico(extraido);
   const nivelInicial = classificarNivel(extraido);
   const sinalCriticoInicial = nivelInicial === 'critico';
   const perguntaRAG = extraido.pergunta || textoUsuario;
 
-  // 3a. Conhecimento puro
+  const llmConfiavel = intencoes.length > 0;
+
+  // 6a. OUTRO
   if (
-    temConhecimento && !temNavegacao && !temRelatoIntent &&
-    !sinalCriticoInicial && !respostaCurta
+    llmConfiavel && temOutroIntent && !temSintoma &&
+    !temConhecimento && !temNavegacao && !temRelatoIntent &&
+    !temSaudacaoIntent && !temAgradecimentoIntent
   ) {
-    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
-      console.log(`⚠️ [RAG] pergunta vaga demais: "${perguntaRAG}"`);
-      return {
-        estado: { ...estado, fase: 'coletando' },
-        resultado: {
-          tipo: 'orientacao',
-          texto: 'Pode me contar um pouco mais? Sobre o que você quer saber exatamente?',
-          decisao: {
-            categoria_interna: 'informacao_insuficiente',
-            destino: 'FALLBACK',
-            resposta_id: 'vago_contexto',
-            regra_acionada: 'rag_pergunta_vaga',
-            versao_regras: VERSAO_REGRAS,
-            nivel: 'AGENDAR',
-            motivos: ['pergunta vaga'],
-          },
-        },
-      };
-    }
-
-    const temTopico = await temTopicoRelevante(perguntaRAG);
-    if (temTopico) {
-      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
-      if (respostaBase) {
-        const cabecalho =
-          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
-            ? `*${respostaBase.titulo}*\n\n`
-            : '';
-        const rodape = respostaBase.bloqueado
-          ? ''
-          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
-        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
-          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
-          : '';
-        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
-
-        return {
-          estado: { ...estado, fase: 'orientado' },
-          resultado: {
-            tipo: 'orientacao',
-            texto: mensagem,
-            decisao: {
-              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
-              regra_acionada: 'base_conhecimento',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-              motivos: respostaBase.bloqueado
-                ? ['base bloqueada por segurança']
-                : ['base de conhecimento'],
-            },
-          },
-        };
-      }
-    }
+    return respostaForaEscopo(estado, true);
   }
 
-  // 3b. Multi-intent: conhecimento + relato
-  if (temConhecimento && temRelatoIntent && !sinalCriticoInicial && !respostaCurta) {
-    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
-      console.log(`⚠️ [RAG] multi-intent com pergunta vaga: "${perguntaRAG}"`);
-    } else {
+  // 6b. SAUDAÇÃO
+  if (llmConfiavel && temSaudacaoIntent && !temSintoma && !respostaCurta) {
+    const r = respostaIniciaTriagem(estado, perguntasJaFeitas, textoUsuario);
+    if (r) return r;
+    return respostaForaEscopo(estado);
+  }
+
+  // 6c. AGRADECIMENTO
+  if (llmConfiavel && temAgradecimentoIntent && !temSintoma) {
+    return {
+      estado: { ...estado, fase: 'orientado' },
+      resultado: {
+        tipo: 'orientacao',
+        texto: mensagemPorId('encerramento_001').texto,
+        decisao: decisaoBase('encerramento_001', 'agradecimento', ['encerramento']),
+      },
+    };
+  }
+
+  // 6d. MULTI-INTENT
+  if (llmConfiavel && temConhecimento && temRelatoIntent && !sinalCriticoInicial && !respostaCurta) {
+    if (perguntaTemConteudoMinimo(perguntaRAG)) {
       const temTopico = await temTopicoRelevante(perguntaRAG);
       if (temTopico) {
         const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -481,11 +607,7 @@ async function processarTurnoInterno(
                 perguntasJaFeitas: [],
                 historico: estado.historico,
               },
-              resultado: {
-                tipo: 'orientacao',
-                texto: mensagemFinal,
-                decisao: decisaoCritica,
-              },
+              resultado: { tipo: 'orientacao', texto: mensagemFinal, decisao: decisaoCritica },
             };
           }
 
@@ -517,15 +639,11 @@ async function processarTurnoInterno(
               resultado: {
                 tipo: 'orientacao',
                 texto: mensagemFinal,
-                decisao: {
-                  categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                  resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
-                  regra_acionada: 'base_conhecimento_multi',
-                  versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                  motivos: respostaBase.bloqueado
-                    ? ['base bloqueada por segurança', 'multi-intent']
-                    : ['base de conhecimento', 'multi-intent'],
-                },
+                decisao: decisaoBase(
+                  respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                  'base_conhecimento_multi',
+                  ['base de conhecimento', 'multi-intent'],
+                ),
               },
             };
           }
@@ -545,13 +663,9 @@ async function processarTurnoInterno(
             resultado: {
               tipo: 'orientacao',
               texto: mensagemFinal,
-              decisao: {
-                categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                resposta_id: 'base_conhecimento_multi',
-                regra_acionada: 'base_conhecimento_multi',
-                versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                motivos: ['base de conhecimento', 'multi-intent'],
-              },
+              decisao: decisaoBase('base_conhecimento_multi', 'base_conhecimento_multi', [
+                'base de conhecimento', 'multi-intent',
+              ]),
             },
           };
         }
@@ -559,128 +673,92 @@ async function processarTurnoInterno(
     }
   }
 
-  // ── 4. Agradecimento
-  if (fase === 'orientado' && ehAgradecimento(textoUsuario) && !temSintomaClinico(extraido)) {
-    return {
-      estado: { ...estado, fase: 'orientado' },
-      resultado: {
-        tipo: 'orientacao',
-        texto: mensagemPorId('encerramento_001').texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento_001', regra_acionada: 'agradecimento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['encerramento'],
-        },
-      },
-    };
+  // 6e. CONHECIMENTO puro
+  if (llmConfiavel && temConhecimento && !temNavegacao && !temRelatoIntent && !sinalCriticoInicial && !respostaCurta) {
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      return respostaPerguntaVaga(estado);
+    }
+    const temTopico = await temTopicoRelevante(perguntaRAG);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+      if (respostaBase) {
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
+        const rodape = respostaBase.bloqueado
+          ? ''
+          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
+        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+          : '';
+        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
+
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: mensagem,
+            decisao: decisaoBase(
+              respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
+              'base_conhecimento',
+              respostaBase.bloqueado ? ['base bloqueada por segurança'] : ['base de conhecimento'],
+            ),
+          },
+        };
+      }
+    }
+    return respostaPerguntaVaga(estado);
   }
 
-  const nivel = classificarNivel(extraido);
-  const sinalCritico = nivel === 'critico';
+  // ── 7. FALLBACK REGEX
+  if (!llmConfiavel) {
+    console.log(`⚠️ [orq] LLM não retornou intenções, usando fallback regex`);
 
-  // ── 5. FAQ
-  if (!temSintomaClinico(extraido) && !respostaCurta) {
-    const faqEncontrada = checarFaq(textoUsuario);
-    if (faqEncontrada) {
+    if (fase === 'orientado' && ehAgradecimentoRegex(textoUsuario) && !temSintoma) {
       return {
         estado: { ...estado, fase: 'orientado' },
         resultado: {
           tipo: 'orientacao',
-          texto: faqEncontrada.resposta,
-          decisao: {
-            categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-            resposta_id: faqEncontrada.id, regra_acionada: faqEncontrada.id,
-            versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['faq'],
-          },
+          texto: mensagemPorId('encerramento_001').texto,
+          decisao: decisaoBase('encerramento_001', 'agradecimento', ['encerramento']),
         },
       };
     }
-  }
 
-  // ── 6. Bloqueio de medicamento
-  if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
-    const msg = mensagemPorId('recusa_medicamento');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_medicamento', regra_acionada: 'bloqueio_medicamento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
-  }
-
-  // ── 7. Saudação inicial
-  if (
-    estado.relatos.length === 0 &&
-    ehSaudacao(textoUsuario) &&
-    !temSintomaClinico(extraido) &&
-    !respostaCurta
-  ) {
-    const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
-    if (!pergunta) {
-      return {
-        estado, resultado: {
-          tipo: 'orientacao', texto: 'Como posso ajudar?',
-          decisao: {
-            categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-            resposta_id: 'vago', regra_acionada: 'vago', versao_regras: VERSAO_REGRAS,
-            nivel: 'AGENDAR', motivos: [],
+    if (!temSintoma && !respostaCurta) {
+      const faqEncontrada = checarFaq(textoUsuario);
+      if (faqEncontrada) {
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: faqEncontrada.resposta,
+            decisao: decisaoBase(faqEncontrada.id, faqEncontrada.id, ['faq']),
           },
-        },
-      };
+        };
+      }
     }
-    return {
-      estado: {
-        ...estado, fase: 'coletando', temaPergunta: 'vago',
-        rodadasPerguntas: 1,
-        perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
-        ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
-        texto_original_acumulado: textoUsuario,
-      },
-      resultado: { tipo: 'perguntas', tema: 'vago', perguntas: [pergunta.texto], texto: pergunta.texto },
-    };
+
+    if (estado.relatos.length === 0 && ehSaudacaoRegex(textoUsuario) && !temSintoma && !respostaCurta) {
+      const r = respostaIniciaTriagem(estado, perguntasJaFeitas, textoUsuario);
+      if (r) return r;
+    }
   }
 
-  // [FIX] Mal-estar vago → inicia triagem em vez de fora de escopo
-  // Ex: "estou passando mal", "não estou bem", "tô mal"
+  // ── 8. MAL-ESTAR VAGO
   const respondendoTriagemAgora = fase === 'coletando' && !!estado.ultimaPergunta;
-  if (
-    descreveMalEstarVago(textoNorm) &&
-    estado.relatos.length === 0 &&
-    !respondendoTriagemAgora &&
-    !respostaCurta
-  ) {
-    const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
-    if (pergunta) {
-      return {
-        estado: {
-          ...estado,
-          fase: 'coletando',
-          temaPergunta: 'vago',
-          rodadasPerguntas: 1,
-          perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
-          ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
-          texto_original_acumulado: textoUsuario,
-        },
-        resultado: {
-          tipo: 'perguntas',
-          tema: 'vago',
-          perguntas: [pergunta.texto],
-          texto: `Entendi. ${pergunta.texto}`,
-        },
-      };
-    }
+  if (descreveMalEstarVago(textoNorm) && estado.relatos.length === 0 && !respondendoTriagemAgora && !respostaCurta) {
+    const r = respostaIniciaTriagem(estado, perguntasJaFeitas, textoUsuario, 'Entendi.');
+    if (r) return r;
   }
 
-  // ── 8. Reset de contexto
+  // ── 9. RESET DE CONTEXTO
   const respondendoTriagem = fase === 'coletando' && !!estado.ultimaPergunta;
+  const relatoComoQueixa = temRelatoIntent || descreveQueixaPropriaRegex(textoNorm);
 
   const nadaClinico =
-    !temSintomaClinico(extraido) &&
+    !temSintoma &&
     !parecePergunta(textoUsuario) &&
     !relatoComoQueixa &&
     !descreveMalEstarVago(textoNorm) &&
@@ -688,44 +766,18 @@ async function processarTurnoInterno(
     !respondendoTriagem;
 
   if (nadaClinico) {
-    const msgForaEscopo = mensagemPorId('fora_escopo_001');
-    return {
-      estado: { ...ESTADO_INICIAL, historico: estado.historico ?? [] },
-      resultado: {
-        tipo: 'orientacao', texto: msgForaEscopo.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'fora_escopo_001', regra_acionada: 'fora_do_escopo_reset',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['fora de escopo'],
-        },
-      },
-    };
+    return respostaForaEscopo(estado, true);
   }
 
-  // ── 9. Fora de escopo inicial
+  // ── 10. FORA DE ESCOPO inicial
   if (
-    !temSintomaClinico(extraido) &&
-    !relatoComoQueixa &&
-    !descreveMalEstarVago(textoNorm) &&
-    estado.relatos.length === 0 &&
-    !respostaCurta &&
-    !respondendoTriagem
+    !temSintoma && !relatoComoQueixa && !descreveMalEstarVago(textoNorm) &&
+    estado.relatos.length === 0 && !respostaCurta && !respondendoTriagem
   ) {
-    const msgForaEscopo = mensagemPorId('fora_escopo_001');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msgForaEscopo.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'fora_escopo_001', regra_acionada: 'fora_do_escopo_inicial',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['fora de escopo'],
-        },
-      },
-    };
+    return respostaForaEscopo(estado);
   }
 
-  // ── 10. Consolida relato
+  // ── 11. TRIAGEM
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -847,132 +899,110 @@ async function processarTurnoComRelatoInterno(
     fase = 'inicio';
   }
 
-  const perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
+  let perguntasJaFeitas = estado.perguntasJaFeitas ?? [];
   const textoNorm = normalizarTexto(textoRepresentativo);
   const historicoFmt = formatarHistorico(estado.historico);
 
-  if (fase === 'orientado' && ehConfirmacaoOrientacao(textoRepresentativo)) {
+  // ── 0. GUARDA CRÍTICA (áudio também)
+  const guardaAudio = detectarCriticoRegex(textoRepresentativo);
+  if (guardaAudio.critico) {
+    incDecisao('SAMU_AGORA');
+    incDestino('SAMU_192_PRONTO_SOCORRO');
+    return respostaEmergenciaGuard(estado, guardaAudio.motivo, guardaAudio.categoria);
+  }
+
+  // ── 1. Confirmação
+  if (fase === 'orientado' && ehConfirmacaoOrientacaoRegex(textoRepresentativo)) {
+    return respostaDespedida(estado);
+  }
+
+  // ── 2. Novo caso
+  if (fase === 'orientado' && ehNovoCasoRegex(textoNorm)) {
+    const msg = mensagemPorId('novo_caso_001');
     return {
-      estado: { ...estado, fase: 'encerrado' },
+      estado: { ...ESTADO_INICIAL, historico: estado.historico ?? [] },
       resultado: {
         tipo: 'orientacao',
-        texto: escolherAleatorio(DESPEDIDAS),
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento_001', regra_acionada: 'confirmacao_orientacao',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['confirmação'],
-        },
+        texto: msg.texto,
+        decisao: decisaoBase('novo_caso_001', 'novo_caso', ['novo caso']),
       },
     };
   }
 
-  if (fase === 'orientado' && ehAgradecimento(textoRepresentativo) && !temSintomaClinico(relatoPronto)) {
+  // ── 3. Reset pós-orientado
+  if (fase === 'orientado' && estado.relatos.length > 0) {
+    const pareceContinuacao =
+      ehConfirmacaoOrientacaoRegex(textoRepresentativo) ||
+      ehAgradecimentoRegex(textoRepresentativo) ||
+      ehNovoCasoRegex(textoNorm);
+
+    if (!pareceContinuacao) {
+      console.log(`🔄 [orq/áudio] reset pós-orientado`);
+      estado = { ...ESTADO_INICIAL, historico: [] };
+      fase = 'inicio';
+      perguntasJaFeitas = [];
+    }
+  }
+
+  // ── 4. Segurança
+  const nivelPre = classificarNivel(relatoPronto);
+  const sinalCriticoPre = nivelPre === 'critico';
+
+  if (!sinalCriticoPre) {
+    if (ehPedidoDiagnostico(textoRepresentativo) || pedidoDiagnosticoAmplo(textoNorm)) {
+      return respostaRecusaDiagnostico(estado);
+    }
+    if (ehPedidoMedicamento(textoRepresentativo)) {
+      return respostaRecusaMedicamento(estado);
+    }
+  }
+
+  // ── 5. LLM DECIDE
+  const intencoes = relatoPronto.intencoes ?? [];
+  const temConhecimento = intencoes.includes('conhecimento');
+  const temNavegacao = intencoes.includes('navegacao');
+  const temRelatoIntent = intencoes.includes('relato');
+  const temSaudacaoIntent = intencoes.includes('saudacao');
+  const temAgradecimentoIntent = intencoes.includes('agradecimento');
+  const temOutroIntent = intencoes.includes('outro');
+
+  const temSintoma = temSintomaClinico(relatoPronto);
+  const nivelInicial = classificarNivel(relatoPronto);
+  const sinalCriticoInicial = nivelInicial === 'critico';
+  const perguntaRAG = relatoPronto.pergunta || textoRepresentativo;
+
+  const llmConfiavel = intencoes.length > 0;
+
+  // 5a. OUTRO
+  if (
+    llmConfiavel && temOutroIntent && !temSintoma &&
+    !temConhecimento && !temNavegacao && !temRelatoIntent &&
+    !temSaudacaoIntent && !temAgradecimentoIntent
+  ) {
+    return respostaForaEscopo(estado, true);
+  }
+
+  // 5b. SAUDAÇÃO
+  if (llmConfiavel && temSaudacaoIntent && !temSintoma) {
+    const r = respostaIniciaTriagem(estado, perguntasJaFeitas, textoRepresentativo);
+    if (r) return r;
+  }
+
+  // 5c. AGRADECIMENTO
+  if (llmConfiavel && temAgradecimentoIntent && !temSintoma) {
     return {
       estado: { ...estado, fase: 'orientado' },
       resultado: {
         tipo: 'orientacao',
         texto: mensagemPorId('encerramento_001').texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'encerramento_001', regra_acionada: 'agradecimento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['encerramento'],
-        },
+        decisao: decisaoBase('encerramento_001', 'agradecimento', ['encerramento']),
       },
     };
   }
 
-  const nivelPre = classificarNivel(relatoPronto);
-  const sinalCriticoPre = nivelPre === 'critico';
-
-  if (
-    !sinalCriticoPre &&
-    (ehPedidoDiagnostico(textoRepresentativo) || pedidoDiagnosticoAmplo(textoNorm))
-  ) {
-    const msg = mensagemPorId('recusa_diagnostico');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_diagnostico', regra_acionada: 'bloqueio_diagnostico',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
-  }
-
-  const temConhecimento = temIntent(relatoPronto, 'conhecimento');
-  const temRelatoIntent = temIntent(relatoPronto, 'relato');
-  const temNavegacao = temIntent(relatoPronto, 'navegacao');
-
-  const relatoComoQueixa =
-    temRelatoIntent || descreveQueixaPropriaRegex(textoNorm);
-  const nivelInicial = classificarNivel(relatoPronto);
-  const sinalCriticoInicial = nivelInicial === 'critico';
-  const perguntaRAG = relatoPronto.pergunta || textoRepresentativo;
-
-  if (temConhecimento && !temNavegacao && !temRelatoIntent && !sinalCriticoInicial) {
-    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
-      console.log(`⚠️ [RAG/áudio] pergunta vaga: "${perguntaRAG}"`);
-      return {
-        estado: { ...estado, fase: 'coletando' },
-        resultado: {
-          tipo: 'orientacao',
-          texto: 'Pode me contar um pouco mais? Sobre o que você quer saber exatamente?',
-          decisao: {
-            categoria_interna: 'informacao_insuficiente',
-            destino: 'FALLBACK',
-            resposta_id: 'vago_contexto',
-            regra_acionada: 'rag_pergunta_vaga',
-            versao_regras: VERSAO_REGRAS,
-            nivel: 'AGENDAR',
-            motivos: ['pergunta vaga'],
-          },
-        },
-      };
-    }
-
-    const temTopico = await temTopicoRelevante(perguntaRAG);
-    if (temTopico) {
-      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
-      if (respostaBase) {
-        const cabecalho =
-          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
-            ? `*${respostaBase.titulo}*\n\n`
-            : '';
-        const rodape = respostaBase.bloqueado
-          ? ''
-          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
-        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
-          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
-          : '';
-        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
-
-        return {
-          estado: { ...estado, fase: 'orientado' },
-          resultado: {
-            tipo: 'orientacao',
-            texto: mensagem,
-            decisao: {
-              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
-              regra_acionada: 'base_conhecimento',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-              motivos: respostaBase.bloqueado
-                ? ['base bloqueada por segurança']
-                : ['base de conhecimento'],
-            },
-          },
-        };
-      }
-    }
-  }
-
-  if (temConhecimento && temRelatoIntent && !sinalCriticoInicial) {
-    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
-      console.log(`⚠️ [RAG/áudio] multi-intent com pergunta vaga`);
-    } else {
+  // 5d. MULTI-INTENT
+  if (llmConfiavel && temConhecimento && temRelatoIntent && !sinalCriticoInicial) {
+    if (perguntaTemConteudoMinimo(perguntaRAG)) {
       const temTopico = await temTopicoRelevante(perguntaRAG);
       if (temTopico) {
         const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -981,7 +1011,6 @@ async function processarTurnoComRelatoInterno(
             respostaBase.origem === 'fallback_direto' && respostaBase.titulo
               ? `*${respostaBase.titulo}*\n\n`
               : '';
-
           const textoAcumuladoMI = estado.texto_original_acumulado
             ? `${estado.texto_original_acumulado} ${textoRepresentativo}`
             : textoRepresentativo;
@@ -1013,11 +1042,7 @@ async function processarTurnoComRelatoInterno(
                 perguntasJaFeitas: [],
                 historico: estado.historico,
               },
-              resultado: {
-                tipo: 'orientacao',
-                texto: mensagemFinal,
-                decisao: decisaoCritica,
-              },
+              resultado: { tipo: 'orientacao', texto: mensagemFinal, decisao: decisaoCritica },
             };
           }
 
@@ -1049,80 +1074,93 @@ async function processarTurnoComRelatoInterno(
               resultado: {
                 tipo: 'orientacao',
                 texto: mensagemFinal,
-                decisao: {
-                  categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                  resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
-                  regra_acionada: 'base_conhecimento_multi',
-                  versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                  motivos: respostaBase.bloqueado
-                    ? ['base bloqueada por segurança', 'multi-intent']
-                    : ['base de conhecimento', 'multi-intent'],
-                },
+                decisao: decisaoBase(
+                  respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                  'base_conhecimento_multi',
+                  ['base de conhecimento', 'multi-intent'],
+                ),
               },
             };
           }
-
-          const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
-            ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
-            : '';
-          const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
-          const mensagemFinal = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
-          return {
-            estado: {
-              ...estado,
-              relatos: relatosMI,
-              texto_original_acumulado: textoAcumuladoMI,
-              fase: 'coletando',
-            },
-            resultado: {
-              tipo: 'orientacao',
-              texto: mensagemFinal,
-              decisao: {
-                categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                resposta_id: 'base_conhecimento_multi',
-                regra_acionada: 'base_conhecimento_multi',
-                versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                motivos: ['base de conhecimento', 'multi-intent'],
-              },
-            },
-          };
         }
       }
     }
   }
 
-  const respondendoTriagemAudio = fase === 'coletando' && !!estado.ultimaPergunta;
+  // 5e. CONHECIMENTO puro
+  if (llmConfiavel && temConhecimento && !temNavegacao && !temRelatoIntent && !sinalCriticoInicial) {
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      return respostaPerguntaVaga(estado);
+    }
+    const temTopico = await temTopicoRelevante(perguntaRAG);
+    if (temTopico) {
+      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+      if (respostaBase) {
+        const cabecalho =
+          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+            ? `*${respostaBase.titulo}*\n\n`
+            : '';
+        const rodape = respostaBase.bloqueado
+          ? ''
+          : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
+        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+          : '';
+        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: mensagem,
+            decisao: decisaoBase(
+              respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento',
+              'base_conhecimento',
+              respostaBase.bloqueado ? ['base bloqueada por segurança'] : ['base de conhecimento'],
+            ),
+          },
+        };
+      }
+    }
+    return respostaPerguntaVaga(estado);
+  }
 
-  // [FIX] Mal-estar vago em áudio também inicia triagem
-  if (
-    descreveMalEstarVago(textoNorm) &&
-    estado.relatos.length === 0 &&
-    !respondendoTriagemAudio
-  ) {
-    const pergunta = escolherProximaPergunta('vago', RELATO_VAZIO, perguntasJaFeitas);
-    if (pergunta) {
+  // ── 6. Fallback regex (áudio)
+  if (!llmConfiavel) {
+    if (fase === 'orientado' && ehAgradecimentoRegex(textoRepresentativo) && !temSintoma) {
       return {
-        estado: {
-          ...estado,
-          fase: 'coletando',
-          temaPergunta: 'vago',
-          rodadasPerguntas: 1,
-          perguntasJaFeitas: [...perguntasJaFeitas, pergunta.id],
-          ultimaPergunta: { id: pergunta.id, campoAlvo: pergunta.campoAlvo, texto: pergunta.texto },
-          texto_original_acumulado: textoRepresentativo,
-        },
+        estado: { ...estado, fase: 'orientado' },
         resultado: {
-          tipo: 'perguntas',
-          tema: 'vago',
-          perguntas: [pergunta.texto],
-          texto: `Entendi. ${pergunta.texto}`,
+          tipo: 'orientacao',
+          texto: mensagemPorId('encerramento_001').texto,
+          decisao: decisaoBase('encerramento_001', 'agradecimento', ['encerramento']),
         },
       };
     }
+    if (!temSintoma) {
+      const faq = checarFaq(textoRepresentativo);
+      if (faq) {
+        return {
+          estado: { ...estado, fase: 'orientado' },
+          resultado: {
+            tipo: 'orientacao',
+            texto: faq.resposta,
+            decisao: decisaoBase(faq.id, faq.id, ['faq']),
+          },
+        };
+      }
+    }
   }
 
+  // ── 7. Mal-estar vago em áudio
+  const respondendoTriagemAudio = fase === 'coletando' && !!estado.ultimaPergunta;
+  if (descreveMalEstarVago(textoNorm) && estado.relatos.length === 0 && !respondendoTriagemAudio) {
+    const r = respostaIniciaTriagem(estado, perguntasJaFeitas, textoRepresentativo, 'Entendi.');
+    if (r) return r;
+  }
+
+  // ── 8. Áudio vazio
   if (
-    !temSintomaClinico(relatoPronto) &&
+    !temSintoma &&
     estado.relatos.length === 0 &&
     !parecePergunta(textoRepresentativo) &&
     !descreveMalEstarVago(textoNorm) &&
@@ -1135,50 +1173,12 @@ async function processarTurnoComRelatoInterno(
         texto:
           '🎤 Ouvi seu áudio, mas não consegui identificar um sintoma específico. ' +
           'Pode me contar de novo com mais detalhes? Por exemplo: o que está sentindo, há quanto tempo e se está piorando.',
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'audio_vazio', regra_acionada: 'audio_sem_conteudo',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['áudio sem sintoma'],
-        },
+        decisao: decisaoBase('audio_vazio', 'audio_sem_conteudo', ['áudio sem sintoma']),
       },
     };
   }
 
-  const nivel = classificarNivel(relatoPronto);
-  const sinalCritico = nivel === 'critico';
-
-  if (!temSintomaClinico(relatoPronto)) {
-    const faq = checarFaq(textoRepresentativo);
-    if (faq) {
-      return {
-        estado: { ...estado, fase: 'orientado' },
-        resultado: {
-          tipo: 'orientacao', texto: faq.resposta,
-          decisao: {
-            categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-            resposta_id: faq.id, regra_acionada: faq.id,
-            versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['faq'],
-          },
-        },
-      };
-    }
-  }
-
-  if (!sinalCritico && ehPedidoMedicamento(textoRepresentativo)) {
-    const msg = mensagemPorId('recusa_medicamento');
-    return {
-      estado,
-      resultado: {
-        tipo: 'orientacao', texto: msg.texto,
-        decisao: {
-          categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-          resposta_id: 'recusa_medicamento', regra_acionada: 'bloqueio_medicamento',
-          versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR', motivos: ['bloqueio'],
-        },
-      },
-    };
-  }
-
+  // ── 9. TRIAGEM (áudio)
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoRepresentativo}`
     : textoRepresentativo;
