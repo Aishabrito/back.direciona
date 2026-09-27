@@ -19,7 +19,8 @@ export type CategoriaCritica =
   | 'engasgo'
   | 'pcr'
   | 'afogamento'
-  | 'queimadura';
+  | 'queimadura'
+  | 'trauma_craniano';
 
 export type SinalCriticoGuard = {
   critico: true;
@@ -34,7 +35,6 @@ function norm(texto: string): string {
   return normalizarTexto(texto);
 }
 
-// Detecta se a mensagem é sobre terceiro (pai, mãe, filho, etc)
 function ehSobreTerceiro(n: string): boolean {
   return /\b(meu|minha|nosso|nossa|o|a)\s+(pai|mae|mãe|filho|filha|marido|esposo|esposa|namorado|namorada|avo|avô|avó|vo|vó|irmao|irmão|irma|tio|tia|primo|prima|amigo|amiga|vizinho|vizinh|conhecid|colega|bebe|bebê|crianca|criança|menino|menina|idoso|idosa|senhor|senhora|alguem|alguém)\b/.test(n);
 }
@@ -43,7 +43,7 @@ export function detectarCriticoRegex(texto: string): ResultadoGuard {
   const n = norm(texto);
   const terceiro = ehSobreTerceiro(n);
 
-  // ─── Ideação suicida ───
+  // ─── Ideaç��o suicida ───
   if (
     /\b(quero me matar|vou me matar|quero morrer|nao quero mais viver|nao quero viver|acabar com (a )?minha vida|vou acabar com tudo|me matar|suicid|tirar minha vida|nao vejo mais sentido|melhor morrer|nao vale a pena viver|quero desaparecer|queria estar morto)\b/.test(n)
   ) {
@@ -76,6 +76,13 @@ export function detectarCriticoRegex(texto: string): ResultadoGuard {
     /\b(queimadura|queimou|queimei|se queimou|queimando|escaldadura|escaldou|agua quente na pele|oleo quente|fogo na pele|acidente com fogo)\b/.test(n)
   ) {
     return { critico: true, motivo: 'queimadura', categoria: 'queimadura', terceiro };
+  }
+
+  // ─── Trauma craniano ───
+  if (
+    /\b(bati a cabeca|bateu a cabeca|bati minha cabeca|bateu minha cabeca|bati com a cabeca|pancada na cabeca|levou uma pancada na cabeca|caiu e bateu a cabeca|caiu de altura|trauma craniano|trauma na cabeca|cabeca aberta|corte na cabeca|corte profundo na cabeca|sangrando na cabeca|sangrando a cabeca|sangrou a cabeca|sangue na cabeca)\b/.test(n)
+  ) {
+    return { critico: true, motivo: 'trauma craniano', categoria: 'trauma_craniano', terceiro };
   }
 
   // ─── Dor torácica ───
@@ -167,8 +174,9 @@ export function permiteTriagemAntes(
   if (categoria === 'falta_de_ar') return false;
   if (categoria === 'avc') return false;
   if (categoria === 'sangramento') return false;
-  if (categoria === 'pcr') return false;     // PCR sempre direto
-  if (categoria === 'afogamento') return false; // afogamento sempre direto
+  if (categoria === 'pcr') return false;
+  if (categoria === 'afogamento') return false;
+  if (categoria === 'trauma_craniano') return false;
 
   // ─── Dor torácica: depende de sinal associado ───
   if (categoria === 'dor_toracica') {
@@ -177,13 +185,12 @@ export function permiteTriagemAntes(
     return !temSinalAssociado;
   }
 
-  // ─── Sempre pergunta (protocolo de primeiros socorros) ───
+  // ─── Sempre pergunta (protocolo) ───
   if (categoria === 'vomito_sangue') return true;
   if (categoria === 'engasgo') return true;
   if (categoria === 'queimadura') return true;
   if (categoria === 'bebe_febre') return true;
 
-  // ─── Desmaio: pergunta ───
   if (categoria === 'desmaio') {
     if (/\b(inconsciente agora|nao acorda|nao responde|apagad[oa] agora|nao ta respondendo|ainda apagad)\b/.test(n)) {
       return false;
@@ -191,7 +198,6 @@ export function permiteTriagemAntes(
     return true;
   }
 
-  // ─── Convulsão: "agora" → SAMU, senão triagem ───
   if (categoria === 'convulsao') {
     if (/\b(convulsionando agora|ta convulsionando|esta convulsionando|convulsionando neste momento)\b/.test(n)) {
       return false;
@@ -199,7 +205,6 @@ export function permiteTriagemAntes(
     return true;
   }
 
-  // ─── Obstétrico: hemorragia → SAMU, senão triagem ───
   if (categoria === 'obstetrico') {
     if (/\b(hemorragia|sangrando muito|muito sangue|sangramento intenso)\b/.test(n)) {
       return false;
@@ -307,6 +312,18 @@ export function protocoloAVCTerceiro(): string {
 Ligue *192* agora.`;
 }
 
+export function protocoloTraumaCranianoTerceiro(): string {
+  return `⚠️ *Enquanto o SAMU não chega:*
+
+1. *Mantenha a pessoa deitada e imóvel* — não deixe levantar nem andar.
+2. *NÃO remova objetos encravados* na cabeça.
+3. Se estiver sangrando, faça *pressão leve ao redor* do ferimento com pano limpo. Não aperte em cima de osso exposto.
+4. Observe se está consciente e respirando bem.
+5. Se perder a consciência ou vomitar, deite de lado para não engasgar.
+
+Ligue *192* agora.`;
+}
+
 // ═══════════════════════════════════════════════════════════
 // Retorna a mensagem de triagem/protocolo por categoria.
 // NUNCA nomeia doença — só instrui e direciona.
@@ -327,9 +344,10 @@ export function perguntaTriagemCritica(
     if (categoria === 'avc') return protocoloAVCTerceiro();
     if (categoria === 'sangramento') return protocoloSangramento();
     if (categoria === 'queimadura') return protocoloQueimadura();
+    if (categoria === 'trauma_craniano') return protocoloTraumaCranianoTerceiro();
   }
 
-  // ─── Próprio: perguntas simples ou protocolo reduzido ───
+  // ─── Próprio: perguntas simples ───
   if (categoria === 'dor_toracica') {
     if (terceiro) {
       return `⚠️ *Emergência potencial.* A pessoa está com falta de ar, suor frio ou desmaio agora? Se sim, ligue *192 (SAMU)* imediatamente. Se não, me conta mais.`;
@@ -357,6 +375,10 @@ export function perguntaTriagemCritica(
 
   if (categoria === 'queimadura') {
     return protocoloQueimadura();
+  }
+
+  if (categoria === 'trauma_craniano') {
+    return null; // próprio → SAMU direto
   }
 
   if (categoria === 'bebe_febre') {

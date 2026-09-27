@@ -44,7 +44,7 @@ function extrairSinaisTrauma(n: string): string[] {
   if (
     /arma branca|esfaquead|levou (uma )?facada|levou (uma )?faca\b|levou (um )?tiro|balead|tiro no|arma de fogo|perfura[cç][aã]o por arma/.test(n)
   ) sinais.push('ferimento_perfurante');
-  if (/trauma craniano|batida na cabe[cç]a|pancada na cabe[cç]a|bateu a cabe[cç]a/.test(n))
+  if (/trauma craniano|batida na cabe[cç]a|pancada na cabe[cç]a|bateu a cabe[cç]a|bati a cabe[cç]a|bati minha cabe[cç]a|corte na cabe[cç]a|sangrando na cabe[cç]a/.test(n))
     sinais.push('trauma_craniano');
   return sinais;
 }
@@ -159,19 +159,42 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
   if (ehSaudacao) return { ...RELATO_VAZIO, informacao_insuficiente: true };
   if (pareceDuvidaSobreTermo(n)) return { ...RELATO_VAZIO, informacao_insuficiente: true };
 
-  const falta_de_ar = afirmadoTri(nc, /\bfalta de ar\b|\bnao consigo respirar\b|\bdificuldade (para|de) respirar\b|\bnao respira bem\b/);
-  const dor_no_peito = afirmadoTri(nc, /\bdor (no|do) peito\b|\baperto no peito\b|\bpressao no peito\b/);
-  const desmaio = afirmadoTri(nc, /\bdesmaio\b|\bdesmaiei\b|\bapaguei\b|\bapagou\b|\binconsciente\b/);
-  const confusao = afirmadoTri(nc, /\bconfus[aã]o\b|\bconfuso\b|\bdesorientad/);
-  const sangramento = afirmadoTri(nc, /\bsangramento\b|\bsangrando\b|\bsangrou\b/);
-  const febre = afirmadoTri(nc, /\bfebre\b|\bfebril\b/);
-  const vomitos = afirmadoTri(nc, /\bvomito\b|\bvomitando\b|\bvomitei\b|\benjoo\b|\bnausea\b/);
-  const trauma = afirmadoTri(nc, /\btrauma\b|\bacidente\b|\bbatida\b|\bqueda\b|\bcaiu\b|\bcai\b|\batropel/);
-  const exposicao_intoxicacao = afirmadoTri(nc, RE_INTOXICACAO);
+  // ─── Detecções críticas — reforçadas com muitos sinônimos ───
 
-  const labios_roxos = afirmadoTri(nc, /\blabios (roxos|arroxeados|azuis)\b/);
+  const falta_de_ar = afirmadoTri(nc,
+    /\bfalta de ar\b|\bfalta de respirar\b|\bnao consigo respirar\b|\bnao (estou )?consigo respirar\b|\bnao to conseguindo respirar\b|\bnao tou conseguindo respirar\b|\bdificuldade (para|pra|de|em) respirar\b|\bnao respira bem\b|\bsem ar\b|\bsufocando\b|\bsufocado\b|\bnao entra ar\b|\bnao ta entrando ar\b|\brespiracao curta\b|\bcansaco (para|pra) respirar\b|\bpeito fechando\b|\bgarganta fechando\b|\bestou ofegante\b|\bfalta de oxigenio\b/);
+
+  const dor_no_peito = afirmadoTri(nc,
+    /\bdor (no|do|de)?\s*peito\b|\bdor toracica\b|\baperto (no|do)\s*peito\b|\bpeito apertado\b|\bpressao (no|do)\s*peito\b|\bpeso (no|do)\s*peito\b|\bpeito doendo\b|\bta doendo o peito\b|\besta doendo o peito\b|\bdor (no|do)\s*coracao\b|\bcoracao apertado\b|\bpontada (no|do)\s*peito\b|\bpeito (ta )?apertando\b|\bsinto (um )?aperto no peito\b|\bsinto (uma )?pressao no peito\b|\bsinto (um )?peso no peito\b|\bqueimacao no peito\b/);
+
+  const desmaio = afirmadoTri(nc,
+    /\bdesmaio\b|\bdesmaiei\b|\bdesmaiou\b|\bdesmaiando\b|\bapaguei\b|\bapagou\b|\bapagando\b|\binconsciente\b|\bperdi a consciencia\b|\bperdeu a consciencia\b|\bcaiu duro\b|\bcaiu desmaiad\b|\bdeu um branco e caiu\b|\bpassou mal e caiu\b|\bperdi os sentidos\b|\bperdeu os sentidos\b/);
+
+  const confusao = afirmadoTri(nc,
+    /\bconfus[aã]o\b|\bconfuso\b|\bconfusa\b|\bdesorientad[oa]\b|\bnao sabe onde esta\b|\bnao reconhece\b|\bdelirando\b|\bdelirio\b|\bfalando coisas sem sentido\b|\bmuito sonolent[oa]\b|\bnao acorda direito\b/);
+
+  const sangramento = afirmadoTri(nc,
+    /\bsangramento\b|\bsangrando\b|\bsangrou\b|\bsangue no vomito\b|\bvomito com sangue\b|\bvomitando sangue\b|\bvomitei sangue\b|\bsangue nas fezes\b|\bfezes com sangue\b|\bfezes pretas\b|\bfezes escuras\b|\bsangue na urina\b|\bsangue no xixi\b|\bhemorragia\b|\bsangramento que nao para\b|\bnao para de sangrar\b|\bmuito sangue\b|\bsangramento intenso\b/);
+
+  const febre = afirmadoTri(nc,
+    /\bfebre\b|\bfebril\b|\bestou quente\b|\bto quente\b|\btou quente\b|\btemperatura alta\b|\btemperatura elevada\b|\besta com temperatura\b|\bta com temperatura\b|\b38 graus\b|\b39 graus\b|\b40 graus\b|\b38,5\b|\b39,5\b|\b40,5\b|\bquebrado de febre\b/);
+
+  const vomitos = afirmadoTri(nc,
+    /\bvomito\b|\bvomitando\b|\bvomitei\b|\bvomitar\b|\benjoo\b|\benjoando\b|\bnausea\b|\bnausead[oa]\b|\bmal estar no estomago\b|\bmareo\b|\bmaread[oa]\b|\bemese\b/);
+
+  const trauma = afirmadoTri(nc,
+    /\btrauma\b|\bacidente\b|\bbatida\b|\bcolisao\b|\bcolidiu\b|\bcapotamento\b|\bcapotou\b|\bqueda\b|\bcaiu\b|\bcai\b|\bdespencou\b|\batropel\b|\batropelamento\b|\bchoque\b|\bbateu a cabeca\b|\bpancada\b|\blevou pancada\b|\blevou uma queda\b/);
+
+  const exposicao_intoxicacao = afirmadoTri(nc,
+    /intoxica[cç][aã]o|envenenamento|overdose|tomei\s+\d+\s+(caixas?|cartelas?|vidros?|garrafas?|frascos?|comprimidos?|unidades?)|bebi\s+\d+\s+(vidros?|garrafas?|frascos?)|ingeri\s+\d+|tomei (muito|varios|bastante)|exagerei na dose|tomei (a )?cartela (toda|inteira)|engoli (muito|varios|bastante)/);
+
+  const labios_roxos = afirmadoTri(nc,
+    /\blabios (roxos|arroxeados|azuis)\b|\blabio (roxo|arroxeado|azul)\b|\bboca (roxa|arroxeada|azul)\b|\bpele (roxa|arroxeada|azulada)\b|\bficou rox[oa]\b|\besta ficando rox[oa]\b|\bc[oó]rculo azul nos labios\b/);
+
   const fala_frases = extrairFalaFrases(n);
-  const alergia_grave = afirmadoTri(nc, /\bgarganta (fechando|fechou)\b|\bnao consigo engolir\b|\banafilaxia\b|\balergia grave\b/);
+
+  const alergia_grave = afirmadoTri(nc,
+    /\bgarganta (fechando|fechou)\b|\bnao consigo engolir\b|\banafilaxia\b|\balergia grave\b|\balergia forte\b|\breacao alergica grave\b|\binchaco (nos labios|na lingua|na garganta|no rosto)\b|\blingua inchada\b|\blabios inchados\b|\bcoceira no corpo todo\b|\bplacas na pele\b|\burticaria\b|\bchoque anafilatico\b|\bnao consigo respirar e estou com alergia\b/);
 
   let autodiagnostico: string | null = null;
   for (const [re, label] of AUTODIAGNOSTICO) {
@@ -260,6 +283,7 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
     [/alergia|coceira|mancha|vermelhid/, 'alergia/coceira'],
     [/tontura|vertigem|zonzeira/, 'tontura'],
     [/diarreia|caganeira/, 'diarreia'],
+    [/refluxo|azia|queima[cç][aã]o no estomago|gastrite/, 'refluxo/azia'],
     [/ardor|queima[cç][aã]o ao urinar|dor ao urinar|infeccao urinaria/, 'sintoma urinário'],
   ];
   for (const [re, label] of sintomasMap) {
@@ -355,51 +379,80 @@ export function extrairInformacoes(texto: string): RelatoEstruturado {
 // Sistema de IA — Groq para texto, Gemini para áudio
 // ═══════════════════════════════════════════════════════════
 
-const SYSTEM_INSTRUCTION = `Você é um médico regulador e triador do SUS (SAMU 192, UBS, UPA).
-Interprete a gravidade e o contexto por trás da mensagem — gírias, erros ortográficos, relatos sobre terceiros.
-Extraia apenas o que está explícito, não invente informações.
+const SYSTEM_INSTRUCTION = `Você é um classificador e extrator de informações médicas do SUS.
 
-SOBRE "intencoes":
-Lista com TODAS as intenções presentes na mensagem (pode ser mais de uma).
+Sua tarefa tem DUAS partes:
+1. Classificar a intenção da mensagem em "intencoes".
+2. Extrair sintomas e dados clínicos em campos estruturados.
 
-- "conhecimento": pergunta genérica sobre saúde ou sobre o SUS.
-  Ex: "o que é dengue", "qual a temperatura de febre", "como funciona o CAPS".
-- "navegacao": pede indicação de onde ir / qual serviço procurar.
-  Ex: "para onde vou com dor de cabeça", "onde devo ir", "aonde levo meu filho".
+═══════════════════════════════════════
+SOBRE "intencoes" (a classificação)
+═══════════════════════════════════════
+
+Escolha UMA OU MAIS das opções:
+- "conhecimento": pergunta sobre saúde, doença, sintoma ou serviço do SUS.
+  Ex: "o que é dengue", "qual a temperatura de febre", "como funciona o CAPS",
+      "quantos graus é febre", "o que é AVC", "quanto tempo dura a gripe"
+- "navegacao": pede indicação de onde ir.
+  Ex: "para onde vou com dor de cabeça", "onde devo ir", "qual UPA mais perto"
 - "relato": descreve sintoma próprio em 1ª pessoa.
-  Ex: "estou com febre há 2 dias", "sinto dor de cabeça".
-- "saudacao": cumprimento isolado.
-- "agradecimento": agradece/encerra.
-- "outro": nada das categorias acima.
+  Ex: "estou com febre", "sinto dor de cabeça", "estou passando mal"
+- "saudacao": cumprimento. Ex: "oi", "olá", "bom dia", "Olaaa", "oiii"
+- "agradecimento": agradece. Ex: "obrigado", "valeu"
+- "outro": QUALQUER COISA QUE NÃO SEJA SAÚDE OU SUS.
 
-REGRA DE MULTI-INTENT (importante):
-- Se a mensagem contém PERGUNTA GENÉRICA **e** RELATO/SINTOMA, devolva as duas:
-  Ex: "estou com dor de cabeça, o que é dengue?" → ["relato", "conhecimento"]
-  Ex: "febre e tosse. como funciona o CAPS?" → ["relato", "conhecimento"]
-  Ex: "tô com dor no peito. qual UPA mais perto?" → ["relato", "navegacao"]
-- Se for só cumprimento, ["saudacao"].
-- Se for só agradecimento, ["agradecimento"].
-- Se for só pergunta, ["conhecimento"].
-- Se for só relato, ["relato"].
+REGRA DURA para "outro":
+Se a mensagem NÃO é sobre saúde/SUS E NÃO é saudação/agradecimento,
+classifique como "outro". Exemplos OBRIGATÓRIOS de "outro":
+- "Quantas libertadores o Flamengo tem?"
+- "Qual minha idade?"
+- "Que horas são?"
+- "Me conta uma piada"
+- "Quem é você?"
+- "Qual a capital da França?"
+- "Como plantar tomate?"
+- "Qual o melhor celular?"
+- "Você é ChatGPT?"
+- "Qual a previsão do tempo?"
 
-SOBRE "pergunta":
-- Quando houver intenção "conhecimento", extraia a PERGUNTA ESPECÍFICA aqui.
-- Ex: "estou com febre, o que é dengue?" → pergunta: "o que é dengue"
-- Ex: "qual a temperatura de febre?" → pergunta: "qual a temperatura de febre?"
-- Se não houver intenção "conhecimento", deixe string vazia.
+REGRA ESPECIAL — Doenças e condições conhecidas:
+Quando a pessoa diz "estou com X" onde X é uma CONDIÇÃO conhecida
+(refluxo, azia, diabetes, asma, pressão alta, rinite, gastrite, etc),
+classifique como "conhecimento" E TAMBÉM "relato". Isso permite o bot explicar
+a condição e orientar sobre manejo.
 
-SOBRE "sintomas":
-- É a lista mais importante. Inclua QUALQUER queixa, sensação ou desconforto relatado.
-- Em dúvida, INCLUA.
+Ex:
+- "estou com refluxo e azia" → ["conhecimento", "relato"]
+- "tenho diabetes" → ["conhecimento", "relato"]
+- "estou com pressão alta" → ["conhecimento", "relato"]
+- "tenho asma" → ["conhecimento", "relato"]
 
-SOBRE "sinais_alerta":
-- Só marque o que indica gravidade: falta de ar, dor no peito, desmaio, confusão, sangramento intenso, convulsão, sinais de AVC, rigidez de nuca, lábios arroxeados, dor abdominal intensa.
+IMPORTANTE — diferenciar condição de sintoma:
+- CONDIÇÃO conhecida → conhecimento + relato. Ex: refluxo, azia, diabetes, asma, gastrite, rinite, pressão alta
+- SINTOMA agudo → só relato. Ex: febre, dor de cabeça, tosse, dor no peito, falta de ar, vômito
 
-DIRETRIZES:
+NÃO invente sintoma se não tem. NÃO classifique "outro" como "relato" só
+porque tem palavra parecida.
+
+═══════════════════════════════════════
+SOBRE "pergunta"
+═══════════════════════════════════════
+Quando intenção for "conhecimento", extraia a pergunta específica aqui.
+Caso contrário, deixe string vazia.
+
+═══════════════════════════════════════
+SOBRE "sintomas" e demais campos clínicos
+═══════════════════════════════════════
+- "sintomas": qualquer queixa, sensação ou desconforto relatado. Se não tem, deixe [].
+- "sinais_alerta": falta de ar, dor no peito, desmaio, confusão, sangramento intenso, convulsão, sinais de AVC, rigidez de nuca, lábios arroxeados.
+- Se a mensagem é "outro" ou "conhecimento" puro, TODOS os campos clínicos ficam vazios/false.
 - NÃO diagnostique doenças.
-- Se a mensagem NÃO tem sintoma algum e é só pergunta, deixe "informacao_insuficiente": true.`;
 
-// ─── [Task 3] Schema com `intencoes` (array) + `pergunta` ───
+DIRETRIZ FINAL:
+- Se tem QUALQUER dúvida entre "outro" e outra categoria, prefira "outro".
+- É melhor classificar a mais do que inventar sintoma.`;
+
+// ─── Schema com `intencoes` (array) + `pergunta` ───
 export const RELATO_JSON_SCHEMA: JsonSchema = {
   name: 'relato_clinico_sus',
   strict: true,
@@ -525,7 +578,6 @@ NÃO misture sintomas antigos com o relato atual.`;
   }).relato;
 
   const resultado = mesclarComIA(local, g);
-  // [Task 3] preserva intenções (array) e pergunta separada
   if (Array.isArray(parsed.intencoes)) {
     resultado.intencoes = parsed.intencoes.filter((x: any) => typeof x === 'string');
   }
@@ -535,7 +587,7 @@ NÃO misture sintomas antigos com o relato atual.`;
   return resultado;
 }
 
-// ─── Áudio (Gemini — mantido pra extração estruturada multimodal) ───
+// ─── Áudio (Gemini) ───
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
