@@ -1,4 +1,4 @@
-import type { RelatoEstruturado, UltimaPergunta } from './tipos';
+import type { RelatoEstruturado, UltimaPergunta } from './tipos.js';
 
 export type TemaPergunta =
   | 'vago' | 'dor' | 'febre' | 'respiratorio'
@@ -119,7 +119,7 @@ export function interpretarRespostaCurta(
   ultima: UltimaPergunta | undefined,
 ): Partial<RelatoEstruturado> | null {
   if (!ultima?.campoAlvo) return null;
-  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const n = texto.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
     .replace(/[.!?,;]+$/g, '').trim();
 
   if (ultima.campoAlvo === 'duracao') {

@@ -8,29 +8,19 @@ import makeWASocket, {
 import { registrarClienteDb } from "../ia/base_conhecimento.js";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
-import dotenv from "dotenv";
-import path from "path";
 import { createHash } from "crypto";
-import { interpretarRelato } from "../ia/extrator_de_informacoes.js";
 import { transcreverAudio } from "../servicos/transcricao_audio.js";
-import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/orquestrador.js";
-
+import { processarTurno, ESTADO_INICIAL } from "../ia/orquestrador.js";
 import { mensagemPorId } from "../ia/mensagens.js";
-import { reformularPergunta } from "../ia/reformulador_pergunta.js";
-import { interpretarRespostaCurta } from "../ia/perguntas.js";
-import { escolherAleatorio, RESETS, ACOLHIMENTOS_REPETICAO } from "../ia/variacao.js";
-import {
-  RELATO_VAZIO,
-  type EstadoConversa,
-  type RelatoEstruturado,
-} from "../ia/tipos.js";
+import { escolherAleatorio, RESETS } from "../ia/variacao.js";
+import type { EstadoConversa } from "../ia/tipos.js";
 import {
   buscarUnidades, formatarUnidades, type TipoUsuario,
 } from "../servicos/geolocalizacao.js";
 import { buscarCoordenadasPorTexto } from "../servicos/nominatim.js";
 import { textoParaAudio } from "../servicos/texto_para_audio.js";
 import { inc } from "../servicos/metricas.js";
-import { setQrCode } from "../index.js";
+import { setQrCode } from "../servicos/qr.js";
 import {
   criarClienteDb, baixarSessaoParaDisco, iniciarSyncPeriodico, registrarSyncNoShutdown, type Sql,
 } from "./persistencia_sessao.js";
@@ -38,21 +28,7 @@ import {
   salvarEstado, carregarEstado, apagarEstado,
 } from "./persistencia_estado.js";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-
 const PUBLIC_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
-
-process.on('unhandledRejection', (err: any) => {
-  const msg = err?.message || String(err);
-  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) return;
-  console.error('❌ Unhandled rejection:', err);
-});
-
-process.on('uncaughtException', (err: any) => {
-  const msg = err?.message || String(err);
-  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) return;
-  console.error('❌ Uncaught exception:', err);
-});
 
 const sessions = new Map<string, EstadoConversa>();
 
@@ -61,24 +37,6 @@ const TTL_SESSAO_MS = 6 * 60 * 60 * 1000;
 const LOCALIZACAO_VALIDA_MS = 30 * 60 * 1000;
 
 const filas = new Map<string, Promise<void>>();
-
-const contadorGemini = new Map<string, number>();
-const LIMITE_GEMINI_POR_HORA = 30;
-
-function podeChamarGemini(sender: string): boolean {
-  const janela = Math.floor(Date.now() / 3600000);
-  const chave = `${sender}|${janela}`;
-  const atual = contadorGemini.get(chave) ?? 0;
-  if (atual >= LIMITE_GEMINI_POR_HORA) return false;
-  contadorGemini.set(chave, atual + 1);
-  if (contadorGemini.size > 5000) {
-    const janelaAtual = janela;
-    for (const k of contadorGemini.keys()) {
-      if (!k.endsWith(`|${janelaAtual}`)) contadorGemini.delete(k);
-    }
-  }
-  return true;
-}
 
 function hashSender(sender: string): string {
   return createHash('sha256').update(sender).digest('hex').slice(0, 8);
@@ -130,45 +88,42 @@ function levenshtein(a: string, b: string): number {
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       const custo = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + custo,
-      );
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + custo);
     }
   }
   return dp[m][n];
 }
 
-function ehComandoReset(entrada: string): boolean {
-  const norm = entrada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+function semAcento(t: string): string {
+  return t.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/[.!]+$/, "").trim();
+}
+
+// Tolerância a erro de digitação SÓ em comandos com "/" ou frases longas.
+// Palavras curtas ("menu", "inicio") precisam ser exatas: com tolerância,
+// respostas como "mes", "meu", "medo" e "meio" reiniciavam a triagem.
+export function ehComandoReset(entrada: string): boolean {
+  const norm = semAcento(entrada);
   if (norm.startsWith('/')) {
-    return levenshtein(norm, '/reset') <= 2 || levenshtein(norm, '/start') <= 2;
+    return levenshtein(norm, '/reset') <= 1 || levenshtein(norm, '/start') <= 1 || norm === '/reiniciar';
   }
   for (const cmd of comandosReset) {
-    const alvo = cmd.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const alvo = semAcento(cmd);
     if (norm === alvo) return true;
-    const palavras = norm.split(/\s+/).filter(Boolean);
-    if (palavras.length <= 2 && levenshtein(norm, alvo) <= 2) return true;
+    if (alvo.length >= 10 && levenshtein(norm, alvo) <= 2) return true;
   }
   return false;
 }
 
 function ehComandoApagar(entrada: string): boolean {
-  const n = entrada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const n = entrada.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").trim();
   return /^\/?(apagar|excluir)( meus? (dados|historico|conversa))?$/.test(n)
     || /^(apagar|excluir) (meus? )?(dados|historico|conversa)$/.test(n);
 }
 
-// [FIX] Detecta se a resposta é um protocolo crítico (C.A.L.M.A., RCP, etc.)
-// e NÃO deve ser reformulada pelo LLM.
-function ehProtocoloCritico(texto: string): boolean {
-  return (
-    texto.includes('⚠️') ||
-    texto.includes('CVV') ||
-    texto.includes('Estou aqui com você') ||
-    texto.startsWith('💛')
-  );
+// Toda mudança de estado passa por aqui: memória + banco (sobrevive a restart).
+async function persistir(sender: string, estado: EstadoConversa): Promise<void> {
+  sessions.set(sender, estado);
+  if (sqlCliente) await salvarEstado(sqlCliente, sender, estado);
 }
 
 async function obterOuCriarEstado(
@@ -191,7 +146,7 @@ async function obterOuCriarEstado(
 }
 
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
-  const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const n = texto.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
   if (/\b(dif[a-z]{3,}|o que e|o que sao|para que serve|como funciona|quando ir|quando devo ir|quando procurar)\b/.test(n)) return null;
 
   const temVerboLocal =
@@ -240,7 +195,7 @@ async function executarBusca(
 ): Promise<void> {
   estado.ultimaLocalizacao = { lat, lng, em: Date.now() };
   estado.aguardandoLocalizacao = undefined;
-  sessions.set(sender, estado);
+  await persistir(sender, estado);
 
   await sock.sendMessage(sender, { text: "🔎 Buscando as unidades mais próximas, um instante..." });
   await sock.sendPresenceUpdate("composing", sender);
@@ -260,21 +215,21 @@ async function executarBusca(
   await sock.sendPresenceUpdate("paused", sender);
 }
 
+const LOCAL_POR_RESPOSTA: Record<string, 'UPA' | 'HOSPITAL' | 'UBS'> = {
+  upa_001: 'UPA', dengue_001: 'UPA', desidratacao_001: 'UPA', intoxicacao_001: 'UPA',
+  emergencia_001: 'HOSPITAL', obstetricia_001: 'HOSPITAL', pediatria_emergencia_001: 'HOSPITAL',
+  mental_emergencia_001: 'HOSPITAL', violencia_001: 'HOSPITAL',
+  ubs_001: 'UBS',
+};
+
+// Anexa a oferta de "unidade mais próxima" e marca no estado que estamos aguardando a localização.
 function oferecerLocalizacao(
-  sender: string,
+  estado: EstadoConversa,
   resultado: { tipo: string; decisao?: { resposta_id: string } },
   mensagemBase: string,
 ): string {
   if (resultado.tipo !== 'orientacao' || !resultado.decisao) return mensagemBase;
-
-  const respostaId = resultado.decisao.resposta_id;
-  let tipoLocalizacao: 'UPA' | 'HOSPITAL' | 'UBS' | null = null;
-
-  if (respostaId === 'upa_001') tipoLocalizacao = 'UPA';
-  else if (['emergencia_001','obstetricia_001','pediatria_emergencia_001','mental_emergencia_001','violencia_001'].includes(respostaId))
-    tipoLocalizacao = 'HOSPITAL';
-  else if (respostaId === 'ubs_001') tipoLocalizacao = 'UBS';
-
+  const tipoLocalizacao = LOCAL_POR_RESPOSTA[resultado.decisao.resposta_id];
   if (!tipoLocalizacao) return mensagemBase;
 
   const { art, prox, nome } = artigoUnidade(tipoLocalizacao);
@@ -283,9 +238,7 @@ function oferecerLocalizacao(
     `\n\n📍 *Quer saber ${art} ${nome} mais ${prox}?* 🙋\n` +
     `Responda *"sim"* e me mande sua localização (📎 → Localização) ou escreva seu *bairro e cidade*.`;
 
-  const estadoApos = sessions.get(sender)!;
-  estadoApos.aguardandoLocalizacao = { ativo: true, tipo: tipoLocalizacao, mensagemOriginal: texto };
-  sessions.set(sender, estadoApos);
+  estado.aguardandoLocalizacao = { ativo: true, tipo: tipoLocalizacao, mensagemOriginal: texto };
   return texto;
 }
 
@@ -459,11 +412,6 @@ function pareceLocal(textoLimpo: string): boolean {
   );
 }
 
-async function comTomNatural(pergunta: string, contexto: string): Promise<string> {
-  if (process.env.REFORMULAR_PERGUNTAS === "0") return pergunta;
-  return reformularPergunta(pergunta, contexto);
-}
-
 async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<void> {
   const text =
     msg.message.conversation ||
@@ -474,7 +422,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   expirarSessaoSeVelha(sender);
 
-  // ── LOCALIZAÇÃO ──
+  // ── LOCALIZAÇÃO (pino do WhatsApp) ──
   const location = msg.message.locationMessage;
   if (location) {
     const lat = location.degreesLatitude;
@@ -492,18 +440,19 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     }
 
     estado.ultimaLocalizacao = { lat, lng, em: Date.now() };
-    sessions.set(sender, estado);
+    await persistir(sender, estado);
     await sock.sendMessage(sender, {
       text: "📍 Localização recebida! O que você quer encontrar perto de você?\n\nResponda: *UPA*, *UBS* ou *hospital*.",
     });
     return;
   }
 
-  // ── ÁUDIO ──
+  // ── ÁUDIO → transcreve e segue EXATAMENTE o mesmo caminho do texto ──
   const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     inc('total_audios');
     const pararDigitandoAudio = iniciarDigitando(sock, sender);
+    let transcricao = '';
     try {
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
@@ -516,90 +465,30 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
           setTimeout(() => rej(new Error('timeout download')), 15000),
         ),
       ])) as Buffer;
-
       if (!buffer || buffer.length === 0) throw new Error("Buffer vazio");
 
       const mime = audioMessage.mimetype || "audio/ogg; codecs=opus";
       console.log(`🎤 [${hashSender(sender)}] Áudio (${(buffer.length / 1024).toFixed(1)} KB)`);
 
-      let transcricao = await transcreverAudio(buffer, mime);
-
+      transcricao = await transcreverAudio(buffer, mime);
       if (!transcricao || transcricao.length < 3) {
-        console.log(`⚠️ [${hashSender(sender)}] Whisper vazio, tentando retry...`);
         await new Promise((r) => setTimeout(r, 500));
         transcricao = await transcreverAudio(buffer, mime);
       }
-
-      if (!transcricao || transcricao.length < 3) {
-        console.log(`❌ [${hashSender(sender)}] transcrição falhou 2x`);
-        pararDigitandoAudio();
-        await sock.sendMessage(sender, {
-          text:
-            '🎤 Não consegui entender o áudio mesmo depois de tentar duas vezes. ' +
-            'Pode repetir em um lugar mais silencioso ou escrever? ' +
-            'Em emergência, ligue 192.',
-        });
-        return;
-      }
-
-      console.log(`📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`);
-
-      const { estado: estadoAtualAudio } = await obterOuCriarEstado(sender);
-      const primeiraMensagemAudio = (estadoAtualAudio.historico?.length ?? 0) === 0;
-
-      const historicoFmt = estadoAtualAudio.historico?.length
-        ? estadoAtualAudio.historico
-            .map((m) => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
-            .join('\n')
-        : undefined;
-
-      const respostaCurtaAudio = interpretarRespostaCurta(
-        transcricao,
-        estadoAtualAudio.ultimaPergunta,
-      );
-
-      const relatoDoAudio = respostaCurtaAudio
-        ? ({
-            ...RELATO_VAZIO,
-            ...respostaCurtaAudio,
-            texto_original_acumulado: '',
-          } as RelatoEstruturado)
-        : await interpretarRelato(transcricao, historicoFmt);
-
-      const { resultado, estado: novoEstado } = await processarTurnoComRelato(
-        transcricao, relatoDoAudio, estadoAtualAudio,
-      );
-      sessions.set(sender, novoEstado);
-
-      if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
-
-      let respostaAudio = resultado.texto;
-
-      // [FIX] NUNCA reformula protocolos críticos (C.A.L.M.A., RCP, etc.)
-      const ehProtocoloCriticoAudio =
-        resultado.tipo === 'perguntas' &&
-        ehProtocoloCritico(resultado.texto);
-
-      if (resultado.tipo === "perguntas" && !ehProtocoloCriticoAudio) {
-        respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
-      }
-
-      respostaAudio = `_🎤 Ouvi: "${transcricao}"_\n\n${respostaAudio}`;
-
-      if (primeiraMensagemAudio) {
-        respostaAudio = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${respostaAudio}`;
-      }
-      respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
-
-      pararDigitandoAudio();
-      await responder(sock, sender, respostaAudio, true);
     } catch (err) {
-      console.error("❌ Erro ao processar áudio:", err);
-      pararDigitandoAudio();
-      await sock.sendMessage(sender, {
-        text: "🎤 Não consegui processar esse áudio. Pode repetir ou escrever? Em emergência, ligue 192.",
-      });
+      console.error("❌ Erro ao baixar/transcrever áudio:", err);
     }
+    pararDigitandoAudio();
+
+    if (!transcricao || transcricao.length < 3) {
+      await sock.sendMessage(sender, {
+        text:
+          '🎤 Não consegui entender o áudio. Pode repetir em um lugar mais silencioso ou escrever? ' +
+          'Em emergência, ligue 192.',
+      });
+      return;
+    }
+    await processarTexto(sock, sender, transcricao, true);
     return;
   }
 
@@ -612,16 +501,18 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   if (!cleanText) return;
+  await processarTexto(sock, sender, cleanText, false);
+}
 
-  console.log(`\n📩 [${hashSender(sender)}] ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
-  const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+async function processarTexto(sock: Sock, sender: string, cleanText: string, veioDeAudio: boolean): Promise<void> {
+  console.log(`\n📩 [${hashSender(sender)}]${veioDeAudio ? ' (áudio)' : ''} ${cleanText.slice(0, 40)}${cleanText.length > 40 ? '...' : ''}`);
+  const textoLimpo = cleanText.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  const prefixoAudio = veioDeAudio ? `_🎤 Ouvi: "${cleanText}"_\n\n` : '';
 
   // ── APAGAR DADOS (LGPD) ──
   if (ehComandoApagar(cleanText)) {
     try {
-      if (sqlCliente) {
-        await apagarEstado(sqlCliente, sender);
-      }
+      if (sqlCliente) await apagarEstado(sqlCliente, sender);
       sessions.delete(sender);
       await sock.sendMessage(sender, {
         text:
@@ -632,8 +523,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     } catch (err) {
       console.error('❌ Erro ao apagar dados:', err);
       await sock.sendMessage(sender, {
-        text:
-          '⚠️ Não consegui apagar agora. Tente de novo em alguns minutos ou mande /reset para limpar a conversa local.',
+        text: '⚠️ Não consegui apagar agora. Tente de novo em alguns minutos ou mande /reset para limpar a conversa local.',
       });
     }
     return;
@@ -646,16 +536,14 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       { role: 'user', content: '/reset', ts: Date.now() },
       { role: 'assistant', content: '🔄 Reiniciado.', ts: Date.now() },
     ];
-    sessions.set(sender, estadoReset);
-    if (sqlCliente) await salvarEstado(sqlCliente, sender, estadoReset);
-
+    await persistir(sender, estadoReset);
     await sock.sendMessage(sender, { text: escolherAleatorio(RESETS) });
     return;
   }
 
-  // ── LOCALIZAÇÃO POR TEXTO ──
-  const estadoLoc = sessions.get(sender);
-  if (estadoLoc?.aguardandoLocalizacao?.ativo) {
+  // ── LOCALIZAÇÃO POR TEXTO (depois de oferecermos a busca) ──
+  const { estado: estadoLoc } = await obterOuCriarEstado(sender);
+  if (estadoLoc.aguardandoLocalizacao?.ativo) {
     const decisao = matchSimNao(textoLimpo);
     const palavras = textoLimpo.split(/\s+/).filter(Boolean);
     const temPalavraClinica = CLINICA_RE.test(textoLimpo);
@@ -665,7 +553,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
     if (decisao === "nao" && palavras.length <= 4 && !temPalavraClinica) {
       estadoLoc.aguardandoLocalizacao = undefined;
-      sessions.set(sender, estadoLoc);
+      await persistir(sender, estadoLoc);
       await sock.sendMessage(sender, { text: "Tudo bem! Se precisar, é só me chamar. 💙" });
       return;
     }
@@ -676,7 +564,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         return;
       }
       estadoLoc.aguardandoLocalizacao.aguardandoTexto = true;
-      sessions.set(sender, estadoLoc);
+      await persistir(sender, estadoLoc);
       await sock.sendMessage(sender, {
         text: `📍 Me mande sua localização pelo 📎 → *Localização*.\n\nOu escreva seu *bairro e cidade* (ex: "Icaraí, Niterói") que eu busco pra você.`,
       });
@@ -689,8 +577,9 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       if (coords) {
         await executarBusca(sock, sender, estadoLoc, coords.lat, coords.lng, tipo);
       } else {
+        inc('nominatim_falha');
         estadoLoc.aguardandoLocalizacao.aguardandoTexto = true;
-        sessions.set(sender, estadoLoc);
+        await persistir(sender, estadoLoc);
         await sock.sendMessage(sender, {
           text: "Não consegui localizar esse endereço. Tente *bairro + cidade* ou compartilhe pelo 📎 → Localização.",
         });
@@ -698,111 +587,61 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       return;
     }
 
+    // Não era resposta sobre localização → segue para a triagem.
     estadoLoc.aguardandoLocalizacao = undefined;
-    sessions.set(sender, estadoLoc);
   }
 
-  // ── PEDIDO EXPLÍCITO DE LOCALIZAÇÃO ──
-  const estadoAtual = sessions.get(sender);
-  const locGuardada = estadoAtual?.ultimaLocalizacao && Date.now() - estadoAtual.ultimaLocalizacao.em < LOCALIZACAO_VALIDA_MS
-    ? estadoAtual.ultimaLocalizacao : null;
+  // ── PEDIDO EXPLÍCITO DE LOCALIZAÇÃO ("onde tem uma UPA?") ──
+  const locGuardada = estadoLoc.ultimaLocalizacao && Date.now() - estadoLoc.ultimaLocalizacao.em < LOCALIZACAO_VALIDA_MS
+    ? estadoLoc.ultimaLocalizacao : null;
 
   let pedidoLoc = detectarPedidoLocalizacao(cleanText);
-  if (!pedidoLoc && locGuardada && !estadoAtual?.aguardandoLocalizacao?.ativo) {
+  if (!pedidoLoc && locGuardada) {
     if (/^(a |o )?(upa|pronto socorro|pronto atendimento)$/.test(textoLimpo)) pedidoLoc = "UPA";
     else if (/^(a |o )?(ubs|posto( de saude)?|clinica da familia)$/.test(textoLimpo)) pedidoLoc = "UBS";
     else if (/^(o |um )?hospital$/.test(textoLimpo)) pedidoLoc = "HOSPITAL";
   }
 
   if (pedidoLoc) {
-    const { estado } = await obterOuCriarEstado(sender);
     if (locGuardada) {
-      await executarBusca(sock, sender, estado, locGuardada.lat, locGuardada.lng, pedidoLoc);
+      await executarBusca(sock, sender, estadoLoc, locGuardada.lat, locGuardada.lng, pedidoLoc);
       return;
     }
-    estado.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText, aguardandoTexto: true };
-    sessions.set(sender, estado);
+    estadoLoc.aguardandoLocalizacao = { ativo: true, tipo: pedidoLoc, mensagemOriginal: cleanText, aguardandoTexto: true };
+    await persistir(sender, estadoLoc);
     const { art, prox, nome } = artigoUnidade(pedidoLoc);
     await sock.sendMessage(sender, {
-      text: `📍 Compartilhe sua localização (📎 → Localização) ou escreva seu *bairro e cidade* que eu busco ${art} ${nome} mais ${prox}.`,
+      text: `${prefixoAudio}📍 Compartilhe sua localização (📎 → Localização) ou escreva seu *bairro e cidade* que eu busco ${art} ${nome} mais ${prox}.`,
     });
     return;
   }
 
-  // ── TRIAGEM ──
+  // ── TRIAGEM (guarda → LLM decisor → validação) ──
   const pararDigitando = iniciarDigitando(sock, sender);
+  try {
+    const primeiraMensagem = (estadoLoc.historico?.length ?? 0) === 0;
 
-  const { estado: estadoAtualProcesso } = await obterOuCriarEstado(sender);
-  const primeiraMensagem = (estadoAtualProcesso.historico?.length ?? 0) === 0;
+    const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoLoc, {
+      origem: veioDeAudio ? 'audio' : 'texto',
+      sessao: hashSender(sender),
+    });
+    if (estadoLoc.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
+      novoEstado.ultimaLocalizacao = estadoLoc.ultimaLocalizacao;
+    }
 
-  // Resposta vaga durante triagem → repete pergunta sem cair em fora de escopo
-  const respostaVaga = /^(nao sei|n sei|não sei|talvez|acho que|nao tenho certeza|não tenho certeza|depende|nao lembro|não lembro|n lembro)$/i
-    .test(cleanText.trim());
+    let mensagemFinal = resultado.texto;
+    if (primeiraMensagem) {
+      const boasVindas = `${MENSAGEM_BOAS_VINDAS}\n\n${mensagemPorId("privacidade_001").texto}`;
+      // Saudação na 1ª mensagem: as boas-vindas já pedem o relato — não duplica a pergunta.
+      mensagemFinal = resultado.acao === 'conversa' ? boasVindas : `${boasVindas}\n\n---\n\n${mensagemFinal}`;
+    }
+    mensagemFinal = oferecerLocalizacao(novoEstado, resultado, mensagemFinal);
 
-  if (
-    respostaVaga &&
-    estadoAtualProcesso.fase === 'coletando' &&
-    estadoAtualProcesso.ultimaPergunta
-  ) {
+    await persistir(sender, novoEstado);
     pararDigitando();
-    const textoResposta = `Tudo bem, sem problema. Vou tentar de outro jeito:\n\n${estadoAtualProcesso.ultimaPergunta.texto}`;
-    await sock.sendMessage(sender, { text: textoResposta });
-    const estadoAtualizado = {
-      ...estadoAtualProcesso,
-      historico: [
-        ...(estadoAtualProcesso.historico ?? []),
-        { role: 'user' as const, content: cleanText, ts: Date.now() },
-        { role: 'assistant' as const, content: textoResposta, ts: Date.now() },
-      ].slice(-12),
-    };
-    sessions.set(sender, estadoAtualizado);
-    if (sqlCliente) await salvarEstado(sqlCliente, sender, estadoAtualizado);
-    return;
+    await responder(sock, sender, `${prefixoAudio}${mensagemFinal}`, veioDeAudio);
+  } catch (err) {
+    pararDigitando();
+    throw err;
   }
-
-  // Detecta mensagem repetida nas últimas 5 entradas do usuário
-  const userMsgs = (estadoAtualProcesso.historico ?? [])
-    .filter((m) => m.role === 'user')
-    .slice(-5)
-    .map((m) => m.content.toLowerCase().trim());
-  const ocorrencias = userMsgs.filter((t) => t === cleanText.toLowerCase().trim()).length;
-  const frustrado = ocorrencias >= 2;
-
-  const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
-  if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
-    novoEstado.ultimaLocalizacao = estadoAtualProcesso.ultimaLocalizacao;
-  }
-  sessions.set(sender, novoEstado);
-
-  if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
-
-  let mensagemFinal = resultado.texto;
-
-  // Acolhe frustração se a mensagem foi repetida
-  if (frustrado && resultado.tipo === 'orientacao' && mensagemFinal.length < 300) {
-    mensagemFinal = `${escolherAleatorio(ACOLHIMENTOS_REPETICAO)}\n\n${mensagemFinal}`;
-  }
-
-  const perguntaGenericaDuplicada = primeiraMensagem && resultado.tipo === "perguntas" && resultado.tema === "vago";
-
-  // [FIX] NUNCA reformula protocolos críticos (C.A.L.M.A., RCP, etc.)
-  const ehProtocoloCriticoTexto =
-    resultado.tipo === 'perguntas' &&
-    ehProtocoloCritico(resultado.texto);
-
-  if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada && !ehProtocoloCriticoTexto) {
-    mensagemFinal = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
-  }
-
-  if (primeiraMensagem) {
-    const privacidade = mensagemPorId("privacidade_001").texto;
-    mensagemFinal = perguntaGenericaDuplicada
-      ? `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}`
-      : `${MENSAGEM_BOAS_VINDAS}\n\n${privacidade}\n\n---\n\n${mensagemFinal}`;
-  }
-
-  mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
-
-  pararDigitando();
-  await responder(sock, sender, mensagemFinal, false);
 }

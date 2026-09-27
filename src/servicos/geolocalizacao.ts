@@ -43,9 +43,10 @@ const PENALIDADE_ESPECIALIZADA_M = 10_000;
 const PENALIDADE_SEM_NOME_M = 3_000;
 const BONUS_PUBLICA_M = 1_000;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const RAIO_LOCAL_CONFIAVEL_M = 10_000;
 
 const norm = (s: string): string =>
-  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '').toLowerCase().trim();
+  s.normalize('NFD').replace(/\p{M}/gu, '').replace(/\./g, '').toLowerCase().trim();
 
 const UPA_FORTE_RE =
   /\bupa\b|\bupa ?24|\bupae\b|unidade de pronto ?atendimento|unidade de pronto ?socorro|coordenacao de emergencia regional/;
@@ -359,11 +360,19 @@ function carregarBaseLocal(): UnidadeLocal[] {
     return baseLocal;
   }
 }
+// O CNES tem telefones truncados/errados ("(20) 4236-49"). Melhor não mostrar do que mostrar errado.
+function telefoneValido(tel: string | null | undefined): string | null {
+  if (!tel) return null;
+  const digitos = tel.replace(/\D/g, '');
+  if (digitos.length < 10 || digitos.length > 11 || /^0/.test(digitos)) return null;
+  return tel;
+}
+
 function buscarLocal(lat: number, lng: number, raioMax = 30_000): UnidadeSaude[] {
   return carregarBaseLocal()
     .map((u): UnidadeSaude => ({
       nome: u.nome, categoria: u.categoria, endereco: u.endereco || 'Endereço não informado',
-      telefone: u.telefone ?? null, distancia: calcularDistancia(lat, lng, u.lat, u.lng),
+      telefone: telefoneValido(u.telefone), distancia: calcularDistancia(lat, lng, u.lat, u.lng),
       lat: u.lat, lng: u.lng, publica: u.publica ?? null, especializada: false, semNome: false,
       linkGoogleMaps: `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${u.lat},${u.lng}`,
     }))
@@ -444,8 +453,10 @@ export async function buscarUnidades(lat: number, lng: number, tipo: TipoUsuario
   const primarias: CategoriaUnidade[] =
     tipo === 'UBS' ? ['UBS'] : tipo === 'UPA' ? ['UPA'] : ['EMERGENCIA'];
 
+  // Base local (CNES) só é usada direto se tiver unidade do tipo pedido por perto;
+  // senão uma unidade a 29 km ganhava de uma do OSM a 2 km.
   const local = selecionar(buscarLocal(lat, lng), tipo);
-  if (local.some((u) => primarias.includes(u.categoria))) {
+  if (local.some((u) => primarias.includes(u.categoria) && u.distancia <= RAIO_LOCAL_CONFIAVEL_M)) {
     return { unidades: local, origem: 'local', falhaServico: false };
   }
 
@@ -470,23 +481,6 @@ export async function buscarUnidades(lat: number, lng: number, tipo: TipoUsuario
     unidades: sobra,
     origem: sobra.length ? (doOsm.length ? 'osm' : 'local') : 'nenhuma',
     falhaServico: sobra.length === 0 && todasFalharam,
-  };
-}
-
-export async function buscarUnidadesProximas(
-  lat: number, lng: number, tipo: TipoBusca = 'TODOS', _raioIgnorado?: number,
-): Promise<UnidadeSaude[]> {
-  const t: TipoUsuario = tipo === 'UBS' ? 'UBS' : tipo === 'UPA' ? 'UPA' : 'HOSPITAL';
-  return (await buscarUnidades(lat, lng, t)).unidades;
-}
-
-export async function buscarUpaEEmergencia(
-  lat: number, lng: number,
-): Promise<{ upas: UnidadeSaude[]; emergencias: UnidadeSaude[] }> {
-  const { unidades } = await buscarUnidades(lat, lng, 'HOSPITAL');
-  return {
-    upas: unidades.filter((u) => u.categoria === 'UPA'),
-    emergencias: unidades.filter((u) => u.categoria === 'EMERGENCIA'),
   };
 }
 

@@ -1,398 +1,202 @@
 // src/ia/guarda_critica.ts
-// Guarda de segurança que roda ANTES do LLM.
-// Detecta sintomas críticos via regex independente.
-// Diferencia emergência ATIVA (SAMU direto) de PASSADA/AMBÍGUA (triagem + protocolo).
+// Guarda de segurança que roda ANTES do LLM. Redundância intencional:
+// se o LLM falhar em ver o óbvio, a guarda pega.
+//
+// Enxuta de propósito — só as categorias mais críticas e só frases
+// inequívocas. Se casar, escala DIRETO (sem pergunta, sem LLM).
+// Casos ambíguos (desmaio passado, febre em bebê, queimadura, etc.) ficam
+// com o LLM decisor + o piso determinístico da validação final.
 
 import { normalizarTexto } from './normalizar.js';
 
 export type CategoriaCritica =
   | 'suicidio'
+  | 'pcr'
+  | 'engasgo'
+  | 'afogamento'
   | 'dor_toracica'
   | 'falta_de_ar'
   | 'avc'
-  | 'desmaio'
+  | 'trauma_craniano'
   | 'convulsao'
-  | 'sangramento'
-  | 'vomito_sangue'
-  | 'bebe_febre'
-  | 'obstetrico'
-  | 'engasgo'
-  | 'pcr'
-  | 'afogamento'
-  | 'queimadura'
-  | 'trauma_craniano';
+  | 'sangramento';
 
-export type SinalCriticoGuard = {
-  critico: true;
-  motivo: string;
-  categoria: CategoriaCritica;
-  terceiro: boolean;
-};
-
-export type ResultadoGuard = SinalCriticoGuard | { critico: false };
-
-function norm(texto: string): string {
-  return normalizarTexto(texto);
-}
+export type ResultadoGuard =
+  | { critico: true; motivo: string; categoria: CategoriaCritica; terceiro: boolean }
+  | { critico: false };
 
 function ehSobreTerceiro(n: string): boolean {
-  return /\b(meu|minha|nosso|nossa|o|a)\s+(pai|mae|mãe|filho|filha|marido|esposo|esposa|namorado|namorada|avo|avô|avó|vo|vó|irmao|irmão|irma|tio|tia|primo|prima|amigo|amiga|vizinho|vizinh|conhecid|colega|bebe|bebê|crianca|criança|menino|menina|idoso|idosa|senhor|senhora|alguem|alguém)\b/.test(n);
+  return /\b(meu|minha|nosso|nossa|o|a)\s+(pai|mae|filho|filha|marido|esposo|esposa|namorado|namorada|avo|vo|irmao|irma|tio|tia|primo|prima|amigo|amiga|vizinho|vizinha|colega|bebe|crianca|menino|menina|idoso|idosa|senhor|senhora)\b/.test(n)
+    || /\b(alguem|uma pessoa|um homem|uma mulher)\b/.test(n);
 }
 
+// Pergunta educativa ("o que fazer em caso de falta de ar?") não é emergência ativa.
+function ehPerguntaEducativa(n: string, original: string): boolean {
+  const pergunta =
+    /\?/.test(original) ||
+    /^(o que|oq|como|quando|qual|quais|pra que|para que)\b/.test(n);
+  if (!pergunta) return false;
+  const educativa = /\b(o que e|o que sao|oq e|o que fazer (em caso|quando|se)|como (identificar|reconhecer|saber|funciona)|quais (os|sao os) sinais|sinais de|sintomas de|significa|diferenca)\b/.test(n);
+  const primeiraPessoaAgora = /\b(estou|to|tou|sinto|meu|minha|agora|esta com|ta com)\b/.test(n);
+  return educativa && !primeiraPessoaAgora;
+}
+
+type Regra = { categoria: CategoriaCritica; motivo: string; re: RegExp };
+
+const REGRAS: Regra[] = [
+  {
+    categoria: 'suicidio',
+    motivo: 'risco de autoagressão',
+    re: /\b(quero me matar|vou me matar|quer se matar|vai se matar|quero morrer|nao quero mais viver|nao quero viver|acabar com (a )?minha vida|tirar (a )?minha (propria )?vida|me matar|suicid\w*|melhor (eu )?morrer|nao vale a pena viver|queria estar mort[oa]|tentou se matar)\b/,
+  },
+  {
+    categoria: 'pcr',
+    motivo: 'parada cardiorrespiratória',
+    // "não respira" só conta se NÃO vier seguido de bem/direito/pelo nariz (nariz entupido ≠ PCR)
+    re: /\b(parada cardiaca|parou o coracao|coracao parou|sem pulso|sem batimento|parou de respirar|nao (esta |ta )?respira(ndo)?( mais)?(?! (bem|direito|pelo|pela|muito|normal)))\b/,
+  },
+  {
+    categoria: 'engasgo',
+    motivo: 'engasgo',
+    re: /\b(engasgad[oa]|engasgou|engasgando|engasguei|entalad[oa] com|entalou com|sufocando com comida)\b/,
+  },
+  {
+    categoria: 'afogamento',
+    motivo: 'afogamento',
+    re: /\b(afogamento|afogou|afogando|se afogou|quase afogou|tirei da (agua|piscina) desacordad[oa])\b/,
+  },
+  {
+    // Diretriz SBC/MS: dor torácica aguda → SAMU sem esperar outros sinais.
+    categoria: 'dor_toracica',
+    motivo: 'dor torácica',
+    re: /\b(dor (no|do|de)?\s*peito|dor toracica|aperto (no|do)\s*peito|peito apertado|pressao (no|do)\s*peito|peso (no|do)\s*peito|peito doendo|doendo o peito|dor (no|do)\s*coracao|pontada (no|do)\s*peito|peito apertando)\b/,
+  },
+  {
+    categoria: 'falta_de_ar',
+    motivo: 'falta de ar',
+    re: /\b(falta de ar|nao consigo respirar|nao (esta|ta|to|tou|estou) conseguindo respirar|nao consegue respirar|dificuldade (para|pra|de) respirar|sufocando|sem ar|nao entra ar|garganta fechando|labios? (roxos?|arroxeados?))\b/,
+  },
+  {
+    categoria: 'avc',
+    motivo: 'sinais neurológicos súbitos',
+    re: /\b(boca torta|rosto torto|sorriso torto|fala enrolada|fala embolada|nao consegue falar|fraqueza (em |de )?(um|1) lado|lado do corpo (fraco|mole|dormente)|nao mexe (o |a )?(braco|perna)|perdeu a forca (do|de um|no) (braco|lado)|perda subita de visao)\b/,
+  },
+  {
+    categoria: 'trauma_craniano',
+    motivo: 'trauma craniano',
+    re: /\b(bati a cabeca|bateu a cabeca|bati com a cabeca|bateu com a cabeca|pancada na cabeca|caiu de altura|trauma craniano|cabeca aberta|corte (profundo )?na cabeca|sangrando (na|a) cabeca|sangue na cabeca)\b/,
+  },
+  {
+    // Só crise ATIVA ou recém-ocorrida — "tremendo de frio" não entra.
+    categoria: 'convulsao',
+    motivo: 'convulsão',
+    re: /\b(convulsao|convulsionando|convulsionou|ataque epileptico|crise epileptica|crise convulsiva|espumando pela boca)\b/,
+  },
+  {
+    categoria: 'sangramento',
+    motivo: 'sangramento importante',
+    re: /\b(sangramento intenso|hemorragia|sangrando muito|muito sangue|nao para de sangrar|sangramento que nao para|vomitando sangue|vomitei sangue)\b/,
+  },
+];
+
 export function detectarCriticoRegex(texto: string): ResultadoGuard {
-  const n = norm(texto);
-  const terceiro = ehSobreTerceiro(n);
+  const n = normalizarTexto(texto);
+  if (!n || ehPerguntaEducativa(n, texto)) return { critico: false };
 
-  // ─── Ideaç��o suicida ───
-  if (
-    /\b(quero me matar|vou me matar|quero morrer|nao quero mais viver|nao quero viver|acabar com (a )?minha vida|vou acabar com tudo|me matar|suicid|tirar minha vida|nao vejo mais sentido|melhor morrer|nao vale a pena viver|quero desaparecer|queria estar morto)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'risco de autoagressão', categoria: 'suicidio', terceiro };
+  for (const r of REGRAS) {
+    const m = r.re.exec(n);
+    if (!m) continue;
+    // Negação logo antes ("não tenho dor no peito", "sem falta de ar")
+    const antes = n.slice(0, m.index).trim().split(/\s+/).slice(-2);
+    if (r.categoria !== 'pcr' && antes.some((p) => /^(nao|sem|nunca|nem|nenhum|nenhuma)$/.test(p))) continue;
+    return { critico: true, motivo: r.motivo, categoria: r.categoria, terceiro: ehSobreTerceiro(n) };
   }
-
-  // ─── PCR / parada cardíaca ───
-  if (
-    /\b(parada cardiaca|parou o coracao|nao respira mais|parou de respirar|nao respira|sem pulso|sem batimento|coracao parou|esta sem respirar|nao ta respirando|nao esta respirando)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'parada cardiorrespiratória', categoria: 'pcr', terceiro };
-  }
-
-  // ─── Engasgo ───
-  if (
-    /\b(engasg|engasgou|engasgando|entalad|entalou|sufocando com comida|comida na garganta|nao consegue engolir|algo na garganta|preso na garganta)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'engasgo', categoria: 'engasgo', terceiro };
-  }
-
-  // ─── Afogamento ───
-  if (
-    /\b(afogamento|afogou|afogando|se afogou|quase afogou|caiu na agua|nao sai da agua|esta na agua sem respirar)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'afogamento', categoria: 'afogamento', terceiro };
-  }
-
-  // ─── Queimadura (recente) ───
-  if (
-    /\b(queimadura|queimou|queimei|se queimou|queimando|escaldadura|escaldou|agua quente na pele|oleo quente|fogo na pele|acidente com fogo)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'queimadura', categoria: 'queimadura', terceiro };
-  }
-
-  // ─── Trauma craniano ───
-  if (
-    /\b(bati a cabeca|bateu a cabeca|bati minha cabeca|bateu minha cabeca|bati com a cabeca|pancada na cabeca|levou uma pancada na cabeca|caiu e bateu a cabeca|caiu de altura|trauma craniano|trauma na cabeca|cabeca aberta|corte na cabeca|corte profundo na cabeca|sangrando na cabeca|sangrando a cabeca|sangrou a cabeca|sangue na cabeca)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'trauma craniano', categoria: 'trauma_craniano', terceiro };
-  }
-
-  // ─── Dor torácica ───
-  if (
-    /\b(dor (no|do|de)?\s*peito|dor toracica|aperto (no|do)\s*peito|peito apertado|pressao (no|do)\s*peito|peso (no|do)\s*peito|peito doendo|ta doendo o peito|esta doendo o peito|dor (no|do)\s*coracao|coracao apertado|pontada (no|do)\s*peito|peito (ta )?apertando|sinto (um )?aperto no peito|sinto (uma )?pressao no peito|sinto (um )?peso no peito|queimacao no peito)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'dor torácica', categoria: 'dor_toracica', terceiro };
-  }
-
-  // ─── Falta de ar ───
-  if (
-    /\b(falta de ar|falta de respirar|nao consigo respirar|nao (estou )?consigo respirar|nao to conseguindo respirar|nao tou conseguindo respirar|ta dificil respirar|esta dificil respirar|dificuldade (para|pra|de|em) respirar|sufocando|sufocado|sem ar|nao entra ar|nao ta entrando ar|respiracao curta|cansaco (para|pra) respirar|peito fechando|garganta fechando|estou ofegante|falta de oxigenio)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'falta de ar', categoria: 'falta_de_ar', terceiro };
-  }
-
-  // ─── Sinais neurológicos súbitos (AVC) ───
-  if (
-    /\b(boca torta|labio torto|rosto torto|face torta|fala enrolada|fala embolada|nao fala direito|nao consegue falar|fraqueza (em |de )?(um|1) lado|lado (do corpo )?(fraco|mole|sem forca)|perdi a forca|perdeu a forca|nao mexe (o |a )?(braco|perna)|dormencia (no|na|de) (braco|perna|corpo)|perda (subita )?de visao|nao enxerga (de )?repente|visao (dupla|embacada) (de )?repente|sorriso torto|dificuldade (para|pra) falar)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'sinais neurológicos súbitos', categoria: 'avc', terceiro };
-  }
-
-  // ─── Desmaio / inconsciência ───
-  if (
-    /\b(desmaio|desmaiei|desmaiou|desmaiando|apaguei|apagou|apagando|perdi a consciencia|perdeu a consciencia|inconsciente|caiu duro|caiu desmaiad|deu um branco e caiu|perdi os sentidos|perdeu os sentidos|passou mal e caiu)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'perda de consciência', categoria: 'desmaio', terceiro };
-  }
-
-  // ─── Convulsão ───
-  if (
-    /\b(convulsao|convulsionando|ataque epileptico|crise epileptica|tremendo todo|tremendo muito|espumando pela boca|corpo tremendo sem parar|tremor incontrolavel)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'convulsão', categoria: 'convulsao', terceiro };
-  }
-
-  // ─── Sangramento importante ───
-  if (
-    /\b(sangramento intenso|hemorragia|sangrando muito|muito sangue|sangramento que nao para|nao para de sangrar|ferida aberta sangrando|corte profundo sangrando)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'sangramento importante', categoria: 'sangramento', terceiro };
-  }
-
-  // ─── Vômito com sangue ───
-  if (
-    /\b(vomitando sangue|vomitei sangue|vomito com sangue|sangue no vomito|vomito com sangue|vomitei com sangue)\b/.test(n)
-  ) {
-    return { critico: true, motivo: 'sangue no vômito', categoria: 'vomito_sangue', terceiro };
-  }
-
-  // ─── Bebê pequeno com febre ───
-  const ehBebe =
-    /\b(bebe|recem nascid|recem-nascid|recem nascido|menos de 3 meses|com 3 meses|com 2 meses|com 1 mes|de 2 meses|de 3 meses|de 1 mes|de 2 semana|de 3 semana|de 4 semana)\b/.test(n);
-  const temFebre = /\b(febre|febril|temperatura alta|temperatura elevada|quebrado de febre|38|39|40)/.test(n);
-  if (ehBebe && temFebre) {
-    return { critico: true, motivo: 'bebê pequeno com febre', categoria: 'bebe_febre', terceiro: true };
-  }
-
-  // ─── Obstétrico ───
-  const ehGestante = /\b(gravida|gestante|estou gravida|to gravida|tou gravida|prenha|gestacao)\b/.test(n);
-  const temSangramento = /\b(sangramento|sangrando|sangrou|sangue|perda de sangue)\b/.test(n);
-  const temContracao = /\b(contracao|contracoes|contraindo|dor de parto|trabalho de parto|bolsa rota)\b/.test(n);
-  const temPerdaLiquido = /\b(bolsa estourou|perda de liquido|rompeu a bolsa|saiu agua|perdi liquido|perdendo liquido)\b/.test(n);
-  const temReducaoMov = /\b(bebe (parou|nao mexe|nao se mexe)|nao sinto (o )?bebe|bebe quieto|nao sinto mexer)\b/.test(n);
-
-  if (ehGestante && (temSangramento || temContracao || temPerdaLiquido || temReducaoMov)) {
-    return { critico: true, motivo: 'sinal obstétrico de risco', categoria: 'obstetrico', terceiro: false };
-  }
-
   return { critico: false };
 }
 
 // ═══════════════════════════════════════════════════════════
-// Decide se pode fazer pergunta de acompanhamento antes de escalar.
+// TEXTOS DE EMERGÊNCIA (aprovados — nunca gerados por LLM)
+// Fonte: Ministério da Saúde, ABE, AHA, SBC. NUNCA nomeiam doença.
 // ═══════════════════════════════════════════════════════════
-export function permiteTriagemAntes(
-  texto: string,
-  categoria: CategoriaCritica,
-  terceiro: boolean,
-): boolean {
-  const n = norm(texto);
+const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
+  suicidio:
+    '💛 Estou aqui com você. Se você está pensando em se machucar, ligue agora para o *CVV 188* (24h, gratuito, sigiloso). Em perigo imediato, ligue *192 (SAMU)* ou vá a uma UPA. Se puder, chame alguém de confiança para ficar com você.',
+  pcr: '',
+  engasgo:
+    '⚠️ Se você está engasgado e não consegue respirar, falar ou tossir, peça ajuda a alguém próximo agora e ligue *192 (SAMU)*. Se consegue tossir, continue tossindo com força.',
+  afogamento: '',
+  dor_toracica:
+    '⚠️ Dor no peito precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Não espere passar e não dirija sozinho.',
+  falta_de_ar:
+    '⚠️ Falta de ar precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá imediatamente à UPA mais próxima. Não dirija sozinho.',
+  avc:
+    '⚠️ Esses sinais precisam de atendimento imediato. Ligue *192 (SAMU)* agora. Anote a hora em que começou — isso é importante para o tratamento.',
+  trauma_craniano:
+    '⚠️ Pancada na cabeça precisa de avaliação imediata. Ligue *192 (SAMU)* ou vá agora a uma UPA/Pronto-Socorro, principalmente se houver vômito, sonolência, confusão, dor de cabeça forte ou sangramento.',
+  convulsao:
+    '⚠️ Essa situação precisa de atendimento imediato. Ligue *192 (SAMU)* agora.',
+  sangramento:
+    '⚠️ Sangramento importante precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, faça pressão firme sobre o local com um pano limpo.',
+};
 
-  // ─── Terceiro: SEMPRE pergunta primeiro (relato é sempre incompleto) ───
-  if (terceiro) return true;
+const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
+  pcr: `⚠️ *Ligue 192 (SAMU) agora* — ou peça para alguém ligar.
 
-  // ─── Nunca pergunta (SAMU/CVV direto) ───
-  if (categoria === 'suicidio') return false;
-  if (categoria === 'falta_de_ar') return false;
-  if (categoria === 'avc') return false;
-  if (categoria === 'sangramento') return false;
-  if (categoria === 'pcr') return false;
-  if (categoria === 'afogamento') return false;
-  if (categoria === 'trauma_craniano') return false;
+*Se a pessoa não responde e não respira normalmente:*
+1. Comprima o centro do peito com força, *100 a 120 vezes por minuto*, sem parar.
+2. Se souber: 30 compressões + 2 ventilações.
+3. Se houver DEA (desfibrilador) por perto, use seguindo as instruções do aparelho.
+4. Continue até o SAMU chegar.`,
+  afogamento: `⚠️ *Ligue 192 (SAMU) agora.* Não entre na água sem treinamento — jogue algo que boie.
 
-  // ─── Dor torácica: depende de sinal associado ───
-  if (categoria === 'dor_toracica') {
-    const temSinalAssociado =
-      /\b(falta de ar|nao consigo respirar|suor frio|suando muito|desmaio|desmaiei|apaguei|confus|nausea|vomit|tontura|fraqueza (no|em) braco|dor (no|do|de) braco|dor na mandibula|dor nas costas|palidez|palido|roxo|labios roxos)\b/.test(n);
-    return !temSinalAssociado;
-  }
-
-  // ─── Sempre pergunta (protocolo) ───
-  if (categoria === 'vomito_sangue') return true;
-  if (categoria === 'engasgo') return true;
-  if (categoria === 'queimadura') return true;
-  if (categoria === 'bebe_febre') return true;
-
-  if (categoria === 'desmaio') {
-    if (/\b(inconsciente agora|nao acorda|nao responde|apagad[oa] agora|nao ta respondendo|ainda apagad)\b/.test(n)) {
-      return false;
-    }
-    return true;
-  }
-
-  if (categoria === 'convulsao') {
-    if (/\b(convulsionando agora|ta convulsionando|esta convulsionando|convulsionando neste momento)\b/.test(n)) {
-      return false;
-    }
-    return true;
-  }
-
-  if (categoria === 'obstetrico') {
-    if (/\b(hemorragia|sangrando muito|muito sangue|sangramento intenso)\b/.test(n)) {
-      return false;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-// ═══════════════════════════════════════════════════════════
-// PROTOCOLOS DE PRIMEIROS SOCORROS
-// Fonte: Ministério da Saúde, ABE, AHA, SBC.
-// NUNCA nomeia doença. Só instrui + direciona serviço.
-// ═══════════════════════════════════════════════════════════
-export function protocoloConvulsaoTerceiro(): string {
-  return `⚠️ *Enquanto a crise acontece:*
-
-1. *Proteja a cabeça* — coloque algo macio embaixo (toalha, casaco).
-2. *Afaste objetos* — móveis e coisas que possam machucar. Tire os óculos e afrouxe a roupa no pescoço.
-3. *Anote a hora* que começou. Se durar mais de 5 minutos ou repetir, ligue *192 (SAMU)*.
-4. *Não coloque nada na boca* e não tente segurar os braços e pernas.
-
-*Depois que a crise passar*, deite a pessoa de lado (posição lateral de segurança) e fique ao lado dela até acordar bem. Não ofereça água, comida ou remédio.
-
-Me avise quando passar e se a pessoa voltou a ficar consciente.`;
-}
-
-export function protocoloEngasgo(): string {
-  return `⚠️ *Enquanto a pessoa está engasgada:*
+*Quando retirar a pessoa:*
+1. Se *não respira*: inicie compressões no peito e mantenha até o SAMU chegar.
+2. Se *respira*: deite de lado e mantenha aquecida.
+3. Mesmo que pareça bem, precisa de avaliação — pode piorar depois.`,
+  engasgo: `⚠️ *Enquanto a pessoa está engasgada:*
 
 1. Se ela *consegue tossir ou falar*: incentive a tossir. Não bata nas costas.
 2. Se *NÃO consegue respirar, falar ou tossir*: fique atrás dela, abrace, punho fechado acima do umbigo, comprima para dentro e para cima.
 3. Em *bebês (menos de 1 ano)*: 5 golpes nas costas + 5 compressões no peito.
 4. Em *gestante ou pessoa obesa*: compressões no peito, não no abdômen.
-5. Se perder a consciência: ligue *192* e inicie RCP.
+5. Se perder a consciência: ligue *192* e inicie compressões no peito.`,
+  convulsao: `⚠️ *Ligue 192 (SAMU).* Enquanto a crise acontece:
 
-Ligue *192* se não resolver rápido.`;
-}
+1. *Proteja a cabeça* com algo macio e afaste objetos.
+2. *Não coloque nada na boca* e não segure braços e pernas.
+3. *Anote a hora* que começou.
+4. Quando a crise passar, deite a pessoa de lado e fique com ela.`,
+  avc: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
 
-export function protocoloPCR(): string {
-  return `⚠️ *Se a pessoa não responde e não respira:*
-
-1. Ligue *192 (SAMU)* agora, ou peça para alguém ligar.
-2. Inicie compressões no centro do peito, *100 a 120 por minuto*, sem parar.
-3. Se souber fazer ventilação: 30 compressões + 2 ventilações.
-4. Se tiver DEA (desfibrilador) próximo, use seguindo as instruções.
-5. Continue até o SAMU chegar.
-
-*Não pare as compressões.*`;
-}
-
-export function protocoloAfogamento(): string {
-  return `⚠️ *Não entre na água sem treinamento.* Chame *192* e jogue algo flutuante.
-
-*Quando retirar a pessoa:*
-1. Se *não respira*: inicie RCP e mantenha até o SAMU chegar.
-2. Se *respira*: deite de lado, mantenha aquecida.
-3. Mesmo que pareça bem, leve a uma UPA — pode piorar depois.
-
-Ligue *192* agora.`;
-}
-
-export function protocoloSangramento(): string {
-  return `⚠️ *Enquanto o sangramento não para:*
-
-1. Faça *pressão direta* com pano limpo sobre o ferimento.
-2. *NÃO retire objetos encravados* (faca, vidro).
-3. Se possível, eleve o membro acima do nível do coração.
-4. Se não parar em 10 minutos, ligue *192*.
-
-Não use pó, café, pasta ou manteiga.`;
-}
-
-export function protocoloQueimadura(): string {
-  return `⚠️ *Cuidados imediatos:*
-
-1. *Água corrente em temperatura ambiente* por cerca de 20 minutos. *NÃO use gelo*.
-2. Retire anéis e objetos apertados antes que o inchaço apareça.
-3. *NÃO estoure bolhas*, nem passe pasta, manteiga ou pó.
-4. Cubra com pano limpo e úmido.
-
-Ligue *192* se for grande, profunda, em rosto/mãos/genitais, ou em bebê/idoso.`;
-}
-
-export function protocoloDesmaioTerceiro(): string {
-  return `⚠️ *Enquanto a pessoa está desmaiada:*
-
-1. Deite-a de costas e verifique se está respirando.
-2. Eleve as pernas (a menos que tenha caído de altura ou batido a cabeça).
-3. Afaste objetos.
-4. Se recuperar rápido: deixe deitada por alguns minutos.
-5. Se *NÃO recuperar em 1 minuto*, não respirar bem, convulsionar ou tiver batido a cabeça: ligue *192*.`;
-}
-
-export function protocoloAVCTerceiro(): string {
-  return `⚠️ *Enquanto o SAMU não chega:*
-
-1. *Anote a hora exata* que os sintomas começaram. Isso é crítico para o tratamento.
-2. Deite a pessoa de lado, com a cabeça levemente elevada.
-3. *NÃO dê água, comida ou remédio*.
-4. Afrouxe roupas apertadas.
-5. Se ela vomitar, mantenha de lado para não engasgar.
-
-Ligue *192* agora.`;
-}
-
-export function protocoloTraumaCranianoTerceiro(): string {
-  return `⚠️ *Enquanto o SAMU não chega:*
+1. *Anote a hora exata* que os sintomas começaram.
+2. *NÃO dê água, comida ou remédio.*
+3. Deite a pessoa de lado, com a cabeça levemente elevada.
+4. Afrouxe roupas apertadas.`,
+  trauma_craniano: `⚠️ *Ligue 192 (SAMU).* Enquanto o SAMU não chega:
 
 1. *Mantenha a pessoa deitada e imóvel* — não deixe levantar nem andar.
-2. *NÃO remova objetos encravados* na cabeça.
-3. Se estiver sangrando, faça *pressão leve ao redor* do ferimento com pano limpo. Não aperte em cima de osso exposto.
-4. Observe se está consciente e respirando bem.
-5. Se perder a consciência ou vomitar, deite de lado para não engasgar.
+2. *NÃO remova objetos encravados.*
+3. Se sangrar, faça pressão leve ao redor do ferimento com pano limpo.
+4. Se vomitar ou perder a consciência, deite de lado.`,
+  sangramento: `⚠️ *Ligue 192 (SAMU).* Enquanto isso:
 
-Ligue *192* agora.`;
+1. Faça *pressão direta e firme* com pano limpo sobre o ferimento.
+2. *NÃO retire objetos encravados.*
+3. Se possível, eleve o membro acima do nível do coração.
+4. Não use pó de café, pasta ou manteiga.`,
+  dor_toracica:
+    '⚠️ Dor no peito precisa de atendimento imediato. *Ligue 192 (SAMU) agora.* Deixe a pessoa em repouso, sentada ou deitada, e não deixe que ela dirija.',
+  falta_de_ar:
+    '⚠️ Falta de ar precisa de atendimento imediato. *Ligue 192 (SAMU) agora.* Deixe a pessoa sentada, em repouso, e afrouxe roupas apertadas.',
+};
+
+/** Texto aprovado para a categoria. Protocolos de primeiros socorros quando é outra pessoa (ou PCR/afogamento). */
+export function textoEmergencia(categoria: CategoriaCritica, terceiro: boolean): string {
+  if (categoria === 'pcr' || categoria === 'afogamento') return PROTOCOLO[categoria]!;
+  if (terceiro && PROTOCOLO[categoria]) return PROTOCOLO[categoria]!;
+  return TEXTO_PROPRIO[categoria];
 }
 
-// ═══════════════════════════════════════════════════════════
-// Retorna a mensagem de triagem/protocolo por categoria.
-// NUNCA nomeia doença — só instrui e direciona.
-// ═══════════════════════════════════════════════════════════
-export function perguntaTriagemCritica(
-  categoria: CategoriaCritica,
-  terceiro: boolean,
-): string | null {
-  // ─── PCR e AFOGAMENTO: protocolo mesmo se for a própria pessoa ───
-  if (categoria === 'pcr') return protocoloPCR();
-  if (categoria === 'afogamento') return protocoloAfogamento();
-
-  // ─── Terceiro: protocolo específico ───
-  if (terceiro) {
-    if (categoria === 'convulsao') return protocoloConvulsaoTerceiro();
-    if (categoria === 'engasgo') return protocoloEngasgo();
-    if (categoria === 'desmaio') return protocoloDesmaioTerceiro();
-    if (categoria === 'avc') return protocoloAVCTerceiro();
-    if (categoria === 'sangramento') return protocoloSangramento();
-    if (categoria === 'queimadura') return protocoloQueimadura();
-    if (categoria === 'trauma_craniano') return protocoloTraumaCranianoTerceiro();
-  }
-
-  // ─── Próprio: perguntas simples ───
-  if (categoria === 'dor_toracica') {
-    if (terceiro) {
-      return `⚠️ *Emergência potencial.* A pessoa está com falta de ar, suor frio ou desmaio agora? Se sim, ligue *192 (SAMU)* imediatamente. Se não, me conta mais.`;
-    }
-    return `⚠️ *Se for dor forte no peito agora, não espere.* Você está com falta de ar, suor frio ou desmaio junto? Se sim, ligue *192 (SAMU)* agora. Se não, me conta mais.`;
-  }
-
-  if (categoria === 'vomito_sangue') {
-    return terceiro
-      ? `A pessoa ainda está vomitando? Foi muito sangue ou só um pouco?`
-      : `Você ainda está vomitando? Foi muito sangue ou só um pouco?`;
-  }
-
-  if (categoria === 'desmaio') {
-    return `Você voltou a ficar consciente? Está se sentindo tonta ou com fraqueza agora?`;
-  }
-
-  if (categoria === 'convulsao') {
-    return `A crise já passou? Você está consciente agora?`;
-  }
-
-  if (categoria === 'engasgo') {
-    return `Você ainda está engasgado? Consegue respirar e falar normalmente agora?`;
-  }
-
-  if (categoria === 'queimadura') {
-    return protocoloQueimadura();
-  }
-
-  if (categoria === 'trauma_craniano') {
-    return null; // próprio → SAMU direto
-  }
-
-  if (categoria === 'bebe_febre') {
-    return `Há quantos dias o bebê está com febre? Ele está mamando bem e urinando normalmente?`;
-  }
-
-  if (categoria === 'obstetrico') {
-    return `Quanto sangramento? Está com dor forte, contração ou perda de líquido?`;
-  }
-
-  return null;
-}
-
-export function temPalavrasClinicas(texto: string): boolean {
-  const n = norm(texto);
-  return /\b(dor|doendo|doer|sinto|sentindo|sintoma|mal|ruim|enjoo|nausea|tosse|febre|falta|aperto|pressao|peso|inchaco|mancha|ferida|sangue|vomito|diarreia|tontura|falta|tonteira|fraqueza|desmaio|cansaco|falta de ar|dificuldade)\b/.test(n);
+export function destinoDaCategoria(categoria: CategoriaCritica): 'SAMU_192' | 'CVV' {
+  return categoria === 'suicidio' ? 'CVV' : 'SAMU_192';
 }
