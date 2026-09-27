@@ -1,6 +1,6 @@
 // src/ia/base_conhecimento.ts
 // RAG: busca vetorial (semântica) + resposta via Groq.
-// Devolve estrutura + passa por LLM-judge antes de sair.
+// Devolve estrutura + passa por 2 camadas anti-diagnóstico antes de sair.
 
 import type { Sql } from '../whatsapp/persistencia_sessao.js';
 import { gerarEmbedding } from '../servicos/embeddings.js';
@@ -98,7 +98,7 @@ function buscarLocalKeyword(pergunta: string, k = 3): TopicoLocal[] {
 }
 
 // ────────────────────────────────────────────────────
-// LLM-judge
+// LLM-judge (Camada 3 — semântica)
 // ────────────────────────────────────────────────────
 const JUDGE_SYSTEM = `Você analisa respostas de um assistente do SUS.
 
@@ -135,7 +135,7 @@ function respostaSeguraGenerica(): string {
 }
 
 // ────────────────────────────────────────────────────
-// System prompt do RAG
+// System prompt do RAG — CONCISO
 // ────────────────────────────────────────────────────
 const RAG_SYSTEM = `Você é um assistente do SUS que explica informações GERAIS sobre saúde e serviços públicos.
 
@@ -146,18 +146,58 @@ REGRAS ABSOLUTAS:
 4. Ao explicar uma doença (ex: "o que é dengue"), explique transmissão, sinais gerais e
    prevenção — NUNCA diga que os sintomas do usuário batem com ela.
 
+ESTILO — MUITO IMPORTANTE:
+- Responda SÓ o que foi perguntado. Se a pergunta é "quantos graus é febre?",
+  responda em 1-2 frases com a temperatura e quando procurar ajuda. NÃO copie o tópico inteiro.
+- Se a pergunta é específica, seja específico. Se é ampla, aí sim dê um panorama curto.
+- Máximo 3 parágrafos curtos. Ideal: 1-2 frases quando der.
+- NUNCA repita o título ou o texto bruto do tópico. Sintetize.
+- Não cumprimente ("Olá!"), não se apresente, não encerre com "espero ter ajudado".
+- Vá direto ao ponto.
+
+Exemplo BOM (pergunta "quantos graus é febre?"):
+"Febre é a partir de ~38°C. Em adultos, procure uma UPA se passar de 39°C, durar mais de 3 dias ou vier com falta de ar, manchas ou confusão."
+
+Exemplo RUIM:
+"Olá! A febre é o aumento da temperatura corporal, geralmente considerada a partir de aproximadamente 38°C... [3 parágrafos gigantes repetindo tudo]"
+
 O QUE VOCÊ PODE FAZER:
-- Explicar informações gerais (ex: "febre é temperatura acima de 37,8°C").
+- Explicar informações gerais (ex: "febre é temperatura acima de 38°C").
 - Explicar diferenças entre serviços do SUS (UBS, UPA, SAMU, CAPS).
 - Orientar quando procurar cada serviço.
 
-FORMATO:
-- Português claro, acolhedor, direto. Máximo 3 parágrafos.
-- Se a base não tiver a informação, devolva EXATAMENTE: NAO_ENCONTRADO
+Se a base não tiver a informação, devolva EXATAMENTE: NAO_ENCONTRADO`;
 
-Exemplo BOM: "Febre é temperatura acima de 37,8°C. Se durar mais de 3 dias ou vier com
-falta de ar, procure uma UPA."
-Exemplo RUIM: "Seus sintomas podem ser de gripe."`;
+// ────────────────────────────────────────────────────
+// [CAMADA 5] Filtro determinístico anti-diagnóstico.
+// Rede de segurança caso o LLM-judge falhe.
+// Não bloqueia explicação educativa ("dengue é transmitida por...").
+// Bloqueia associação sintoma ↔ doença ("seus sintomas são de X").
+// ────────────────────────────────────────────────────
+const DOENCAS_DIAGNOSTICAS =
+  'gripe|influenza|dengue|zika|chikungunya|covid|coronavirus|pneumonia|infarto|avc|derrame|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma|hepatite|tuberculose|hanseniase';
+
+function respostaDiagnosticaRegex(resposta: string): boolean {
+  const padroes = [
+    // "você pode estar com X", "você tem X"
+    /\b(voc[eê]|o senhor|a senhora)\b[^.!?]{0,40}\b(pode|deve|parece|provavelmente|possivelmente)\b[^.!?]{0,30}\b(ter|estar com|ser)\b/i,
+    // "seus sintomas são de X" / "seus sintomas indicam X"
+    /\b(seus?|os)\s+sintomas?\b[^.!?]{0,40}\b(s[aã]o|indicam|sugerem|apontam|revelam|batem com|cursam com)\b/i,
+    // "isso é X" / "isso pode ser X" com doença
+    new RegExp(`\\b(isso|isto|esse quadro|esse caso)\\b[^.!?]{0,30}\\b(é|eh|pode ser|deve ser|parece)\\b[^.!?]{0,20}\\b(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
+    // "quadro de X" / "caso de X" (quando ligado ao usuário)
+    new RegExp(`\\b(quadro|caso|suspeita)\\s+de\\s+(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
+    // "o diagnóstico é", "diagnóstico provável"
+    /\b(diagn[oó]stico|progn[oó]stico)\b[^.!?]{0,30}\b(é|eh|prov[aá]vel|sugere|indica)\b/i,
+    // "provavelmente é X", "possivelmente é X" + doença
+    new RegExp(`\\b(provavelmente|possivelmente|aparentemente|talvez)\\b[^.!?]{0,30}\\b(${DOENCAS_DIAGNOSTICAS})\\b`, 'i'),
+  ];
+
+  for (const p of padroes) {
+    if (p.test(resposta)) return true;
+  }
+  return false;
+}
 
 // ────────────────────────────────────────────────────
 // API pública
@@ -212,9 +252,18 @@ ${contextoTexto}`;
     };
   }
 
-  const suspeito = await respostaTemDiagnostico(pergunta, texto);
-  if (suspeito) {
-    console.warn(`🚫 [RAG/judge] bloqueado: "${texto.slice(0, 80)}..."`);
+  // [FIX] Corte de tamanho — pergunta curta não merece resposta gigante
+  let textoFinal = texto;
+  if (texto.length > 800 && pergunta.length < 80) {
+    const paragrafos = texto.split(/\n\n+/);
+    textoFinal = paragrafos.slice(0, 3).join('\n\n');
+    console.log(`✂️ [RAG] resposta cortada: ${texto.length} → ${textoFinal.length} chars`);
+  }
+
+  // ── [CAMADA 5] Regex determinístico — ANTES do LLM judge
+  // É rápido, não depende do LLM e pega os casos óbvios.
+  if (respostaDiagnosticaRegex(textoFinal)) {
+    console.warn(`🚫 [RAG/regex] bloqueado: "${textoFinal.slice(0, 80)}..."`);
     return {
       titulo: '',
       corpo: respostaSeguraGenerica(),
@@ -224,10 +273,23 @@ ${contextoTexto}`;
     };
   }
 
-  console.log(`✅ [RAG] resposta aprovada pelo judge (${texto.length} chars)`);
+  // ── [CAMADA 3] LLM-judge — pega o que o regex deixou passar
+  const suspeito = await respostaTemDiagnostico(pergunta, textoFinal);
+  if (suspeito) {
+    console.warn(`🚫 [RAG/judge] bloqueado: "${textoFinal.slice(0, 80)}..."`);
+    return {
+      titulo: '',
+      corpo: respostaSeguraGenerica(),
+      topico_id: topicoBase?.id ?? 'seguro_generico',
+      origem,
+      bloqueado: true,
+    };
+  }
+
+  console.log(`✅ [RAG] resposta aprovada pelas 2 camadas (${textoFinal.length} chars)`);
   return {
     titulo: topicoBase?.titulo ?? '',
-    corpo: texto,
+    corpo: textoFinal,
     topico_id: topicoBase?.id ?? 'desconhecido',
     origem,
     similaridade: topicoBase?.similaridade,
