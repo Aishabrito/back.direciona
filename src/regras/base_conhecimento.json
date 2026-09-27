@@ -1,114 +1,625 @@
 {
-  "versao": "1.0.0",
-  "atualizado_em": "2026-03-15",
+  "versao": "1.2.0",
+  "atualizado_em": "2026-09-24",
   "topicos": [
     {
       "id": "dengue",
       "titulo": "Dengue — sintomas, transmissão e quando procurar ajuda",
       "tags": ["dengue", "aedes", "mosquito", "febre", "dor no corpo", "mancha"],
-      "conteudo": "A dengue é transmitida pela picada do mosquito Aedes aegypti, principalmente em períodos chuvosos. Os sintomas clássicos são febre alta (acima de 38°C), dor de cabeça, dor atrás dos olhos, dor no corpo e nas juntas, náusea e manchas vermelhas na pele. A maioria dos casos evolui bem com hidratação e repouso. SINAIS DE ALARME que exigem atendimento imediato: dor abdominal intensa e contínua, vômitos persistentes, sangramento pelo nariz ou gengiva, fezes escuras, tontura ao levantar, sonolência excessiva, pele pálida e fria. Não tome ácido acetilsalicílico (AAS) nem anti-inflamatórios — aumentam o risco de sangramento. Procure uma UPA se tiver sinais de alarme; a UBS atende casos leves."
+      "conteudo": "A dengue é transmitida pela picada do mosquito Aedes aegypti, principalmente em períodos chuvosos. Os sintomas clássicos são febre, dor de cabeça, dor atrás dos olhos, dor no corpo e nas juntas, náusea e manchas vermelhas na pele.\n\nA maioria dos casos evolui bem com hidratação e repouso. Procure uma UBS ou outro serviço de saúde para avaliação se houver suspeita de dengue — especialmente quando a febre desaparece, porque é nessa fase que podem surgir complicações. Vá imediatamente a uma UPA ou pronto-socorro se surgirem sinais de alarme: dor abdominal intensa e contínua, vômitos persistentes, sangramento (nariz, gengiva, fezes escuras), tontura, desmaio, sonolência intensa, irritabilidade, dificuldade para respirar ou pouca urina.\n\nNão tome ácido acetilsalicílico (AAS) nem anti-inflamatórios — aumentam o risco de sangramento."
     },
     {
       "id": "dengue_zika_chikungunya",
       "titulo": "Diferença entre dengue, zika e chikungunya",
       "tags": ["zika", "chikungunya", "dengue", "aedes", "arbovirose"],
-      "conteudo": "As três são transmitidas pelo mesmo mosquito (Aedes aegypti) e podem ter sintomas parecidos. Dengue: febre alta e dor no corpo, pode evoluir para formas graves. Zika: febre baixa, manchas vermelhas no corpo, conjuntivite, dura poucos dias; é perigoso principalmente para gestantes (risco de microcefalia). Chikungunya: febre e dor intensa nas juntas (articulações), que pode durar meses. Não há tratamento específico para nenhuma — o cuidado é sintomático com hidratação e repouso. Todas exigem avaliação médica para confirmar o diagnóstico."
+      "conteudo": "As três são transmitidas pelo mesmo mosquito (Aedes aegypti) e podem ter sintomas parecidos. Dengue: febre e dor no corpo, pode evoluir para formas graves. Zika: febre baixa, manchas vermelhas no corpo, conjuntivite, dura poucos dias; é perigoso principalmente para gestantes (risco de microcefalia). Chikungunya: febre e dor intensa nas juntas (articulações), que pode durar meses.\n\nNão há tratamento específico para nenhuma — o cuidado é sintomático, com hidratação e repouso. Todas exigem avaliação em serviço de saúde para confirmar o diagnóstico."
     },
     {
       "id": "gripe_resfriado",
       "titulo": "Diferença entre gripe e resfriado",
       "tags": ["gripe", "resfriado", "influenza", "coriza", "tosse"],
-      "conteudo": "Resfriado comum: causado por rinovírus, geralmente brando, com coriza, espirros, garganta irritada, dura 3 a 7 dias. Gripe (influenza): causada pelo vírus influenza, mais intensa, com febre alta, dor no corpo, dor de cabeça, cansaço, pode durar 1 a 2 semanas. Ambos melhoram com repouso e hidratação. Procure uma UBS se persistir além de 7 dias ou se tiver febre alta por mais de 3 dias. Procure uma UPA se surgir falta de ar, dor no peito ou piora rápida. A vacina contra gripe é oferecida anualmente na UBS para grupos prioritários (idosos, crianças, gestantes, profissionais de saúde)."
+      "conteudo": "Resfriado comum: causado por rinovírus, geralmente brando, com coriza, espirros, garganta irritada, dura 3 a 7 dias. Gripe (influenza): causada pelo vírus influenza, mais intensa, com febre, dor no corpo, dor de cabeça, cansaço, pode durar 1 a 2 semanas.\n\nAmbos melhoram com repouso e hidratação. Procure uma UBS se persistir além de 7 dias ou se a febre durar mais de 3 dias. Procure uma UPA se surgir falta de ar, dor no peito ou piora rápida. A vacina contra gripe é oferecida anualmente na UBS para grupos prioritários (idosos, crianças, gestantes, profissionais de saúde)."
     },
     {
       "id": "covid",
       "titulo": "COVID-19 — sintomas e cuidados",
       "tags": ["covid", "coronavirus", "sars", "perda de olfato", "perda de paladar"],
-      "conteudo": "A COVID-19 é causada pelo vírus SARS-CoV-2. Sintomas comuns: febre, tosse, dor de garganta, perda de olfato ou paladar, cansaço, dor no corpo. Casos leves podem ser acompanhados em casa com repouso e hidratação, isolamento por 5 a 7 dias. Procure uma UPA se surgir falta de ar, dor no peito, confusão, lábios arroxeados ou saturação de oxigênio abaixo de 94%. A vacinação está disponível na UBS para grupos prioritários."
+      "conteudo": "A COVID-19 é causada pelo vírus SARS-CoV-2. Sintomas comuns: febre, tosse, dor de garganta, perda de olfato ou paladar, cansaço, dor no corpo. Casos leves podem ser acompanhados em casa com repouso e hidratação.\n\nSe houver suspeita ou confirmação, evite contato próximo com outras pessoas e siga a orientação vigente do Ministério da Saúde e da secretaria de saúde local — a recomendação pode variar conforme os sintomas, o estado clínico e a possibilidade de usar máscara.\n\nProcure uma UPA se surgir falta de ar, dor no peito, confusão, lábios arroxeados ou saturação de oxigênio abaixo de 94%. Pessoas com maior risco de evolução grave (idosos, imunossuprimidos, com doenças crônicas) devem procurar avaliação precocemente — há tratamento específico disponível no SUS quando diagnosticado no período adequado. A vacinação está disponível na UBS."
     },
     {
       "id": "pressao_alta",
       "titulo": "Pressão alta (hipertensão) — o que fazer",
       "tags": ["pressao alta", "hipertensao", "pressao arterial", "dor de cabeca"],
-      "conteudo": "A hipertensão é uma doença crônica comum, geralmente sem sintomas, que exige acompanhamento na UBS com medição regular da pressão arterial. Pressão alta persistente pode causar AVC, infarto e problemas nos rins. Mudanças no estilo de vida ajudam: reduzir sal, praticar atividade física, controlar o peso, evitar álcool e cigarro. Se a pressão subir muito e vier acompanhada de dor de cabeça intensa, visão turva, dor no peito ou falta de ar, procure imediatamente uma UPA ou ligue 192."
+      "conteudo": "A hipertensão é uma doença crônica comum, geralmente sem sintomas, que exige acompanhamento na UBS com medição regular da pressão arterial. Pressão alta persistente pode causar AVC, infarto e problemas nos rins.\n\nMudanças no estilo de vida ajudam: reduzir sal, praticar atividade física, controlar o peso, evitar álcool e cigarro. Se a pressão subir muito e vier acompanhada de dor de cabeça intensa, visão turva, dor no peito ou falta de ar, procure imediatamente uma UPA ou ligue 192."
     },
     {
       "id": "diabetes",
       "titulo": "Diabetes — sintomas e acompanhamento",
       "tags": ["diabetes", "glicemia", "açucar no sangue", "sede", "urinar muito"],
-      "conteudo": "O diabetes é uma doença crônica caracterizada por níveis elevados de açúcar no sangue. Sintomas comuns: muita sede, urinar muito, cansaço, perda de peso sem explicação, visão embaçada, feridas que demoram a cicatrizar. O acompanhamento é feito na UBS com exames de sangue periódicos e uso de medicamentos quando prescritos. Sinais de emergência: confusão mental, hálito de acetona, respiração rápida e profunda, desmaio — procure uma UPA imediatamente."
+      "conteudo": "O diabetes é uma doença crônica caracterizada por níveis elevados de açúcar no sangue. Sintomas comuns: muita sede, urinar muito, cansaço, perda de peso sem explicação, visão embaçada, feridas que demoram a cicatrizar.\n\nO acompanhamento é feito na UBS com exames periódicos e uso de medicamentos quando prescritos. Sinais de emergência: confusão mental, hálito de acetona, respiração rápida e profunda, desmaio — procure uma UPA imediatamente."
     },
     {
       "id": "asma",
       "titulo": "Asma — crise e cuidados",
       "tags": ["asma", "chiado no peito", "falta de ar", "bronquite"],
-      "conteudo": "A asma é uma doença inflamatória dos brônquios que causa chiado no peito, tosse seca e falta de ar. Durante uma crise, o tratamento inclui o uso de bombinhas (broncodilatadores) prescritas. Numa crise grave, com falta de ar intensa que não melhora com a bombinha, dificuldade para falar frases inteiras, ou lábios arroxeados, procure uma UPA ou ligue 192. O acompanhamento de rotina é feito na UBS, com plano de ação escrito pelo médico."
+      "conteudo": "A asma é uma doença inflamatória dos brônquios que causa chiado no peito, tosse seca e falta de ar. Durante uma crise, o tratamento inclui o uso de bombinhas (broncodilatadores) prescritas.\n\nNuma crise grave, com falta de ar intensa que não melhora com a bombinha, dificuldade para falar frases inteiras, ou lábios arroxeados, procure uma UPA ou ligue 192. O acompanhamento de rotina é feito na UBS, com plano de ação escrito pelo médico."
     },
     {
       "id": "alergia",
       "titulo": "Alergia — quando é grave",
       "tags": ["alergia", "alérgico", "coceira", "urticaria", "anafilaxia"],
-      "conteudo": "Reações alérgicas leves causam coceira, espirros, coriza, olhos vermelhos — trate com antialérgico prescrito ou procure a UBS. SINAIS DE GRAVIDADE: falta de ar, chiado no peito, inchaço nos lábios, língua ou garganta, dificuldade para engolir, tontura, desmaio, queda de pressão. Isso é anafilaxia, uma emergência — ligue 192 imediatamente. Pessoas com histórico de alergia grave devem andar com adrenalina autoinjetável quando prescrita."
+      "conteudo": "Reações alérgicas leves causam coceira, espirros, coriza, olhos vermelhos — trate com antialérgico prescrito ou procure a UBS.\n\nSINAIS DE GRAVIDADE: falta de ar, chiado no peito, inchaço nos lábios, língua ou garganta, dificuldade para engolir, tontura, desmaio, queda de pressão. Isso é anafilaxia, uma emergência — ligue 192 imediatamente. Pessoas com histórico de alergia grave devem andar com adrenalina autoinjetável quando prescrita."
     },
     {
       "id": "dor_cabeca",
       "titulo": "Dor de cabeça — tipos e quando se preocupar",
       "tags": ["dor de cabeca", "enxaqueca", "cefaleia", "migranea"],
-      "conteudo": "A maioria das dores de cabeça é benigna (tensão, enxaqueca, cansaço, desidratação). Melhora com repouso, hidratação e analgésico comum. SINAIS DE ALARME: dor de cabeça súbita e muito intensa (a pior da vida), acompanhada de febre e rigidez de nuca, vômitos em jato, confusão, fraqueza em um lado do corpo, alteração da visão ou da fala, ou após uma queda. Nesses casos, procure uma UPA ou ligue 192 imediatamente."
+      "conteudo": "A maioria das dores de cabeça é benigna (tensão, enxaqueca, cansaço, desidratação). Melhora com repouso, hidratação e analgésico comum.\n\nSINAIS DE ALARME: dor de cabeça súbita e muito intensa (a pior da vida), acompanhada de febre e rigidez de nuca, vômitos em jato, confusão, fraqueza em um lado do corpo, alteração da visão ou da fala, ou após uma queda. Nesses casos, procure uma UPA ou ligue 192 imediatamente."
     },
     {
       "id": "dor_costas",
       "titulo": "Dor nas costas — quando procurar ajuda",
       "tags": ["dor nas costas", "lombar", "coluna", "lombalgia"],
-      "conteudo": "A dor nas costas é muito comum e geralmente melhora com repouso relativo, calor local e analgésico. Procure uma UBS se durar mais de uma semana, se repetir com frequência ou se atrapalhar as atividades diárias. SINAIS DE URGÊNCIA: dor que desce pela perna com formigamento ou perda de força, perda de controle da urina ou fezes, febre com dor intensa, dor após uma queda, ou perda de sensibilidade na região genital — procure uma UPA."
+      "conteudo": "A dor nas costas é muito comum e geralmente melhora com repouso relativo, calor local e analgésico. Procure uma UBS se durar mais de uma semana, se repetir com frequência ou se atrapalhar as atividades diárias.\n\nSINAIS DE URGÊNCIA: dor que desce pela perna com formigamento ou perda de força, perda de controle da urina ou fezes, febre com dor intensa, dor após uma queda, ou perda de sensibilidade na região genital — procure uma UPA."
     },
     {
       "id": "diarreia",
       "titulo": "Diarreia — cuidados em casa e sinais de alerta",
       "tags": ["diarreia", "desidratacao", "soro", "intestino"],
-      "conteudo": "A diarreia aguda geralmente dura 2 a 3 dias e melhora com hidratação (soro caseiro ou soro de reidratação oral) e alimentação leve. Evite refrigerantes, sucos industrializados e leite. Procure uma UBS se durar mais de 3 dias ou se houver sangue nas fezes. Procure uma UPA se houver sinais de desidratação: boca seca, olhos fundos, pouca urina, tontura ao levantar, sonolência excessiva. Em crianças e idosos, a desidratação é mais rápida — procure atendimento antes."
+      "conteudo": "A diarreia aguda geralmente dura 2 a 3 dias e melhora com hidratação e alimentação leve. Use soro de reidratação oral preparado exatamente conforme as instruções da embalagem — se não houver, procure uma UBS para orientação. Evite refrigerantes, sucos industrializados e leite.\n\nProcure uma UBS se durar mais de 3 dias ou se houver sangue nas fezes. Procure uma UPA se houver sinais de desidratação: boca seca, olhos fundos, pouca urina, tontura ao levantar, sonolência excessiva. Em crianças e idosos, a desidratação é mais rápida — procure atendimento antes."
     },
     {
       "id": "vacinacao",
       "titulo": "Vacinação — calendário e onde tomar",
       "tags": ["vacina", "vacinacao", "imunizacao", "calendario"],
-      "conteudo": "As vacinas estão disponíveis gratuitamente na UBS de referência, com o Cartão Nacional de Saúde e documento com foto. O calendário infantil inclui BCG, hepatite B, pentavalente, VIP/VOP, rotavírus, pneumocócica, meningocócica, tríplice viral, varicela e outras. Adultos e idosos têm calendário próprio (gripe anual, COVID-19, tétano, hepatite B). Gestantes têm calendário específico. Leve sempre o cartão de vacinação para registro."
+      "conteudo": "As vacinas estão disponíveis gratuitamente na UBS de referência, com o Cartão Nacional de Saúde e documento com foto. O calendário infantil inclui BCG, hepatite B, pentavalente, VIP/VOP, rotavírus, pneumocócica, meningocócica, tríplice viral, varicela e outras.\n\nAdultos e idosos têm calendário próprio (gripe anual, COVID-19, tétano, hepatite B). Gestantes têm calendário específico. Leve sempre o cartão de vacinação para registro."
     },
     {
       "id": "aleitamento",
       "titulo": "Amamentação — orientações gerais",
       "tags": ["amamentacao", "leite materno", "mama", "bebe", "aleitamento"],
-      "conteudo": "O leite materno é o alimento ideal para o bebê até os 6 meses de vida, exclusivamente. Depois, complementado com outros alimentos até 2 anos ou mais. O bebê deve mamar em livre demanda (quando quiser). Se houver dor nas mamas, fissuras ou dificuldade na pega, procure a UBS ou um Banco de Leite Humano para orientação. Sinais de alerta no bebê: não está ganhando peso, está muito sonolento, tem menos de 6 fraldas molhadas por dia, ou febre — procure atendimento."
+      "conteudo": "O leite materno é o alimento ideal para o bebê até os 6 meses de vida, exclusivamente. Depois, complementado com outros alimentos até 2 anos ou mais. O bebê deve mamar em livre demanda (quando quiser).\n\nSe houver dor nas mamas, fissuras ou dificuldade na pega, procure a UBS ou um Banco de Leite Humano para orientação. Sinais de alerta no bebê: não está ganhando peso, está muito sonolento, tem menos de 6 fraldas molhadas por dia, ou febre — procure atendimento."
     },
-        {
+    {
       "id": "febre_geral",
       "titulo": "Febre — o que é, quando se preocupar e onde buscar ajuda",
-      "tags": ["febre", "temperatura", "febre alta", "adulto", "febre persistente", "infecção", "37 graus", "38 graus", "39 graus"],
-      "conteudo": "Febre é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Em adultos e adolescentes, febre isolada de início recente sem outros sintomas pode ser acompanhada em casa com hidratação, repouso e antitérmico quando prescrito. Procure a UBS se a febre durar mais de 3 dias, se repetir com frequência ou vier com outros sintomas. Procure uma UPA ou ligue 192 imediatamente se houver: falta de ar, dor no peito, confusão mental, rigidez de nuca, manchas roxas na pele que não desaparecem ao esticar, convulsão, ou febre acima de 39°C que não baixa com antitérmico. Em crianças, bebês e gestantes, os critérios são diferentes e mais rigorosos — consulte os tópicos específicos."
+      "tags": ["febre", "temperatura", "febre alta", "adulto", "febre persistente", "infecção"],
+      "conteudo": "Febre é o aumento da temperatura corporal, geralmente considerado a partir de aproximadamente 38°C, mas o valor de referência pode variar conforme o local de medição, a idade e o protocolo do serviço.\n\nEm adultos e adolescentes, febre isolada de início recente sem outros sintomas pode ser acompanhada em casa com hidratação, repouso e antitérmico quando prescrito. Procure a UBS se a febre durar mais de 3 dias, se repetir com frequência ou vier com outros sintomas. Em bebês pequenos, gestantes, idosos e pessoas com doenças crônicas, procure orientação mais cedo.\n\nProcure uma UPA ou ligue 192 imediatamente se houver: falta de ar, dor no peito, confusão mental, rigidez de nuca, manchas roxas na pele que não desaparecem ao esticar, convulsão, prostração intensa ou piora do estado geral."
     },
     {
       "id": "febre_crianca",
       "titulo": "Febre em criança — quando procurar ajuda",
       "tags": ["febre", "crianca", "bebe", "temperatura", "pediatria", "filho", "filha"],
-      "conteudo": "Febre em criança é temperatura acima de 37,8°C (axilar). Nem toda febre é grave — muitas vezes é o corpo reagindo a uma infecção. Cuidados em casa: deixar a criança com pouca roupa, oferecer líquidos com frequência, dar antitérmico apenas se prescrito pelo médico. Procure imediatamente uma UPA ou ligue 192 se: bebê com menos de 3 meses com qualquer febre, criança muito sonolenta ou difícil de acordar, manchas roxas na pele que não desaparecem ao esticar, dificuldade para respirar, convulsão, rigidez de nuca, ou febre acima de 39°C que não baixa com antitérmico."
+      "conteudo": "Febre é o aumento da temperatura corporal. O valor de referência pode variar conforme o local de medição e a idade da criança. Cuidados em casa: deixar a criança com pouca roupa, oferecer líquidos com frequência, dar antitérmico apenas se prescrito pelo médico.\n\nProcure imediatamente uma UPA ou ligue 192 se: bebê com menos de 3 meses com qualquer febre, criança muito sonolenta ou difícil de acordar, manchas roxas na pele que não desaparecem ao esticar, dificuldade para respirar, convulsão, rigidez de nuca, prostração intensa ou piora do estado geral."
     },
     {
       "id": "antibiotico",
       "titulo": "Antibióticos — uso correto",
       "tags": ["antibiotico", "bacteria", "virus", "receita"],
-      "conteudo": "Antibióticos só funcionam contra bactérias, não contra vírus. Por isso, não ajudam em gripes, resfriados ou COVID — na maioria dos casos. O uso incorreto causa resistência bacteriana, dificultando tratamentos futuros. Só use antibiótico com prescrição médica, na dose e pelo tempo indicados. Não pare antes do fim do tratamento mesmo se sentir melhor. Não use sobras de tratamentos anteriores nem compartilhe com outras pessoas. Guardar e descartar antibiótico deve ser feito corretamente (na farmácia ou UBS)."
+      "conteudo": "Antibióticos só funcionam contra bactérias, não contra vírus. Por isso, não ajudam em gripes, resfriados ou COVID — na maioria dos casos. O uso incorreto causa resistência bacteriana, dificultando tratamentos futuros.\n\nUse antibiótico somente quando prescrito. Tome na dose, nos horários e pelo período orientados. Não interrompa, prolongue ou reinicie o tratamento por conta própria; se tiver efeitos adversos ou dúvidas, procure o serviço que prescreveu. Não use sobras de tratamentos anteriores nem compartilhe com outras pessoas. Descarte o que sobrar na farmácia ou UBS."
     },
     {
       "id": "saude_mental_ansiedade",
       "titulo": "Ansiedade e crise de pânico — o que fazer",
       "tags": ["ansiedade", "panico", "crise", "coracao acelerado", "falta de ar"],
-      "conteudo": "A ansiedade pode causar coração acelerado, falta de ar, sudorese, tremores, sensação de morte iminente. Numa crise de pânico, respire devagar, conte até 4 para inspirar e 6 para expirar, foque em objetos ao redor. Se for a primeira vez ou se houver dor no peito intensa, procure uma UPA para descartar causas cardíacas. O acompanhamento contínuo é feito no CAPS ou na UBS, com apoio psicológico e, quando indicado, medicação. O CVV 188 atende gratuitamente 24h para apoio emocional."
+      "conteudo": "A ansiedade pode causar coração acelerado, falta de ar, sudorese, tremores, sensação de morte iminente. Numa crise de pânico, respire devagar, conte até 4 para inspirar e 6 para expirar, foque em objetos ao redor.\n\nSe for a primeira vez ou se houver dor no peito intensa, procure uma UPA para descartar causas cardíacas. O acompanhamento contínuo é feito no CAPS ou na UBS, com apoio psicológico e, quando indicado, medicação. O CVV 188 atende gratuitamente 24h para apoio emocional."
     },
     {
       "id": "dengue_prevencao",
       "titulo": "Prevenção da dengue em casa",
       "tags": ["dengue", "prevencao", "agua parada", "mosquito"],
-      "conteudo": "Para evitar a dengue, elimine água parada em pneus, garrafas, vasos de plantas, calhas e caixas d'água destampadas. Mantenha caixas d'água, tonéis e cisternas fechados. Tampe ralos pouco usados. Lave bebedouros de animais com escova semanalmente. Descarte corretamente lixo que possa acumular água. Se a prefeitura fizer visita de combate ao mosquito, permita a entrada dos agentes. Em períodos de epidemia, use repelente."
+      "conteudo": "Para evitar a dengue, elimine água parada em pneus, garrafas, vasos de plantas, calhas e caixas d'água destampadas. Mantenha caixas d'água, tonéis e cisternas fechados. Tampe ralos pouco usados. Lave bebedouros de animais com escova semanalmente.\n\nDescarte corretamente lixo que possa acumular água. Se a prefeitura fizer visita de combate ao mosquito, permita a entrada dos agentes. Em períodos de epidemia, use repelente."
+    },
+    {
+      "id": "falta_de_ar_urgencia",
+      "titulo": "Falta de ar — quando é urgente",
+      "tags": ["falta de ar", "dispneia", "respirar", "sufocamento", "cansaço para respirar", "nao consigo respirar"],
+      "conteudo": "Falta de ar em repouso, com lábios arroxeados, confusão mental, dor no peito ou incapacidade de falar frases completas é emergência. Ligue 192 (SAMU) ou vá imediatamente para uma UPA.\n\nFalta de ar leve, que aparece só em esforço e melhora com repouso, pode ser avaliada numa UBS. Se for frequente ou piorar com o tempo, procure avaliação."
+    },
+    {
+      "id": "dor_no_peito_infarto",
+      "titulo": "Dor no peito — quando é emergência",
+      "tags": ["dor no peito", "infarto", "aperto no peito", "coracao", "dor toracica", "peso no peito"],
+      "conteudo": "Dor no peito com aperto, peso ou queimação, que irradia para braço esquerdo, mandíbula, costas ou estômago, e vem acompanhada de suor frio, falta de ar ou náusea é emergência. Ligue 192 imediatamente.\n\nNão espere passar. Não dirija sozinho. Infarto tratado nas primeiras horas tem muito mais chance de recuperação. Se a dor for leve, passageira e claramente muscular, pode ser avaliada em UBS."
+    },
+    {
+      "id": "avc_sinais",
+      "titulo": "AVC — como reconhecer e o que fazer",
+      "tags": ["avc", "derrame", "boca torta", "fraqueza em um lado", "fala enrolada", "perda de visao"],
+      "conteudo": "Sinais de AVC aparecem de repente: boca torta, fraqueza ou dormência em um lado do corpo, fala enrolada ou dificuldade de entender o que os outros falam, perda de visão súbita em um ou nos dois olhos.\n\nAo menor sinal, ligue 192 imediatamente. Anote a hora que começou — isso ajuda muito no tratamento. Não espere passar. Cada minuto conta."
+    },
+    {
+      "id": "dor_abdominal_quando_preocupar",
+      "titulo": "Dor abdominal — quando se preocupar",
+      "tags": ["dor de barriga", "dor abdominal", "barriga", "estomago", "abdomen"],
+      "conteudo": "Dor abdominal forte, contínua, que piora ao toque, com febre, vômitos persistentes ou sangue nas fezes é sinal de alerta. Procure uma UPA.\n\nDor leve, associada a gases ou má digestão, geralmente melhora com repouso e alimentação leve. Se persistir por mais de 2 dias ou voltar com frequência, procure uma UBS."
+    },
+    {
+      "id": "vomito_persistente",
+      "titulo": "Vômitos — quando se preocupar",
+      "tags": ["vomito", "vomitando", "enjoo", "nausea", "vomito persistente"],
+      "conteudo": "Vômitos que impedem de beber líquidos, duram mais de 24h, vêm com sangue ou dor abdominal intensa precisam de avaliação em UPA.\n\nPara vômitos leves: beba pequenas quantidades de soro de reidratação oral (preparado conforme a embalagem) com frequência, evite alimentos pesados. Se piorar ou aparecer desidratação (boca seca, pouca urina, tontura ao levantar), procure uma UBS."
+    },
+    {
+      "id": "desmaio_sincope",
+      "titulo": "Desmaio — o que fazer",
+      "tags": ["desmaio", "apaguei", "inconsciente", "sincope", "perda de consciencia"],
+      "conteudo": "Se a pessoa desmaiar, deite-a com segurança e verifique se respira. Afaste objetos perigosos e não ofereça comida, bebida ou medicamentos.\n\nSe não recuperar rapidamente a consciência, não respirar normalmente, tiver convulsão, dor no peito, trauma ou estiver grávida, ligue 192. Após um desmaio, é recomendável avaliação médica para investigar a causa — a urgência depende do contexto."
+    },
+    {
+      "id": "convulsao",
+      "titulo": "Convulsão — o que fazer",
+      "tags": ["convulsao", "crise convulsiva", "epilepsia", "tremor", "crise"],
+      "conteudo": "Durante uma convulsão: afaste objetos, proteja a cabeça, não coloque nada na boca, não tente segurar a pessoa. Depois da crise, deite-a de lado.\n\nLigue 192 se durar mais de 5 minutos, se repetir, ou se for a primeira vez. Mesmo que passe rápido, procure uma UPA para avaliação. Se a pessoa tem epilepsia diagnosticada e a crise foi igual às habituais, siga o plano do médico."
+    },
+    {
+      "id": "queimadura",
+      "titulo": "Queimadura — graus e cuidados",
+      "tags": ["queimadura", "queimei", "fogo", "agua quente", "queimadura de pele"],
+      "conteudo": "Resfrie a área com água corrente em temperatura ambiente ou fresca por aproximadamente 20 minutos, sem usar gelo. Retire anéis, relógios e objetos apertados antes que o inchaço aumente, se isso puder ser feito sem arrancar material preso à pele. Nunca remova tecido grudado na queimadura. Não passe pasta, manteiga, pó de café nem gelo.\n\nProcure uma UPA se: for maior que a palma da mão, tiver bolhas, for em rosto, mãos, pés, genitais ou articulações, se atingiu bebê ou idoso, ou se for queimadura química ou elétrica (sempre urgência)."
+    },
+    {
+      "id": "intoxicacao_alimentar",
+      "titulo": "Intoxicação — o que fazer",
+      "tags": ["intoxicacao", "intoxicacao alimentar", "comida estragada", "envenenamento", "overdose", "disque intoxicacao"],
+      "conteudo": "Após comer algo suspeito, é comum ter náusea, vômito e diarreia em algumas horas. Beba líquidos com frequência para evitar desidratação.\n\nEm caso de ingestão de produto químico, medicamento em excesso ou substância desconhecida, não provoque vômito e não ofereça leite ou alimentos sem orientação. Ligue para o Disque-Intoxicação 0800 722 6001 (quando disponível na região) e, se houver sintomas graves, ligue 192. Procure uma UPA se houver sangue no vômito ou nas fezes, febre alta, confusão, dificuldade de respirar ou desmaio."
+    },
+    {
+      "id": "gestante_sinais_alerta",
+      "titulo": "Gestante — sinais de alerta",
+      "tags": ["gestante", "gravida", "gravidez", "pre natal", "sangramento na gravidez"],
+      "conteudo": "Gestante deve procurar uma UPA ou maternidade de referência se tiver: sangramento vaginal, dor de cabeça intensa, visão turva, pressão alta, contrações antes do tempo, perda de líquido, febre, dor abdominal forte ou diminuição dos movimentos do bebê.\n\nO pré-natal é feito na UBS. Vá a todas as consultas e faça os exames solicitados. Gestação de risco é encaminhada para acompanhamento especializado na maternidade de referência."
+    },
+    {
+      "id": "crianca_diarreia_vomito",
+      "titulo": "Criança com diarreia e vômito",
+      "tags": ["crianca", "diarreia", "vomito", "desidratacao", "bebe"],
+      "conteudo": "Criança com diarreia e vômito perde líquido rápido. Ofereça soro de reidratação oral (preparado conforme a embalagem) em pequenas quantidades, várias vezes ao dia — mesmo que ela vomite, continue oferecendo.\n\nProcure UPA se: não conseguir beber, estiver urinando pouco, ficar muito sonolenta ou difícil de acordar, tiver olhos fundos, boca seca, ou sangue nas fezes. Bebês desidratam muito rápido — procure atendimento antes."
+    },
+    {
+      "id": "idoso_quedas",
+      "titulo": "Idoso — quedas e quando se preocupar",
+      "tags": ["idoso", "queda", "fratura", "osso quebrado", "caiu"],
+      "conteudo": "Após uma queda, procure uma UPA se houver dor intensa, deformidade, dificuldade de mover um membro, batida na cabeça (mesmo sem sintomas), confusão ou perda de consciência.\n\nMesmo sem sintomas aparentes, idosos que caíram devem ser avaliados — fraturas de quadril e batidas na cabeça podem não doer no início. Prevenção: retire tapetes soltos, use luz noturna, barras no banheiro."
+    },
+    {
+      "id": "diferenca_ubs_upa_samu",
+      "titulo": "Diferença entre UBS, UPA, Pronto-Socorro e SAMU",
+      "tags": ["ubs", "upa", "samu", "pronto socorro", "diferenca", "192", "qual procurar"],
+      "conteudo": "UBS (Unidade Básica de Saúde): acompanhamento de rotina, vacinação, pré-natal, doenças crônicas, sintomas leves e avaliação inicial durante o horário de funcionamento. Algumas UBS também realizam acolhimento de demanda espontânea.\n\nUPA (Unidade de Pronto Atendimento): atendimento 24 horas para urgências de menor ou maior gravidade, conforme classificação de risco.\n\nPronto-socorro hospitalar: urgências e emergências que precisam de estrutura hospitalar.\n\nSAMU 192: situações com risco imediato de morte — dificuldade intensa para respirar, suspeita de infarto, AVC, parada cardiorrespiratória, convulsão prolongada ou trauma grave. Ligue e descreva a situação."
+    },
+    {
+      "id": "o_que_e_caps",
+      "titulo": "CAPS — o que é e quando procurar",
+      "tags": ["caps", "saude mental", "psicologo", "psiquiatra", "atendimento mental", "caps ad"],
+      "conteudo": "CAPS (Centro de Atenção Psicossocial) é um serviço do SUS especializado em saúde mental: psicólogos, psiquiatras, assistentes sociais e terapeutas ocupacionais.\n\nProcure o CAPS para acompanhamento em ansiedade, depressão, crises de pânico, uso de álcool e drogas (CAPS AD), ou sofrimento psíquico persistente. O atendimento é gratuito e pode começar por encaminhamento da UBS ou direto na unidade."
+    },
+    {
+      "id": "depressao",
+      "titulo": "Depressão — quando procurar ajuda",
+      "tags": ["depressao", "tristeza", "desanimo", "saude mental", "vontade de nada"],
+      "conteudo": "Tristeza persistente por mais de 2 semanas, perda de interesse pelas coisas, alterações no sono e apetite, cansaço constante e pensamentos negativos podem indicar depressão.\n\nProcure uma UBS ou o CAPS. O SUS oferece acompanhamento psicológico e psiquiátrico gratuitos. Se houver pensamentos de morte ou automutilação, ligue 188 (CVV) — atendimento 24h, gratuito e sigiloso — ou procure uma UPA."
+    },
+    {
+      "id": "cartao_sus",
+      "titulo": "Cartão SUS — como tirar",
+      "tags": ["cartao sus", "sus", "cadastro", "documento", "conecte sus"],
+      "conteudo": "O Cartão SUS é gratuito e garante acesso a todos os serviços públicos de saúde. Pode ser tirado em qualquer UBS, com RG, CPF e comprovante de residência.\n\nEm muitos municípios é possível também emitir pelo aplicativo Conecte SUS ou pelo site da prefeitura. Se você perdeu o cartão, pode pedir a segunda via na UBS."
+    },
+    {
+      "id": "saude_bucal",
+      "titulo": "Dentista pelo SUS",
+      "tags": ["dentista", "saude bucal", "dente", "odonto", "dor de dente"],
+      "conteudo": "A saúde bucal é oferecida gratuitamente na UBS, com equipe de odontologia. Inclui consultas, restaurações, extrações, tratamento de gengiva e orientação de higiene.\n\nCasos mais complexos (canal, ortodontia, implante) são encaminhados para o CEO (Centro de Especialidades Odontológicas). Dor de dente intensa com febre ou inchaço no rosto pode ser uma infecção séria — procure uma UPA."
+    },
+    {
+      "id": "violencia_domestica_sexual",
+      "titulo": "Violência doméstica ou sexual — onde buscar ajuda",
+      "tags": ["violencia", "agressao", "violencia domestica", "violencia sexual", "estupro", "180"],
+      "conteudo": "Se você está sofrendo violência, ligue 180 (Central de Atendimento à Mulher) — 24h, gratuito e sigiloso. Em risco imediato, ligue 190.\n\nEm caso de violência sexual, procure imediatamente um serviço de saúde de referência para violência sexual. Se não souber qual é, vá a uma UPA ou hospital e peça encaminhamento. O atendimento inclui profilaxia para ISTs, contracepção de emergência e acompanhamento psicológico, e não depende de boletim de ocorrência."
+    },
+    {
+      "id": "ist",
+      "titulo": "ISTs — informações e onde testar",
+      "tags": ["ist", "dst", "hiv", "sifilis", "gonorreia", "teste rapido", "preservativo"],
+      "conteudo": "ISTs (Infecções Sexualmente Transmissíveis) muitas vezes não dão sintomas. O teste é gratuito e sigiloso na UBS, incluindo HIV, sífilis, hepatites B e C.\n\nUse preservativo em todas as relações. Se tiver corrimento, feridas ou verrugas na região genital, procure uma UBS. HIV e sífilis têm tratamento gratuito pelo SUS, e hepatite C tem cura."
+    },
+    {
+      "id": "tuberculose",
+      "titulo": "Tuberculose — sinais e tratamento",
+      "tags": ["tuberculose", "tosse com sangue", "tosse persistente", "pulmao", "suor noturno"],
+      "conteudo": "Tosse por mais de 3 semanas, com ou sem sangue, suor noturno, febre à tarde e perda de peso podem indicar tuberculose. Procure uma UBS para exame de escarro — é gratuito e rápido.\n\nO tratamento é gratuito pelo SUS e dura 6 meses. É importante não interromper, mesmo se os sintomas melhorarem. A família também precisa ser avaliada."
+    },
+    {
+      "id": "hanseniase",
+      "titulo": "Hanseníase — sinais e tratamento",
+      "tags": ["hanseniase", "mancha na pele", "dormencia", "lepra", "perda de sensibilidade"],
+      "conteudo": "Manchas na pele com perda de sensibilidade, dormência em mãos ou pés, caroços pelo corpo podem ser hanseníase. Procure uma UBS ao primeiro sinal.\n\nTem cura e o tratamento é gratuito pelo SUS. Quanto mais cedo começar, menor o risco de sequelas. Pessoas que convivem com o paciente também precisam ser avaliadas."
+    },
+    {
+      "id": "hepatites_virais",
+      "titulo": "Hepatites virais",
+      "tags": ["hepatite", "figado", "hepatite a", "hepatite b", "hepatite c", "pele amarela"],
+      "conteudo": "Hepatite é inflamação do fígado, geralmente causada por vírus. Sintomas: cansaço, náusea, pele e olhos amarelados, urina escura, fezes claras.\n\nHepatite A e B têm vacina (disponível na UBS). Hepatite C tem cura com tratamento gratuito pelo SUS. Procure uma UBS para testagem — o diagnóstico precoce evita complicações no fígado."
+    },
+    {
+      "id": "tabagismo",
+      "titulo": "Parar de fumar",
+      "tags": ["fumo", "cigarro", "tabagismo", "parar de fumar", "vape", "cigarro eletronico"],
+      "conteudo": "Parar de fumar traz benefícios em qualquer idade — a pressão melhora em dias, o risco de infarto cai em meses, o de câncer em anos.\n\nA UBS oferece apoio gratuito, incluindo grupos de apoio e, quando indicado, medicação. Procure uma UBS e pergunte pelo programa de controle do tabagismo. Não há julgamento — é uma questão de saúde."
+    },
+    {
+      "id": "alcool_drogas",
+      "titulo": "Uso de álcool e drogas — onde buscar ajuda",
+      "tags": ["alcool", "droga", "crack", "maconha", "dependencia", "caps ad"],
+      "conteudo": "O uso abusivo de álcool e drogas é uma questão de saúde, não de julgamento. O CAPS AD (Álcool e Drogas) oferece acolhimento, acompanhamento e tratamento gratuitos.\n\nProcure uma UBS ou o CAPS AD da sua região. Se houver intoxicação aguda, confusão, convulsão ou risco de vida, procure uma UPA ou ligue 192."
+    },
+    {
+      "id": "acidente_peconhento",
+      "titulo": "Picada de cobra, escorpião ou aranha",
+      "tags": ["cobra", "escorpiao", "aranha", "picada", "peconhento", "soro antiveneno"],
+      "conteudo": "Picada de animal peçonhento é emergência. Mantenha a pessoa em repouso, não corte, não chupe, não amarre o local. Lave com água e sabão.\n\nVá imediatamente para uma UPA. Se possível, leve uma foto do animal (não tente capturá-lo). O soro antiveneno é gratuito no SUS. A rapidez no atendimento é essencial."
+    },
+    {
+      "id": "rcp_parada_cardiaca",
+      "titulo": "Parada cardiorrespiratória — RCP",
+      "tags": ["rcp", "parada cardiaca", "reanimacao", "massagem cardiaca", "nao respira"],
+      "conteudo": "Se alguém desmaiar e não respirar: ligue 192 imediatamente e inicie compressões torácicas fortes e rápidas no centro do peito (100 a 120 por minuto), sem parar.\n\nSe souber fazer ventilação, alterne 30 compressões com 2 ventilações. Iniciar compressões imediatamente pode aumentar significativamente a chance de sobrevivência até a chegada do SAMU. Use um desfibrilador externo automático (DEA), se houver e se você souber utilizá-lo, seguindo as instruções do aparelho."
+    },
+    {
+      "id": "engasgo_heimlich",
+      "titulo": "Engasgo — o que fazer",
+      "tags": ["engasgo", "asfixia", "heimlich", "sufocando", "entalado"],
+      "conteudo": "Se a pessoa consegue tossir ou falar, incentive-a a tossir e observe. Não coloque os dedos na boca sem visualizar o objeto.\n\nSe não consegue respirar, falar ou tossir, peça para alguém ligar 192. Em adultos e crianças maiores, faça golpes nas costas e compressões abdominais conforme treinamento de primeiros socorros. Em bebês, use golpes nas costas e compressões torácicas. Em gestantes e pessoas obesas, prefira compressões torácicas. Se a pessoa perder a consciência, inicie RCP."
+    },
+    {
+      "id": "afogamento",
+      "titulo": "Afogamento — o que fazer",
+      "tags": ["afogamento", "agua", "praia", "piscina", "quase afogou"],
+      "conteudo": "Em afogamento, não entre na água sem treinamento — chame ajuda (192). Jogue algo flutuante para a pessoa.\n\nApós retirar da água, se a pessoa não respira, inicie RCP (compressões no peito) e ligue 192 imediatamente. Toda vítima de afogamento deve ser avaliada em UPA, mesmo que pareça bem — pode haver complicação pulmonar depois."
+    },
+    {
+      "id": "sangramento_nasal",
+      "titulo": "Sangramento nasal — o que fazer",
+      "tags": ["sangramento nasal", "nariz", "epistaxe", "sangrou o nariz"],
+      "conteudo": "Sangramento nasal: sente-se, incline a cabeça levemente para frente (não para trás), aperte a parte mole do nariz por 10 minutos sem soltar.\n\nSe não parar em 20 minutos, se for muito intenso, ou se acontecer após uma pancada na cabeça, procure uma UPA. Sangramentos repetidos devem ser avaliados na UBS."
+    },
+    {
+      "id": "pre_natal",
+      "titulo": "Pré-natal — o que é e como fazer",
+      "tags": ["pre natal", "gestante", "gravida", "acompanhamento gravidez"],
+      "conteudo": "O pré-natal é o acompanhamento da gestação, feito na UBS. Inclui consultas regulares, exames, vacinas e orientações sobre alimentação, sono e sinais de alerta.\n\nComece o pré-natal assim que descobrir a gravidez, preferencialmente no primeiro trimestre. A quantidade e a frequência das consultas dependem da evolução da gestação e da avaliação da equipe de saúde. Gestação de risco é encaminhada para acompanhamento especializado na maternidade de referência."
+    },
+    {
+      "id": "planejamento_familiar",
+      "titulo": "Planejamento familiar e métodos contraceptivos",
+      "tags": ["planejamento familiar", "anticoncepcional", "camisinha", "diu", "contracepcao", "pilula"],
+      "conteudo": "O SUS oferece métodos contraceptivos gratuitos: pílula, camisinha masculina e feminina, DIU, injeção, implante e cirurgia (laqueadura/vasectomia).\n\nConverse com a equipe da UBS para escolher o método mais adequado. O atendimento é sigiloso e respeita sua decisão. Adolescentes também têm direito ao atendimento."
+    },
+    {
+      "id": "verminose",
+      "titulo": "Verminoses — prevenção e tratamento",
+      "tags": ["verme", "verminose", "lombriga", "parasita", "coceira anal"],
+      "conteudo": "Verminoses são comuns em locais sem saneamento adequado. Sintomas: dor abdominal, diarreia, coceira anal, perda de peso, cansaço.\n\nPrevenção: lave as mãos antes das refeições, lave bem frutas e verduras, use água tratada, ande calçado. O tratamento é simples e oferecido na UBS, às vezes em dose única para toda a família."
+    },
+
+    {
+      "id": "catapora",
+      "titulo": "Catapora — sintomas e cuidados",
+      "tags": ["catapora", "varicela", "bolhas", "coceira", "febre"],
+      "conteudo": "A catapora é uma infecção viral que causa febre, mal-estar e bolhas que coçam e aparecem em diferentes fases. Evite coçar para reduzir o risco de infecção na pele e mantenha as unhas curtas. Não ofereça aspirina a crianças. Procure uma UBS para avaliação, especialmente se a pessoa estiver grávida, for bebê, adulto ou tiver baixa imunidade. Procure uma UPA se houver dificuldade para respirar, confusão, sonolência intensa ou infecção importante nas lesões."
+    },
+    {
+      "id": "sarampo",
+      "titulo": "Sarampo — sintomas e prevenção",
+      "tags": ["sarampo", "febre", "manchas", "tosse", "vacina"],
+      "conteudo": "O sarampo pode causar febre alta, tosse, coriza, olhos vermelhos e manchas que começam geralmente no rosto e se espalham pelo corpo. Se houver suspeita, evite contato com outras pessoas e procure uma unidade de saúde antes de ir ao local, quando possível, para receber orientação. A vacinação é a principal forma de prevenção. Falta de ar, sonolência intensa, convulsão ou piora rápida exigem atendimento imediato."
+    },
+    {
+      "id": "coqueluche",
+      "titulo": "Coqueluche — tosse intensa e prevenção",
+      "tags": ["coqueluche", "tosse", "bebê", "vacina", "respiração"],
+      "conteudo": "A coqueluche é uma infecção respiratória que pode causar crises de tosse prolongadas, às vezes acompanhadas de vômito ou dificuldade para respirar. Bebês podem apresentar pausas na respiração e precisam de avaliação rápida. Procure uma UBS se houver tosse persistente ou crises repetidas. Vá a uma UPA se houver lábios arroxeados, falta de ar, pausas respiratórias ou cansaço intenso. A vacinação protege contra formas graves."
+    },
+    {
+      "id": "caxumba",
+      "titulo": "Caxumba — sintomas e cuidados",
+      "tags": ["caxumba", "parotidite", "rosto inchado", "saliva", "vacina"],
+      "conteudo": "A caxumba pode causar inchaço doloroso próximo às orelhas ou na mandíbula, febre, dor de cabeça e dificuldade para mastigar. Evite compartilhar copos, talheres e objetos pessoais. Procure uma UBS para avaliação e orientação sobre afastamento de atividades coletivas. Dor forte nos testículos, dor abdominal intensa, rigidez de nuca, confusão ou vômitos persistentes exigem atendimento urgente."
+    },
+    {
+      "id": "mononucleose",
+      "titulo": "Mononucleose — sintomas e cuidados",
+      "tags": ["mononucleose", "garganta", "gânglios", "cansaço", "febre"],
+      "conteudo": "A mononucleose pode causar cansaço intenso, febre, dor de garganta e aumento dos gânglios do pescoço. O diagnóstico precisa ser avaliado por profissional de saúde. Descanse, hidrate-se e não compartilhe utensílios usados para beber ou comer. Evite esportes de contato até receber orientação, pois pode haver aumento do baço. Procure urgência se surgir dor abdominal forte, dificuldade para respirar ou engolir."
+    },
+    {
+      "id": "amigdalite",
+      "titulo": "Dor de garganta e amigdalite",
+      "tags": ["dor de garganta", "amigdalite", "amígdala", "pus", "febre"],
+      "conteudo": "Dor de garganta pode ser causada por vírus ou bactérias. Repouso, hidratação e alimentos macios podem aliviar os sintomas. Não use antibiótico por conta própria, pois nem toda amigdalite precisa desse medicamento. Procure uma UBS se houver febre persistente, placas nas amígdalas ou dificuldade para engolir. Vá à UPA se houver dificuldade para respirar, incapacidade de engolir saliva ou inchaço importante no pescoço."
+    },
+    {
+      "id": "sinusite",
+      "titulo": "Sinusite — sintomas e quando procurar ajuda",
+      "tags": ["sinusite", "nariz entupido", "dor facial", "secrecao", "dor de cabeça"],
+      "conteudo": "Sinusite pode causar nariz entupido, secreção nasal, dor ou pressão no rosto, tosse e redução do olfato. Muitos casos são virais e melhoram com hidratação, lavagem nasal com solução apropriada e repouso. Não use antibiótico sem avaliação. Procure uma UBS se os sintomas persistirem, piorarem ou voltarem com frequência. Inchaço ao redor dos olhos, alteração da visão, confusão ou dor de cabeça muito intensa exigem urgência."
+    },
+    {
+      "id": "rinite",
+      "titulo": "Rinite — sintomas e controle",
+      "tags": ["rinite", "alergia", "espirro", "coriza", "nariz"],
+      "conteudo": "A rinite pode causar espirros, coriza, coceira no nariz e olhos lacrimejantes, geralmente após contato com poeira, mofo, pelos ou outros desencadeantes. Mantenha os ambientes ventilados e reduza poeira e mofo. Lave o nariz com solução indicada por profissional de saúde. Procure uma UBS se os sintomas forem frequentes ou atrapalharem o sono. Falta de ar ou inchaço na boca e garganta são sinais de emergência."
+    },
+    {
+      "id": "bronquiolite",
+      "titulo": "Bronquiolite em bebês — sinais de alerta",
+      "tags": ["bronquiolite", "bebê", "chiado", "tosse", "respiração"],
+      "conteudo": "A bronquiolite é uma infecção respiratória comum em bebês e pode causar coriza, tosse, chiado e dificuldade para respirar. Ofereça leite materno ou alimentação habitual em pequenas quantidades e observe a respiração. Procure atendimento imediatamente se o bebê respirar muito rápido, afundar as costelas, ficar arroxeado, mamar pouco, urinar pouco ou apresentar pausas respiratórias. Não ofereça xaropes ou antibióticos sem prescrição."
+    },
+    {
+      "id": "pneumonia",
+      "titulo": "Pneumonia — sintomas e sinais de gravidade",
+      "tags": ["pneumonia", "tosse", "febre", "pulmão", "falta de ar"],
+      "conteudo": "Pneumonia pode causar febre, tosse, catarro, dor no peito, cansaço e falta de ar. Bebês, idosos e pessoas com doenças crônicas podem apresentar poucos sintomas, mas piorar rapidamente. Procure uma UBS para avaliação se houver febre e tosse persistentes ou piora do estado geral. Vá a uma UPA se houver falta de ar, confusão, lábios arroxeados, dor intensa no peito ou dificuldade para falar."
+    },
+    {
+      "id": "bronquite",
+      "titulo": "Bronquite aguda — tosse e cuidados",
+      "tags": ["bronquite", "tosse", "catarro", "resfriado", "pulmão"],
+      "conteudo": "A bronquite aguda geralmente ocorre após uma infecção viral e causa tosse, com ou sem catarro. A tosse pode durar algumas semanas mesmo depois da melhora dos outros sintomas. Hidrate-se, evite fumaça e não use antibiótico sem indicação. Procure uma UBS se a tosse persistir, piorar ou vier acompanhada de febre prolongada. Falta de ar ou dor no peito exige avaliação imediata."
+    },
+    {
+      "id": "otite",
+      "titulo": "Dor de ouvido e otite",
+      "tags": ["otite", "dor de ouvido", "ouvido", "criança", "febre"],
+      "conteudo": "A otite pode causar dor de ouvido, febre, irritabilidade e redução temporária da audição. Em crianças pequenas, observe choro, dificuldade para dormir e recusa alimentar. Não coloque óleo, álcool, cotonete ou gotas no ouvido sem orientação. Procure uma UBS para avaliação. Vá à UPA se houver inchaço atrás da orelha, rigidez de nuca, alteração da consciência ou dor intensa com piora rápida."
+    },
+    {
+      "id": "conjuntivite",
+      "titulo": "Conjuntivite — cuidados e transmissão",
+      "tags": ["conjuntivite", "olho vermelho", "secreção", "coceira", "olhos"],
+      "conteudo": "Conjuntivite pode causar olho vermelho, coceira, lacrimejamento e secreção. Lave as mãos, não compartilhe toalhas e evite tocar ou coçar os olhos. Não use colírios com antibiótico ou corticoide sem avaliação. Procure uma UBS se houver secreção intensa ou sintomas persistentes. Dor forte, sensibilidade à luz, alteração da visão, trauma ou contato com produto químico exigem atendimento urgente."
+    },
+    {
+      "id": "tercol",
+      "titulo": "Terçol — o que fazer",
+      "tags": ["terçol", "olho", "pálpebra", "inchaço", "higiene"],
+      "conteudo": "O terçol é um pequeno nódulo dolorido na borda da pálpebra, geralmente relacionado à obstrução de uma glândula. Compressas mornas e limpas podem aliviar o desconforto. Não esprema o local e não compartilhe toalhas ou maquiagem. Procure uma UBS se não melhorar, voltar com frequência ou afetar a visão. Inchaço intenso, febre ou dor no olho exigem avaliação."
+    },
+    {
+      "id": "glaucoma",
+      "titulo": "Glaucoma — importância da avaliação",
+      "tags": ["glaucoma", "visão", "olho", "pressão ocular", "cegueira"],
+      "conteudo": "O glaucoma pode danificar o nervo óptico e muitas vezes não causa sintomas no início. Consultas oftalmológicas ajudam a identificar alterações antes da perda de visão. Use corretamente os colírios prescritos e não interrompa o tratamento por conta própria. Dor ocular intensa, olho vermelho, visão embaçada, halos ao redor das luzes, náusea ou vômito podem indicar urgência."
+    },
+    {
+      "id": "catarata",
+      "titulo": "Catarata — sintomas e tratamento",
+      "tags": ["catarata", "visão embaçada", "olho", "idoso", "oftalmologia"],
+      "conteudo": "A catarata causa visão embaçada, sensibilidade à luz, dificuldade para enxergar à noite e percepção de cores menos intensas. Geralmente evolui aos poucos e deve ser avaliada em consulta. Não existe colírio que reverta a catarata; quando necessário, o tratamento é cirúrgico. Procure atendimento rapidamente se a perda de visão for súbita, houver dor intensa ou trauma ocular."
+    },
+    {
+      "id": "perda_auditiva",
+      "titulo": "Perda de audição — quando investigar",
+      "tags": ["surdez", "perda auditiva", "ouvido", "zumbido", "audição"],
+      "conteudo": "A perda de audição pode ocorrer gradualmente por idade, exposição a ruído, infecções ou outras causas. Evite introduzir objetos no ouvido e use proteção em ambientes muito barulhentos. Procure uma UBS se a dificuldade persistir ou afetar a comunicação. Perda súbita de audição, especialmente em um ouvido, deve ser avaliada com urgência."
+    },
+    {
+      "id": "zumbido",
+      "titulo": "Zumbido no ouvido — causas e cuidados",
+      "tags": ["zumbido", "ouvido", "barulho", "audição", "tontura"],
+      "conteudo": "Zumbido é a percepção de sons sem uma fonte externa e pode estar relacionado a exposição a ruído, alterações auditivas, medicamentos ou outras condições. Evite sons muito altos e não use medicamentos por conta própria. Procure uma UBS se o zumbido persistir, for unilateral ou vier acompanhado de perda auditiva. Zumbido súbito com tontura intensa, fraqueza ou dificuldade para falar exige urgência."
+    },
+    {
+      "id": "vertigem",
+      "titulo": "Tontura e vertigem — quando procurar ajuda",
+      "tags": ["tontura", "vertigem", "labirintite", "equilíbrio", "náusea"],
+      "conteudo": "Tontura pode significar sensação de desequilíbrio, fraqueza ou que o ambiente está girando. Sente-se ou deite-se em local seguro, evite dirigir e hidrate-se se conseguir. Procure uma UBS se for recorrente ou persistente. Vá imediatamente à UPA se a tontura vier com fraqueza em um lado, fala alterada, perda súbita de visão, dor de cabeça intensa, desmaio ou dor no peito."
+    },
+    {
+      "id": "anemia",
+      "titulo": "Anemia — sintomas e investigação",
+      "tags": ["anemia", "cansaço", "palidez", "ferro", "fraqueza"],
+      "conteudo": "Anemia pode causar cansaço, palidez, falta de ar aos esforços, tontura, dor de cabeça e coração acelerado. Ela pode ter diversas causas e não deve ser tratada apenas com suplementos por conta própria. Procure uma UBS para avaliação e exames. Falta de ar intensa, desmaio, dor no peito ou sangramento importante exigem atendimento imediato."
+    },
+    {
+      "id": "colesterol_alto",
+      "titulo": "Colesterol alto — prevenção e acompanhamento",
+      "tags": ["colesterol", "triglicerides", "coração", "exame", "alimentação"],
+      "conteudo": "Colesterol alto geralmente não causa sintomas, mas aumenta o risco de doenças cardiovasculares. O acompanhamento inclui avaliação do risco individual, alimentação equilibrada, atividade física e, quando indicado, medicamentos. Não interrompa remédios sem conversar com a equipe de saúde. Procure uma UBS para avaliação periódica. Dor no peito, falta de ar súbita ou sinais de AVC são emergências."
+    },
+    {
+      "id": "obesidade",
+      "titulo": "Obesidade — cuidado sem julgamento",
+      "tags": ["obesidade", "peso", "alimentação", "atividade física", "saúde"],
+      "conteudo": "A obesidade é uma condição de saúde influenciada por fatores biológicos, emocionais, sociais e ambientais. O cuidado deve ser individualizado e sem culpa ou estigma. Procure a UBS para avaliação de pressão, glicemia, colesterol, sono e outras condições associadas. Evite dietas extremas e medicamentos para emagrecer sem prescrição. Mudanças graduais e acompanhamento profissional são mais seguros."
+    },
+    {
+      "id": "alimentacao_saudavel",
+      "titulo": "Alimentação saudável — orientações básicas",
+      "tags": ["alimentação", "nutrição", "comida saudável", "sal", "açúcar"],
+      "conteudo": "Uma alimentação saudável prioriza alimentos in natura ou minimamente processados, como frutas, verduras, feijão, legumes, ovos e carnes, conforme as necessidades de cada pessoa. Reduza ultraprocessados, excesso de sal, açúcar e bebidas açucaradas. Faça mudanças possíveis e sustentáveis, sem dietas restritivas por conta própria. Pessoas com diabetes, doença renal, gestação ou outras condições devem receber orientação individualizada."
+    },
+    {
+      "id": "desidratacao",
+      "titulo": "Desidratação — sinais e cuidados",
+      "tags": ["desidratação", "sede", "urina", "tontura", "líquidos"],
+      "conteudo": "Desidratação pode causar sede intensa, boca seca, urina escura ou em pouca quantidade, tontura, fraqueza e sonolência. Ofereça líquidos em pequenas quantidades e, em casos de diarreia ou vômitos, use soro de reidratação oral conforme as instruções da embalagem. Crianças, idosos e pessoas doentes podem piorar mais rápido. Procure uma UPA se houver confusão, desmaio, incapacidade de beber ou ausência de urina."
+    },
+    {
+      "id": "insolacao",
+      "titulo": "Insolação e exaustão pelo calor",
+      "tags": ["insolação", "calor", "desmaio", "temperatura", "sol"],
+      "conteudo": "A exposição excessiva ao calor pode causar fraqueza, tontura, dor de cabeça, náusea, suor intenso e desidratação. Leve a pessoa para local fresco, retire o excesso de roupa e ofereça líquidos se estiver consciente e conseguir beber. Confusão, desmaio, pele muito quente, convulsão ou temperatura muito elevada são sinais de emergência: ligue 192. Crianças, idosos e pessoas com doenças crônicas exigem atenção especial."
+    },
+    {
+      "id": "hipotermia",
+      "titulo": "Hipotermia — primeiros cuidados",
+      "tags": ["hipotermia", "frio", "temperatura baixa", "tremor", "emergência"],
+      "conteudo": "Hipotermia ocorre quando a temperatura corporal cai excessivamente, podendo causar tremores, confusão, sonolência, fala lenta e perda de coordenação. Leve a pessoa para um local protegido, retire roupas molhadas e aqueça gradualmente com cobertores. Não use calor intenso diretamente na pele e não ofereça álcool. Confusão, desmaio, respiração lenta ou ausência de tremores com muito frio exigem ligação para 192."
+    },
+    {
+      "id": "picada_inseto",
+      "titulo": "Picada de inseto — quando se preocupar",
+      "tags": ["picada", "inseto", "abelha", "marimbondo", "inchaço"],
+      "conteudo": "A maioria das picadas de insetos causa dor, vermelhidão e inchaço local. Lave a área e faça compressa fria. Se houver ferrão visível de abelha, remova-o com cuidado sem apertar a bolsa de veneno. Inchaço no rosto ou garganta, falta de ar, tontura, vômitos ou manchas pelo corpo podem indicar reação grave: ligue 192. Procure atendimento se houver múltiplas picadas."
+    },
+    {
+      "id": "mordida_animal",
+      "titulo": "Mordida de cachorro, gato ou outro animal",
+      "tags": ["mordida", "cachorro", "gato", "raiva", "ferida"],
+      "conteudo": "Lave imediatamente a ferida com água corrente e sabão por vários minutos. Não feche o ferimento com curativo apertado nem aplique substâncias caseiras. Procure uma unidade de saúde para avaliar necessidade de vacina ou soro contra raiva e proteção contra tétano. Tente identificar o animal sem se colocar em risco e observe se ele pode ser acompanhado pelas autoridades. Mordidas profundas, em mãos, rosto ou perto de articulações exigem atendimento rápido."
+    },
+    {
+      "id": "raiva_humana",
+      "titulo": "Raiva — prevenção após mordida",
+      "tags": ["raiva", "mordida", "cachorro", "vacina", "soro"],
+      "conteudo": "A raiva é uma doença grave transmitida principalmente pela saliva de animais infectados. Após mordida, arranhão ou contato de saliva com mucosa, lave o local e procure imediatamente uma unidade de saúde, mesmo que a ferida pareça pequena. A equipe avaliará o animal, o tipo de exposição e a necessidade de vacina ou soro. Não espere surgirem sintomas para buscar atendimento."
+    },
+    {
+      "id": "tetano",
+      "titulo": "Tétano — ferimentos e vacinação",
+      "tags": ["tétano", "ferida", "ferrugem", "vacina", "espasmo"],
+      "conteudo": "O tétano pode ocorrer quando bactérias entram por ferimentos, especialmente profundos ou contaminados. Lave a ferida com água e sabão e procure uma UBS para verificar a vacinação. A ferrugem não causa tétano diretamente, mas objetos sujos ou perfurantes podem contaminar o ferimento. Rigidez na mandíbula, dificuldade para engolir ou espasmos musculares exigem emergência."
+    },
+    {
+      "id": "ferimento_corte",
+      "titulo": "Cortes e ferimentos — primeiros cuidados",
+      "tags": ["corte", "ferida", "sangramento", "machucado", "curativo"],
+      "conteudo": "Lave cortes pequenos com água corrente e sabão e cubra com curativo limpo. Para sangramento, faça pressão direta contínua com gaze ou pano limpo. Não sopre, não coloque pó ou café e não retire objetos grandes encravados. Procure uma UPA se o sangramento não parar, se o corte for profundo, estiver aberto, tiver perda de sensibilidade ou envolver tendões, articulações, rosto ou mãos."
+    },
+    {
+      "id": "fratura",
+      "titulo": "Fratura — como agir",
+      "tags": ["fratura", "osso quebrado", "trauma", "dor", "inchaço"],
+      "conteudo": "Suspeite de fratura diante de dor intensa, deformidade, inchaço, incapacidade de movimentar ou apoiar o membro após trauma. Não tente colocar o osso no lugar nem force a movimentação. Imobilize o membro na posição encontrada e procure uma UPA. Se houver sangramento intenso, perda de sensibilidade, extremidade fria ou acidente grave, ligue 192."
+    },
+    {
+      "id": "entorse",
+      "titulo": "Entorse — cuidados iniciais",
+      "tags": ["entorse", "torção", "tornozelo", "inchaço", "dor"],
+      "conteudo": "Após uma torção, descanse, eleve o membro e use compressa fria protegida por um pano por períodos curtos. Evite massagear ou aplicar calor nas primeiras horas. Não apoie o peso se houver dor importante. Procure uma UBS ou UPA se não conseguir caminhar, houver deformidade, dor intensa, grande inchaço ou suspeita de fratura."
+    },
+    {
+      "id": "traumatismo_craniano",
+      "titulo": "Batida na cabeça — sinais de alerta",
+      "tags": ["batida na cabeça", "trauma", "concussão", "queda", "vômito"],
+      "conteudo": "Após uma pancada na cabeça, observe dor de cabeça, vômitos, sonolência, confusão, perda de memória, convulsão, alteração da visão ou saída de sangue ou líquido pelo nariz ou ouvido. Não deixe a pessoa sozinha se houver sintomas. Procure uma UPA após trauma importante, perda de consciência, uso de anticoagulantes ou em crianças pequenas e idosos. Confusão, convulsão, fraqueza ou dificuldade para acordar exigem 192."
+    },
+    {
+      "id": "concussao",
+      "titulo": "Concussão — cuidados após trauma",
+      "tags": ["concussão", "cabeça", "esporte", "tontura", "memória"],
+      "conteudo": "Concussão pode causar dor de cabeça, tontura, náusea, sensibilidade à luz, dificuldade de concentração e alteração da memória após uma pancada. A pessoa deve ser avaliada e evitar retornar a esportes ou atividades de risco até receber orientação. Não use álcool ou sedativos por conta própria. Piora da dor, vômitos repetidos, confusão, convulsão ou sonolência excessiva exigem urgência."
+    },
+    {
+      "id": "trombose",
+      "titulo": "Trombose — sinais e emergência",
+      "tags": ["trombose", "perna inchada", "coágulo", "dor na perna", "embolia"],
+      "conteudo": "A trombose venosa profunda pode causar inchaço, dor, calor e vermelhidão geralmente em uma perna. Não massageie o local e procure avaliação médica. Falta de ar súbita, dor no peito, tosse com sangue, desmaio ou coração acelerado podem indicar embolia pulmonar: ligue 192 imediatamente. O risco pode aumentar após cirurgias, imobilização, viagens longas, gestação ou uso de alguns medicamentos."
+    },
+    {
+      "id": "varizes",
+      "titulo": "Varizes — cuidados e sinais de alerta",
+      "tags": ["varizes", "veias", "pernas", "inchaço", "circulação"],
+      "conteudo": "Varizes são veias dilatadas e tortuosas, frequentemente nas pernas. Caminhar, evitar longos períodos parado e elevar as pernas podem ajudar, conforme orientação profissional. Não use meias de compressão sem avaliação quando houver doença arterial ou outras condições. Procure uma UBS se houver dor, feridas ou inchaço frequente. Uma perna subitamente inchada, quente e dolorida exige avaliação rápida."
+    },
+    {
+      "id": "insuficiencia_cardiaca",
+      "titulo": "Insuficiência cardíaca — sinais de piora",
+      "tags": ["coração", "insuficiência cardíaca", "falta de ar", "inchaço", "cansaço"],
+      "conteudo": "Insuficiência cardíaca pode causar falta de ar aos esforços, cansaço, inchaço nas pernas e aumento rápido de peso por retenção de líquido. Use os medicamentos exatamente como prescritos e acompanhe o peso conforme orientação. Procure a UBS se os sintomas estiverem aumentando. Falta de ar em repouso, dor no peito, confusão, lábios arroxeados ou dificuldade para deitar exigem UPA ou SAMU 192."
+    },
+    {
+      "id": "arritmia",
+      "titulo": "Palpitação e arritmia — quando investigar",
+      "tags": ["palpitação", "arritmia", "coração acelerado", "batimento", "tontura"],
+      "conteudo": "Palpitação é a sensação de batimentos acelerados, fortes ou irregulares. Pode ocorrer por ansiedade, febre, cafeína, medicamentos ou alterações cardíacas. Anote quando acontece, quanto dura e quais sintomas aparecem, e procure uma UBS se for recorrente. Dor no peito, desmaio, falta de ar intensa, confusão ou palpitação persistente exigem atendimento imediato."
+    },
+    {
+      "id": "doenca_renal",
+      "titulo": "Doença renal — prevenção e sinais",
+      "tags": ["rim", "doença renal", "urina", "pressão alta", "diabetes"],
+      "conteudo": "Doenças renais podem evoluir sem sintomas, especialmente em pessoas com hipertensão ou diabetes. O acompanhamento inclui controle da pressão, glicemia, exames de sangue e urina quando indicados. Evite usar anti-inflamatórios repetidamente sem orientação. Procure uma UBS se houver inchaço, alterações persistentes na urina ou cansaço. Pouca ou nenhuma urina, falta de ar e confusão exigem atendimento urgente."
+    },
+    {
+      "id": "infeccao_urinaria",
+      "titulo": "Infecção urinária — sintomas e cuidados",
+      "tags": ["infecção urinária", "urina", "ardência", "cistite", "dor"],
+      "conteudo": "Infecção urinária pode causar ardência ao urinar, vontade frequente de urinar, urgência e dor na parte baixa da barriga. Procure uma UBS para avaliação e exame quando indicado; não use antibiótico por conta própria. Febre, dor nas costas ou na lateral, calafrios, vômitos, gestação, sexo masculino, criança ou idoso exigem avaliação mais rápida, pois podem indicar infecção nos rins."
+    },
+    {
+      "id": "calculo_renal",
+      "titulo": "Pedra nos rins — sintomas e urgência",
+      "tags": ["pedra nos rins", "cálculo renal", "cólica", "urina", "dor lombar"],
+      "conteudo": "Cálculo renal pode causar dor intensa na lateral ou nas costas, que pode irradiar para a virilha, além de náusea e sangue na urina. Procure avaliação médica para confirmar a causa e orientar o tratamento. Febre, calafrios, vômitos persistentes, dificuldade para urinar ou dor que não melhora exigem UPA. Não tome medicamentos em excesso nem tente eliminar a pedra sem orientação."
+    },
+    {
+      "id": "constipacao",
+      "titulo": "Prisão de ventre — prevenção e cuidados",
+      "tags": ["prisão de ventre", "constipação", "intestino", "fezes", "fibras"],
+      "conteudo": "Prisão de ventre pode causar evacuações difíceis, fezes endurecidas e sensação de evacuação incompleta. Aumente gradualmente fibras na alimentação, beba líquidos e mantenha atividade física, se possível. Não use laxantes repetidamente sem orientação. Procure uma UBS se o problema persistir ou voltar frequentemente. Dor abdominal intensa, vômitos, barriga muito distendida ou sangue nas fezes exigem avaliação."
+    },
+    {
+      "id": "hemorroida",
+      "titulo": "Hemorroidas — sintomas e cuidados",
+      "tags": ["hemorroida", "sangue nas fezes", "ânus", "dor", "coceira"],
+      "conteudo": "Hemorroidas podem causar dor, coceira, inchaço e sangramento vermelho vivo ao evacuar. Evite fazer força, aumente fibras e líquidos e não permaneça muito tempo no vaso sanitário. Procure uma UBS para confirmar a causa, pois nem todo sangramento é hemorroida. Sangramento volumoso, fezes negras, tontura, desmaio ou dor intensa exigem atendimento urgente."
+    },
+    {
+      "id": "refluxo",
+      "titulo": "Refluxo e azia — cuidados",
+      "tags": ["refluxo", "azia", "queimação", "estômago", "digestão"],
+      "conteudo": "Refluxo pode causar queimação no peito ou na garganta, gosto ácido e retorno de alimentos. Faça refeições menores, evite deitar logo após comer e observe alimentos que pioram os sintomas. Não use remédios continuamente sem avaliação. Procure uma UBS se os sintomas forem frequentes, houver dificuldade para engolir, perda de peso, vômitos persistentes ou sangue. Dor no peito com falta de ar ou suor frio deve ser tratada como emergência."
+    },
+    {
+      "id": "gastrite",
+      "titulo": "Gastrite e dor no estômago",
+      "tags": ["gastrite", "dor no estômago", "queimação", "náusea", "digestão"],
+      "conteudo": "Gastrite pode causar dor ou queimação na parte alta da barriga, náusea e sensação de estômago cheio. Evite álcool, cigarro, anti-inflamatórios sem orientação e alimentos que pioram os sintomas. Procure uma UBS se a dor persistir ou voltar com frequência. Vômito com sangue, fezes pretas, desmaio, dor intensa ou barriga rígida exigem UPA."
+    },
+    {
+      "id": "apendicite",
+      "titulo": "Apendicite — sinais de alerta",
+      "tags": ["apendicite", "dor abdominal", "lado direito", "febre", "vômito"],
+      "conteudo": "Apendicite pode começar com dor perto do umbigo e migrar para a parte inferior direita da barriga, acompanhada de náusea, vômitos, febre e perda de apetite. A dor tende a piorar com o movimento ou ao tocar a região. Procure uma UPA rapidamente. Não use laxantes nem faça refeições pesadas enquanto aguarda avaliação."
+    },
+    {
+      "id": "reacao_medicamento",
+      "titulo": "Reação a medicamento — o que fazer",
+      "tags": ["remédio", "medicamento", "alergia", "efeito colateral", "reação"],
+      "conteudo": "Medicamentos podem causar efeitos adversos, como náusea, tontura, sonolência ou manchas na pele. Não interrompa medicamentos importantes sem orientação, mas procure o serviço que prescreveu se os sintomas forem novos ou intensos. Inchaço na boca ou garganta, falta de ar, desmaio, bolhas na pele ou descamação exigem emergência: ligue 192. Não compartilhe medicamentos."
+    },
+    {
+      "id": "uso_seguro_medicamentos",
+      "titulo": "Uso seguro de medicamentos",
+      "tags": ["medicamento", "remédio", "dose", "prescrição", "farmácia"],
+      "conteudo": "Use medicamentos na dose, no horário e pelo período orientados. Não misture remédios, álcool ou suplementos sem verificar possíveis interações. Mantenha os medicamentos fora do alcance de crianças e não use sobras de tratamentos antigos. Em caso de dúvida, procure uma UBS ou farmácia. Se houver ingestão acidental ou dose excessiva, ligue para o Disque-Intoxicação 0800 722 6001 e, se houver sintomas graves, para o 192."
+    },
+    {
+      "id": "saude_do_homem",
+      "titulo": "Saúde do homem — acompanhamento",
+      "tags": ["saúde do homem", "homem", "prevenção", "check-up", "ubs"],
+      "conteudo": "O cuidado preventivo deve considerar idade, histórico familiar, hábitos, saúde mental, vacinação, pressão, diabetes, saúde sexual e uso de álcool ou tabaco. Não espere sintomas intensos para procurar a UBS. Dor no peito, falta de ar, sangue na urina ou nas fezes, perda de peso sem explicação e alterações persistentes devem ser avaliados. Exames devem ser solicitados conforme a história e o risco individual."
+    },
+    {
+      "id": "saude_da_mulher",
+      "titulo": "Saúde da mulher — prevenção",
+      "tags": ["saúde da mulher", "mulher", "prevenção", "ubs", "exames"],
+      "conteudo": "A UBS pode orientar sobre vacinação, planejamento reprodutivo, prevenção de ISTs, saúde menstrual, pré-natal, climatério e rastreamentos indicados. Procure atendimento se houver sangramento vaginal fora do habitual, dor pélvica persistente, corrimento com mau cheiro ou dor durante a relação. Sangramento intenso, dor forte, desmaio ou suspeita de gravidez com dor exigem urgência."
+    },
+    {
+      "id": "menstruacao_dolorosa",
+      "titulo": "Cólicas menstruais — quando investigar",
+      "tags": ["menstruação", "cólica", "dor pélvica", "ciclo menstrual", "endometriose"],
+      "conteudo": "Cólicas leves podem ocorrer durante a menstruação, mas dor intensa ou incapacitante não deve ser normalizada. Registre a intensidade da dor, duração e alterações no fluxo. Procure uma UBS se a dor impedir atividades, começar de forma diferente ou vier com sangramento muito intenso. Dor súbita e intensa, desmaio, febre ou possibilidade de gravidez exigem atendimento imediato."
+    },
+    {
+      "id": "corrimento_vaginal",
+      "titulo": "Corrimento vaginal — quando procurar ajuda",
+      "tags": ["corrimento", "vagina", "coceira", "odor", "ist"],
+      "conteudo": "Corrimento pode ocorrer por alterações da flora, candidíase, vaginose ou ISTs. A cor, o odor e os sintomas associados ajudam na avaliação, mas não permitem diagnóstico seguro apenas pela descrição. Evite duchas vaginais e não use pomadas por conta própria. Procure uma UBS se houver coceira, odor forte, dor, feridas, sangramento ou recorrência. Dor pélvica intensa, febre ou gravidez exigem avaliação rápida."
     }
   ]
 }

@@ -374,7 +374,6 @@ async function processarTurnoInterno(
             ? `*${respostaBase.titulo}*\n\n`
             : '';
 
-        // Consolida o relato + gera a PRÓXIMA pergunta de triagem
         const textoAcumuladoMI = estado.texto_original_acumulado
           ? `${estado.texto_original_acumulado} ${textoUsuario}`
           : textoUsuario;
@@ -386,7 +385,6 @@ async function processarTurnoInterno(
         });
         const nivelMI = classificarNivel(atualMI);
 
-        // Se já é crítico, manda direto pro fluxo de emergência
         if (nivelMI === 'critico') {
           const decisaoCritica = aplicarMotor(atualMI, textoAcumuladoMI);
           const msgCritica = comporResposta({
@@ -413,7 +411,6 @@ async function processarTurnoInterno(
           };
         }
 
-        // Pega a próxima pergunta da triagem
         const temaMI = escolherTemaPergunta({
           sintomas: atualMI.sintomas, idade_grupo: atualMI.idade_grupo,
           gestante: atualMI.gestante, risco_mental: atualMI.risco_mental,
@@ -423,7 +420,6 @@ async function processarTurnoInterno(
         const perguntaMI = escolherProximaPergunta(temaMI, atualMI, perguntasJaFeitas);
 
         if (perguntaMI) {
-          // Tem pergunta → seta ultimaPergunta pra próximo turno ser interpretado
           const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${perguntaMI.texto}`;
           return {
             estado: {
@@ -456,7 +452,6 @@ async function processarTurnoInterno(
           };
         }
 
-        // Sem pergunta disponível (fallback defensivo)
         const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
         const mensagemFinal = `${cabecalho}${respostaBase.corpo}${rodape}`;
         return {
@@ -569,11 +564,16 @@ async function processarTurnoInterno(
   }
 
   // ── 8. Reset de contexto
+  // [FIX] Se está no meio de uma triagem (fase 'coletando' + ultimaPergunta),
+  // NUNCA cai em fora de escopo — apenas continua o fluxo.
+  const respondendoTriagem = fase === 'coletando' && !!estado.ultimaPergunta;
+
   const nadaClinico =
     !temSintomaClinico(extraido) &&
     !parecePergunta(textoUsuario) &&
     !relatoComoQueixa &&
-    !respostaCurta;
+    !respostaCurta &&
+    !respondendoTriagem;
 
   if (nadaClinico) {
     const msgForaEscopo = mensagemPorId('fora_escopo_001');
@@ -595,7 +595,8 @@ async function processarTurnoInterno(
     !temSintomaClinico(extraido) &&
     !relatoComoQueixa &&
     estado.relatos.length === 0 &&
-    !respostaCurta
+    !respostaCurta &&
+    !respondendoTriagem
   ) {
     const msgForaEscopo = mensagemPorId('fora_escopo_001');
     return {
@@ -953,7 +954,15 @@ async function processarTurnoComRelatoInterno(
     }
   }
 
-  if (!temSintomaClinico(relatoPronto) && estado.relatos.length === 0 && !parecePergunta(textoRepresentativo)) {
+  // [FIX] Se está no meio de uma triagem, NÃO cai em áudio vazio
+  const respondendoTriagemAudio = fase === 'coletando' && !!estado.ultimaPergunta;
+
+  if (
+    !temSintomaClinico(relatoPronto) &&
+    estado.relatos.length === 0 &&
+    !parecePergunta(textoRepresentativo) &&
+    !respondendoTriagemAudio
+  ) {
     return {
       estado,
       resultado: {
