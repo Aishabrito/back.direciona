@@ -31,9 +31,28 @@ import {
 import {
   salvarEstado, carregarEstado, apagarEstado,
 } from "./persistencia_estado.js";
- 
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+// ─── URL pública (usada no QR code e no health check) ───
+const PUBLIC_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
+
+// ─── [FIX] Handlers globais — silencia erros cosméticos do Baileys ───
+process.on('unhandledRejection', (err: any) => {
+  const msg = err?.message || String(err);
+  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
+    return; // ruído esperado em reconexões
+  }
+  console.error('❌ Unhandled rejection:', err);
+});
+
+process.on('uncaughtException', (err: any) => {
+  const msg = err?.message || String(err);
+  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
+    return;
+  }
+  console.error('❌ Uncaught exception:', err);
+});
 
 const sessions = new Map<string, EstadoConversa>();
 
@@ -73,6 +92,7 @@ function expirarSessaoSeVelha(sender: string): void {
   if (ultima && Date.now() - ultima > TTL_SESSAO_MS) sessions.delete(sender);
   ultimaAtividade.set(sender, Date.now());
 }
+
 const AUTH_DIR = "auth_info_baileys";
 
 let botIniciado = false;
@@ -102,6 +122,27 @@ const comandosReset = [
   "vamos comecar dnv", "vamos começar de novo", "voltar pro inicio", "voltar para o inicio",
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
+
+// ─── [FIX Bug 1] Carrega estado do banco antes de criar novo ───
+// Sem isso, o histórico morre a cada restart do bot.
+async function obterOuCriarEstado(
+  sender: string,
+): Promise<{ estado: EstadoConversa; primeiraVez: boolean }> {
+  const emMemoria = sessions.get(sender);
+  if (emMemoria) return { estado: emMemoria, primeiraVez: false };
+
+  if (sqlCliente) {
+    const doBanco = await carregarEstado(sqlCliente, sender);
+    if (doBanco) {
+      sessions.set(sender, doBanco);
+      return { estado: doBanco, primeiraVez: false };
+    }
+  }
+
+  const novo = JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa;
+  sessions.set(sender, novo);
+  return { estado: novo, primeiraVez: true };
+}
 
 function detectarPedidoLocalizacao(texto: string): 'UPA' | 'HOSPITAL' | 'UBS' | null {
   const n = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -188,9 +229,6 @@ function oferecerLocalizacao(
   return texto;
 }
 
-// ────────────────────────────────────────────────────────────
-// Responde: se a pessoa mandou áudio, devolve áudio também.
-// ────────────────────────────────────────────────────────────
 async function responder(
   sock: Sock,
   sender: string,
@@ -251,11 +289,11 @@ export async function startWhatsAppBot(): Promise<void> {
     return;
   }
 
-if (!sqlCliente) {
-  sqlCliente = await criarClienteDb();
-}
-const sql = sqlCliente;
-registrarClienteDb(sql);  
+  if (!sqlCliente) {
+    sqlCliente = await criarClienteDb();
+  }
+  const sql = sqlCliente;
+  registrarClienteDb(sql);
 
   if (!botIniciado) {
     await baixarSessaoParaDisco(sql);
@@ -292,7 +330,8 @@ registrarClienteDb(sql);
     if (qr) {
       setQrCode(qr);
       console.log("\n📲 *NOVO QR CODE GERADO!*");
-      console.log("👉 Abra no navegador: https://back-direciona.onrender.com/qr");
+      // [FIX Bug 2] usa PUBLIC_URL em vez de URL hardcoded do Render
+      console.log(`👉 Abra no navegador: ${PUBLIC_URL}/qr`);
       console.log("⏳ Escaneie em até 20 segundos!\n");
     }
 
@@ -386,7 +425,8 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       return;
     }
 
-    const estado = sessions.get(sender) ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    // [FIX Bug 1] carrega do banco se não estiver em memória
+    const { estado } = await obterOuCriarEstado(sender);
     const aguardando = estado.aguardandoLocalizacao;
     if (aguardando?.ativo) {
       await executarBusca(sock, sender, estado, lat, lng, aguardando.tipo);
@@ -401,8 +441,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-    // ── ÁUDIO ──
-    // ── ÁUDIO ──
+  // ── ÁUDIO ──
   const audioMessage = msg.message.audioMessage;
   if (audioMessage) {
     inc('total_audios');
@@ -410,7 +449,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       await sock.sendPresenceUpdate("composing", sender);
       await sock.sendMessage(sender, { text: "🎤 Um instante, estou ouvindo..." });
 
-      // 1. Baixa com timeout (Baileys às vezes trava sem avisar)
+      // 1. Baixa com timeout
       const buffer = (await Promise.race([
         downloadMediaMessage(
           msg, "buffer", {},
@@ -435,7 +474,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         transcricao = await transcreverAudio(buffer, mime);
       }
 
-      // 3. Se ainda vazio → pede pra repetir e sai limpo
+      // 3. Se ainda vazio → pede pra repetir
       if (!transcricao || transcricao.length < 3) {
         console.log(`❌ [${hashSender(sender)}] transcrição falhou 2x`);
         await sock.sendMessage(sender, {
@@ -450,14 +489,18 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
       console.log(`📝 [${hashSender(sender)}] Transcrito: "${transcricao.slice(0, 100)}${transcricao.length > 100 ? '...' : ''}"`);
 
-      // 4. Pipeline normal de texto (Groq pra extração)
-      const relatoDoAudio = await interpretarRelato(transcricao);
+      // [FIX Bug 1 + Bug 3] carrega estado ANTES pra ter histórico disponível
+      const { estado: estadoAtualAudio, primeiraVez: primeiraMensagemAudio } =
+        await obterOuCriarEstado(sender);
 
-      const primeiraMensagemAudio = !sessions.has(sender);
-      if (primeiraMensagemAudio) {
-        sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-      }
-      const estadoAtualAudio = sessions.get(sender)!;
+      // [FIX Bug 3] passa histórico pro extrator no áudio também
+      const historicoFmt = estadoAtualAudio.historico?.length
+        ? estadoAtualAudio.historico
+            .map((m) => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`)
+            .join('\n')
+        : undefined;
+
+      const relatoDoAudio = await interpretarRelato(transcricao, historicoFmt);
 
       const { resultado, estado: novoEstado } = await processarTurnoComRelato(
         transcricao, relatoDoAudio, estadoAtualAudio,
@@ -471,7 +514,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
         respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
       }
 
-      // 5. Mostra o que o bot ouviu (transparência)
       respostaAudio = `_🎤 Ouvi: "${transcricao}"_\n\n${respostaAudio}`;
 
       if (primeiraMensagemAudio) {
@@ -479,7 +521,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       }
       respostaAudio = oferecerLocalizacao(sender, resultado, respostaAudio);
 
-      // 6. Responde em áudio (TTS Gemini)
       await responder(sock, sender, respostaAudio, true);
     } catch (err) {
       console.error("❌ Erro ao processar áudio:", err);
@@ -490,6 +531,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     await sock.sendPresenceUpdate("paused", sender);
     return;
   }
+
   // ── FOTO / STICKER / DOCUMENTO ──
   const temImagem = msg.message.imageMessage || msg.message.stickerMessage || msg.message.documentMessage;
   if (temImagem && !cleanText) {
@@ -573,7 +615,8 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   }
 
   if (pedidoLoc) {
-    const estado = estadoAtual ?? (JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
+    // [FIX Bug 1] carrega do banco se não estiver em memória
+    const { estado } = await obterOuCriarEstado(sender);
     if (locGuardada) {
       await executarBusca(sock, sender, estado, locGuardada.lat, locGuardada.lng, pedidoLoc);
       return;
@@ -590,12 +633,10 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   // ── TRIAGEM ──
   await sock.sendPresenceUpdate("composing", sender);
 
-  const primeiraMensagem = !sessions.has(sender);
-  if (primeiraMensagem) {
-    sessions.set(sender, JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa);
-  }
+  // [FIX Bug 1] carrega estado do banco se não estiver em memória
+  const { estado: estadoAtualProcesso, primeiraVez: primeiraMensagem } =
+    await obterOuCriarEstado(sender);
 
-  const estadoAtualProcesso = sessions.get(sender)!;
   const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
   if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
     novoEstado.ultimaLocalizacao = estadoAtualProcesso.ultimaLocalizacao;
@@ -621,7 +662,6 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   mensagemFinal = oferecerLocalizacao(sender, resultado, mensagemFinal);
 
-  // Veio de texto → responde em texto
   await responder(sock, sender, mensagemFinal, false);
   await sock.sendPresenceUpdate("paused", sender);
 }
