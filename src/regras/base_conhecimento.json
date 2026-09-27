@@ -620,6 +620,264 @@
       "titulo": "Corrimento vaginal — quando procurar ajuda",
       "tags": ["corrimento", "vagina", "coceira", "odor", "ist"],
       "conteudo": "Corrimento pode ocorrer por alterações da flora, candidíase, vaginose ou ISTs. A cor, o odor e os sintomas associados ajudam na avaliação, mas não permitem diagnóstico seguro apenas pela descrição. Evite duchas vaginais e não use pomadas por conta própria. Procure uma UBS se houver coceira, odor forte, dor, feridas, sangramento ou recorrência. Dor pélvica intensa, febre ou gravidez exigem avaliação rápida."
+    } 
+        ,{
+      "id": "o_que_e_sus",
+      "titulo": "O que é o SUS",
+      "tags": ["sus", "sistema unico de saude", "o que e sus", "principios", "universalidade"],
+      "conteudo": "O SUS (Sistema Único de Saúde) é o sistema público de saúde do Brasil. Garante atendimento gratuito a toda a população, sem discriminação. Seus princípios são: universalidade (todos têm direito), integralidade (atende do preventivo ao tratamento) e equidade (trata diferente os desiguais). É financiado por impostos e gerido por União, estados e municípios."
+    },
+    {
+      "id": "como_marcar_consulta",
+      "titulo": "Como marcar consulta na UBS",
+      "tags": ["marcar consulta", "agendar", "consulta", "ubs", "agendamento"],
+      "conteudo": "Para marcar consulta, vá à UBS mais próxima com Cartão SUS e documento com foto. Algumas unidades permitem agendamento por telefone ou aplicativo. Consultas de rotina são agendadas; demanda do dia é atendida por ordem de chegada ou acolhimento. Se for urgente, procure UPA."
+    },
+    {
+      "id": "como_funciona_samu",
+      "titulo": "Como funciona o SAMU 192",
+      "tags": ["samu", "192", "ambulancia", "emergencia", "resgate"],
+      "conteudo": "O SAMU atende emergências pelo telefone 192, gratuito, 24h. Ao ligar, informe: local exato, o que aconteceu, quantas vítimas, se estão conscientes e se respiram. A ligação é gravada e a ambulância mais próxima é enviada. Para casos simples, pode ser orientado a procurar UPA por conta própria. Não ligue pra transporte de rotina."
+    },
+    {
+      "id": "como_funciona_upa",
+      "titulo": "Como funciona a UPA",
+      "tags": ["upa", "unidade de pronto atendimento", "urgencia", "24 horas"],
+      "conteudo": "A UPA (Unidade de Pronto Atendimento) atende urgências e emergências 24h, todos os dias. Funciona com classificação de risco: casos mais graves são atendidos primeiro. Tem raio-X, ECG e exames básicos. Não substitui hospital para casos complexos nem UBS para rotina."
+    },
+    {
+      "id": "como_funciona_ubs",
+      "titulo": "O que a UBS faz (e o que não faz)",
+      "tags": ["ubs", "posto de saude", "atencao basica", "clinica da familia"],
+      "conteudo": "A UBS faz: consultas agendadas, vacinação, pré-natal, curativos, acompanhamento de doenças crônicas (pressão, diabetes), saúde bucal, coleta de exames básicos. A UBS NÃO faz: urgência, exames complexos, internação, cirurgia. Para isso, é encaminhado para UPA, hospital ou especialista."
+    },
+    {
+      "id": "como_tirar_cartao_sus",
+      "titulo": "Como tirar o Cartão SUS",
+      "tags": ["cartao sus", "cns", "cadastro", "conecte sus"],
+      "conteudo": "O Cartão SUS é gratuito e pode ser tirado em qualquer UBS, com RG, CPF e comprovante de residência. Em muitos municípios também é possível emitir pelo aplicativo Conecte SUS. Segunda via também é gratuita na UBS. É obrigatório para consultas, exames e vacinas."
+    },
+    {
+      "id": "conecte_sus",
+      "titulo": "Conecte SUS — o que é e como usar",
+      "tags": ["conecte sus", "aplicativo", "app", "carteira digital"],
+      "conteudo": "O Conecte SUS é o aplicativo oficial do Ministério da Saúde. Nele você vê histórico de vacinas, exames, consultas, medicamentos e o Cartão SUS digital. Gratuito para Android e iOS. Login com CPF e conta gov.br."
+    },
+    {
+      "id": "farmacia_popular",
+      "titulo": "Farmácia Popular — como funciona",
+      "tags": ["farmacia popular", "medicamento gratuito", "remedio", "sus"],
+      "conteudo": "O programa Farmácia Popular oferece medicamentos gratuitos ou com desconto para hipertensão, diabetes, asma, rinite, Parkinson, osteoporose, glaucoma, contracepção e fraldas geriátricas. Basta ir a uma farmácia credenciada com CPF, documento com foto e receita médica válida. Não precisa de cadastro prévio."
+    },
+    {
+      "id": "medicamento_uso_continuo",
+      "titulo": "Como conseguir medicamento de uso contínuo",
+      "tags": ["medicamento continuo", "remedio", "pressao", "diabetes", "receita"],
+      "conteudo": "Medicamentos de uso contínuo (pressão, diabetes, etc.) são retirados na UBS com receita médica válida e Cartão SUS. A receita geralmente vale por 3 a 6 meses. Não interrompa o uso sem orientação. Se o remédio não estiver disponível na UBS, peça orientação sobre Farmácia Popular ou outro serviço."
+    },
+    {
+      "id": "como_marcar_exames",
+      "titulo": "Como marcar exames pelo SUS",
+      "tags": ["exame", "marcar exame", "laboratorio", "sangue", "raio x"],
+      "conteudo": "Exames são solicitados pelo médico da UBS. Após a consulta, a solicitação é inserida no sistema e o agendamento é feito pela própria UBS ou por central de regulação. Alguns exames simples são feitos na própria UBS; outros são encaminhados para laboratórios conveniados ou hospitais. Leve sempre Cartão SUS e a solicitação."
+    },
+    {
+      "id": "ouvidoria_sus",
+      "titulo": "Ouvidoria do SUS — como reclamar ou elogiar",
+      "tags": ["ouvidoria", "reclamacao", "denuncia", "sus", "136"],
+      "conteudo": "A Ouvidoria do SUS atende pelo telefone 136, gratuito, 24h. Serve para reclamações, denúncias, sugestões e elogios. A ligação é sigilosa e gera protocolo para acompanhamento. Também é possível reclamar diretamente na UBS ou na secretaria de saúde do município."
+    },
+    {
+      "id": "direitos_usuario_sus",
+      "titulo": "Direitos do usuário do SUS",
+      "tags": ["direitos", "paciente", "sus", "carta dos direitos"],
+      "conteudo": "Todo usuário do SUS tem direito a: atendimento humanizado e sem discriminação, informação clara sobre seu estado de saúde, acesso ao prontuário, acompanhante em consultas e internações (em casos previstos em lei), segunda opinião médica, e sigilo das informações. Reclamações podem ser feitas na Ouvidoria (136)."
+    },
+    {
+      "id": "agente_comunitario_saude",
+      "titulo": "Agente Comunitário de Saúde — o que faz",
+      "tags": ["acs", "agente comunitario", "visita domiciliar", "equipe de saude"],
+      "conteudo": "O Agente Comunitário de Saúde (ACS) é o profissional que visita as casas da sua comunidade, faz cadastro das famílias, orienta sobre prevenção, marca consultas e acompanha gestantes, idosos e doentes crônicos. É a ponte entre a comunidade e a UBS. Procure o ACS da sua área na UBS de referência."
+    },
+    {
+      "id": "estrategia_saude_familia",
+      "titulo": "Estratégia Saúde da Família (ESF)",
+      "tags": ["esf", "saude da familia", "equipe", "atencao basica"],
+      "conteudo": "A ESF é o modelo de atenção básica do SUS. Cada equipe (médico, enfermeiro, técnico de enfermagem, ACS e dentista) cuida de cerca de 3.000 a 4.000 pessoas de um território. Isso permite acompanhamento próximo e contínuo. Pergunte na sua UBS qual a equipe responsável pelo seu endereço."
+    },
+    {
+      "id": "nasf",
+      "titulo": "NASF — Núcleo Ampliado de Saúde da Família",
+      "tags": ["nasf", "nucleo ampliado", "equipe multiprofissional", "nutricionista", "psicologo"],
+      "conteudo": "O NASF é uma equipe multiprofissional (nutricionista, psicólogo, fisioterapeuta, assistente social, educador físico) que apoia as equipes da UBS. O atendimento é por encaminhamento da equipe. Não é porta aberta — a UBS regula."
+    },
+    {
+      "id": "melhor_em_casa",
+      "titulo": "Programa Melhor em Casa (atenção domiciliar)",
+      "tags": ["melhor em casa", "atencao domiciliar", "em casa", "idoso acamado"],
+      "conteudo": "O Melhor em Casa leva atendimento médico, de enfermagem e fisioterapia à casa de pacientes acamados ou com dificuldade de locomoção. A entrada é por encaminhamento da UBS, hospital ou UPA. Gratuito pelo SUS. Consulte a secretaria de saúde do seu município."
+    },
+    {
+      "id": "academia_da_saude",
+      "titulo": "Academia da Saúde",
+      "tags": ["academia da saude", "atividade fisica", "exercicio", "prevencao"],
+      "conteudo": "O programa Academia da Saúde oferece atividade física orientada, ginástica, alongamento, dança e orientação nutricional gratuitos. É uma forma de prevenir doenças crônicas. Procure a UBS ou a secretaria de saúde do seu município para saber os polos."
+    },
+    {
+      "id": "vigilancia_sanitaria",
+      "titulo": "Vigilância Sanitária — o que faz",
+      "tags": ["vigilancia sanitaria", "fiscalizacao", "denuncia", "alimento", "restaurante"],
+      "conteudo": "A Vigilância Sanitária fiscaliza alimentos, medicamentos, cosméticos, serviços de saúde e condições sanitárias de estabelecimentos. Você pode denunciar problemas pelo 136 ou na secretaria municipal de saúde. Também faz inspeção em escolas, restaurantes, mercados e hospitais."
+    },
+    {
+      "id": "vacinas_infantil",
+      "titulo": "Vacinação infantil — calendário",
+      "tags": ["vacina", "calendario", "crianca", "bebe", "imunizacao"],
+      "conteudo": "O calendário infantil inclui: BCG e hepatite B ao nascer; penta, VIP, rotavírus, pneumo aos 2, 4 e 6 meses; tríplice viral aos 12 e 15 meses; varicela e hepatite A aos 15 meses; DTP e poliomielite de reforço aos 4 anos. Leve sempre a caderneta. Se atrasar, ainda pode ser aplicada."
+    },
+    {
+      "id": "vacinas_adulto",
+      "titulo": "Vacinação do adulto — quais tomar",
+      "tags": ["vacina adulto", "imunizacao adulto", "tetanos", "hepatite b"],
+      "conteudo": "Adultos devem manter em dia: hepatite B, dupla adulto (difteria e tétano) de 10 em 10 anos, tríplice viral, febre amarela (para quem viaja), influenza anual e COVID-19. Gestantes têm calendário próprio. Procure a UBS com a caderneta."
+    },
+    {
+      "id": "como_conseguir_especialista",
+      "titulo": "Como consultar um especialista pelo SUS",
+      "tags": ["especialista", "cardiologista", "dermatologista", "encaminhamento", "fila"],
+      "conteudo": "Primeiro passo é consultar o clínico geral da UBS. Se ele avaliar que precisa de especialista, faz o encaminhamento no sistema. A vaga entra numa fila regulada pelo município/estado. O tempo de espera varia por especialidade e região. Não vá direto ao especialista sem encaminhamento."
+    },
+    {
+      "id": "tempo_espera_consulta",
+      "titulo": "Tempo de espera por consulta/exame",
+      "tags": ["fila", "espera", "demora", "consulta", "exame"],
+      "conteudo": "Não existe prazo único — varia por especialidade, município e gravidade. Casos urgentes e prioritários (gestantes, idosos, câncer) têm prioridade legal. Reclamações sobre demora podem ser feitas na Ouvidoria (136) ou na secretaria de saúde. Para urgência, procure UPA."
+    },
+    {
+      "id": "saude_mental_atendimento",
+      "titulo": "Atendimento em saúde mental pelo SUS",
+      "tags": ["saude mental", "psicologo", "psiquiatra", "caps", "atendimento"],
+      "conteudo": "O atendimento em saúde mental é feito pela UBS (casos leves), CAPS (casos moderados a graves), e hospitais (internação, em último caso). O CAPS oferece psicólogo, psiquiatra, terapia ocupacional e grupos. O acesso é por encaminhamento da UBS ou direto na unidade."
+    },
+    {
+      "id": "caps_infantil",
+      "titulo": "CAPS Infantojuvenil (CAPSi)",
+      "tags": ["caps infantil", "capsi", "crianca", "adolescente", "saude mental"],
+      "conteudo": "O CAPSi atende crianças e adolescentes com transtornos mentais graves (autismo, psicose, transtornos de humor, uso de drogas). Oferece atendimento multiprofissional e apoio à família. Acesso por encaminhamento da UBS, escola ou demanda espontânea."
+    },
+    {
+      "id": "caps_ad",
+      "titulo": "CAPS AD — Álcool e Drogas",
+      "tags": ["caps ad", "alcool", "droga", "dependencia", "tratamento"],
+      "conteudo": "O CAPS AD atende pessoas com uso problemático de álcool e outras drogas. Oferece acolhimento, desintoxicação ambulatorial, grupos de apoio, atendimento à família e articulação com comunidades terapêuticas quando indicado. Gratuito e sigiloso."
+    },
+    {
+      "id": "atendimento_psicologico",
+      "titulo": "Atendimento psicológico gratuito",
+      "tags": ["psicologo", "terapia", "atendimento psicologico", "saude mental"],
+      "conteudo": "O SUS oferece atendimento psicológico gratuito na UBS, no CAPS e em algumas clínicas-escola conveniadas. O acesso é por encaminhamento da equipe de saúde. Em crises, procure UPA ou ligue 188 (CVV). Para casos leves, a UBS pode oferecer grupos terapêuticos."
+    },
+    {
+      "id": "atendimento_psiquiatrico",
+      "titulo": "Atendimento psiquiátrico pelo SUS",
+      "tags": ["psiquiatra", "atendimento psiquiatrico", "saude mental", "medicacao"],
+      "conteudo": "O psiquiatra é acessado por encaminhamento da UBS ou do CAPS. Em crises graves, hospitais gerais com leito psiquiátrico ou CAPS III atendem 24h. A internação psiquiátrica é o último recurso, por lei deve ser preferencialmente em hospital geral e por curto período."
+    },
+    {
+      "id": "doacao_sangue",
+      "titulo": "Como doar sangue pelo SUS",
+      "tags": ["doar sangue", "hemocentro", "doacao", "sangue"],
+      "conteudo": "Para doar sangue, procure um hemocentro ou banco de sangue. Requisitos: 16 a 69 anos (menor precisa de autorização), peso acima de 50kg, boa saúde, documento com foto. Não é preciso estar em jejum — evite alimentos gordurosos. A doação é gratuita e pode salvar até 4 vidas."
+    },
+    {
+      "id": "transplante_orgaos",
+      "titulo": "Transplante de órgãos pelo SUS",
+      "tags": ["transplante", "orgao", "doacao", "fila", "sus"],
+      "conteudo": "O transplante de órgãos é 100% gratuito pelo SUS. A fila é única, baseada em critérios técnicos (compatibilidade, urgência, tempo de espera). A doação só acontece com autorização da família. Avise sua família sobre seu desejo de ser doador — não existe documento obrigatório."
+    },
+    {
+      "id": "pre_natal_detalhado",
+      "titulo": "Pré-natal — o que é feito em cada consulta",
+      "tags": ["pre natal", "gestante", "consultas", "exames gravidez"],
+      "conteudo": "O pré-natal inclui: exames de sangue e urina, ultrassom, medição da pressão, ausculta do bebê, avaliação do peso e vacinas (tétano, hepatite B, gripe). É recomendado começar no 1º trimestre. A gestante deve levar dúvidas por escrito. Sinais de alerta (sangramento, dor de cabeça forte, visão turva) exigem UPA imediata."
+    },
+    {
+      "id": "amamentacao_dificuldades",
+      "titulo": "Dificuldades na amamentação",
+      "tags": ["amamentacao", "fissura", "pega", "leite fraco", "bebe"],
+      "conteudo": "Dor, fissura, ingurgitamento e baixa produção são comuns e têm solução. A UBS pode orientar sobre pega correta, posições e ordenha. Não existe 'leite fraco'. Bancos de Leite Humano apoiam gratuitamente. Se o bebê não está ganhando peso ou tem menos de 6 fraldas molhadas por dia, procure atendimento."
+    },
+    {
+      "id": "saude_idoso",
+      "titulo": "Saúde do idoso pelo SUS",
+      "tags": ["idoso", "terceira idade", "saude do idoso", "vacina idoso", "queda"],
+      "conteudo": "Idosos têm direito a atendimento prioritário, vacinas específicas (gripe, pneumocócica, herpes-zóster quando indicada), acompanhamento de doenças crônicas na UBS, fisioterapia e prevenção de quedas. O programa Melhor em Casa atende idosos acamados. Quedas em idosos exigem avaliação em UPA."
+    },
+    {
+      "id": "saude_deficiente",
+      "titulo": "Atendimento a pessoas com deficiência",
+      "tags": ["deficiente", "pcd", "acessibilidade", "atendimento prioritario"],
+      "conteudo": "Pessoas com deficiência têm direito a atendimento prioritário, acessibilidade nos serviços de saúde, acompanhante e acesso a reabilitação (fisioterapia, fonoaudiologia, terapia ocupacional) pelo SUS. O CER (Centro Especializado em Reabilitação) oferece atendimento especializado. Encaminhamento pela UBS."
+    },
+    {
+      "id": "saude_indigena",
+      "titulo": "Saúde indígena pelo SUS",
+      "tags": ["saude indigena", "indigena", "sesai", "aldeia"],
+      "conteudo": "A saúde indígena é gerida pela SESAI (Secretaria Especial de Saúde Indígena), com equipes que atendem nas aldeias. Inclui atenção básica, vacinação, pré-natal e emergências. Indígenas em área urbana podem usar qualquer UBS. Gratuito e adaptado à cultura local."
+    },
+    {
+      "id": "atendimento_domiciliar",
+      "titulo": "Atendimento domiciliar — quem tem direito",
+      "tags": ["atendimento em casa", "domiciliar", "acamado", "melhor em casa"],
+      "conteudo": "Tem direito ao atendimento em casa: idosos acamados ou com dificuldade de locomoção, pacientes crônicos em fase avançada, pós-cirúrgicos e cuidados paliativos. A entrada é por encaminhamento da UBS, hospital ou UPA, avaliada pela equipe do Melhor em Casa. Gratuito."
+    },
+    {
+      "id": "cuidados_paliativos",
+      "titulo": "Cuidados paliativos pelo SUS",
+      "tags": ["cuidados paliativos", "paliativo", "terminal", "conforto", "dor"],
+      "conteudo": "Cuidados paliativos são para pacientes com doenças graves que ameaçam a vida. O foco é aliviar dor e sofrimento, não curar. Oferecidos em casa (atenção domiciliar), ambulatórios, hospitais e hospices. Acesso por encaminhamento da UBS. Gratuito."
+    },
+    {
+      "id": "ciatox_intoxicacao",
+      "titulo": "CIATox — intoxicação e envenenamento",
+      "tags": ["ciatox", "intoxicacao", "envenenamento", "disque intoxicacao", "0800"],
+      "conteudo": "O CIATox (Centro de Informação e Assistência Toxicológica) orienta casos de intoxicação por medicamentos, produtos químicos, plantas, animais peçonhentos e drogas. Ligue 0800 722 6001 (Disque-Intoxicação), 24h, gratuito. Não provoque vômito sem orientação."
+    },
+    {
+      "id": "regulacao_leitos",
+      "titulo": "Regulação de leitos — como funciona",
+      "tags": ["regulacao", "leito", "internacao", "vaga"],
+      "conteudo": "A regulação de leitos é o sistema que distribui vagas de internação pelo SUS. Quem precisa é regulado por uma central que avalia gravidade e disponibilidade de leitos na região. Não é possível escolher o hospital; a central direciona para onde houver vaga adequada ao caso."
+    },
+    {
+      "id": "notificacao_compulsoria",
+      "titulo": "Doenças de notificação compulsória",
+      "tags": ["notificacao", "compulsoria", "vigilancia", "doenca", "cievs"],
+      "conteudo": "Algumas doenças precisam ser notificadas às autoridades de saúde: dengue, zika, chikungunya, sarampo, tuberculose, hanseníase, HIV, sífilis, hepatites virais, meningite, COVID-19, entre outras. A notificação é feita pelo profissional de saúde, não pelo paciente. Serve para monitorar e conter surtos."
+    },
+    {
+      "id": "violencia_contra_crianca",
+      "titulo": "Violência contra criança e adolescente",
+      "tags": ["violencia infantil", "crianca", "adolescente", "denuncia", "100"],
+      "conteudo": "Denúncias de violência contra criança ou adolescente devem ser feitas pelo Disque 100, 24h, gratuito e anônimo. Em emergência, ligue 190. O Conselho Tutelar e a rede de proteção (CRAS, CREAS) são acionados. Profissionais de saúde têm obrigação legal de notificar casos suspeitos."
+    },
+    {
+      "id": "violencia_idoso",
+      "titulo": "Violência contra idoso",
+      "tags": ["violencia idoso", "idoso", "denuncia", "100", "maus tratos"],
+      "conteudo": "Denúncias de violência contra idoso pelo Disque 100, 24h, anônimo. Em risco imediato, ligue 190. O Estatuto do Idoso garante proteção e o Ministério Público pode ser acionado. A UBS e o CRAS também acolhem e encaminham casos."
+    },
+    {
+      "id": "gravidez_adolescencia",
+      "titulo": "Gravidez na adolescência — apoio pelo SUS",
+      "tags": ["gravidez adolescente", "adolescente", "pre natal", "apoio"],
+      "conteudo": "Gestantes adolescentes têm direito a pré-natal completo, apoio psicológico, acesso a métodos contraceptivos pós-parto e acompanhamento social. A UBS é porta de entrada. O atendimento é sigiloso e sem julgamento. A adolescente pode ir sozinha à consulta. Gratuito."
+    },
+    {
+      "id": "hiv_tratamento",
+      "titulo": "HIV — tratamento e acompanhamento pelo SUS",
+      "tags": ["hiv", "aids", "coquetel", "tratamento", "tarv"],
+      "conteudo": "O tratamento do HIV é gratuito pelo SUS e começa assim que diagnosticado. O coquetel (TARV) está disponível em serviços de referência (SAE). O acompanhamento inclui exames periódicos, apoio psicológico e prevenção de infecções oportunistas. Não interrompa sem orientação. Sigilo garantido por lei."
     }
   ]
 }
