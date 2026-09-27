@@ -25,6 +25,7 @@ import { mesclarRelatos } from './validador_de_saida.js';
 import { normalizarTexto } from './normalizar.js';
 import { inc, incDecisao, incDestino } from '../servicos/metricas.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
+import { escolherAleatorio, DESPEDIDAS, ABERTURAS_RAG } from './variacao.js';
 
 export const ESTADO_INICIAL: EstadoConversa = {
   relatos: [],
@@ -87,16 +88,25 @@ function descreveQueixaPropriaRegex(textoNorm: string): boolean {
 
 function pedidoDiagnosticoAmplo(textoNorm: string): boolean {
   const DOENCAS =
-    'gripe|influenza|dengue|covid|corona|coronavirus|pneumonia|infarto|avc|derrame|virose|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma';
+    'gripe|influenza|dengue|zika|chikungunya|covid|corona|coronavirus|pneumonia|infarto|avc|derrame|virose|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma|hepatite|tuberculose|hanseniase';
   const SUSPEITA = 'acho|acredito|penso|imagino|suspeito|desconfio|sera';
   const VERBO_PROPRIO = 'estou\\s+com|to\\s+com|tou\\s+com|tenho|peguei|pega';
 
   if (/\bmeus?\s+sintomas?\s+(sao|e|eh|podem ser|pode ser)\b/.test(textoNorm)) return true;
+
   const re1 = new RegExp(`\\b(${SUSPEITA})\\s+(q|que)?\\s*(${VERBO_PROPRIO})\\b`);
   if (re1.test(textoNorm)) return true;
+
   const re2 = new RegExp(`\\b(${SUSPEITA}|deve|pode)\\s+(q|que)?\\s*((e|eh)\\s+)?\\b(${DOENCAS})\\b`);
   if (re2.test(textoNorm)) return true;
+
   if (/\b(to|estou|tou)\s+(achando|pensando|suspeitando)\b/.test(textoNorm)) return true;
+
+  const re3 = new RegExp(`\\b(e|eh|seria|sera)\\s+(${DOENCAS})\\b`);
+  if (re3.test(textoNorm)) return true;
+
+  if (/\b(isso|isto|esse|essa)\s+(e|eh|é)\s+(grave|serio|sério|perigoso|ruim|mau)\b/.test(textoNorm)) return true;
+
   return false;
 }
 
@@ -121,8 +131,23 @@ function temIntent(relato: RelatoEstruturado, i: string): boolean {
   return Array.isArray(relato.intencoes) && relato.intencoes.includes(i);
 }
 
+const PALAVRAS_VAZIAS = new Set([
+  'isso', 'isto', 'aquilo', 'esse', 'essa', 'este', 'esta',
+  'aquele', 'aquela', 'papo', 'reto', 'coisa', 'negocio', 'negócio',
+  'grave', 'serio', 'serio', 'perigoso', 'ruim', 'mau',
+]);
+
+function perguntaTemConteudoMinimo(pergunta: string): boolean {
+  const palavrasSignificativas = pergunta
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .split(/\s+/)
+    .filter((p) => p.length > 3 && !PALAVRAS_VAZIAS.has(p));
+  return palavrasSignificativas.length >= 3;
+}
+
 // ============================================================
-// WRAPPERS PÚBLICOS — try/catch + histórico + log
+// WRAPPERS PÚBLICOS
 // ============================================================
 
 function respostaFallbackTurno(estado: EstadoConversa, erro: any): {
@@ -254,12 +279,13 @@ async function processarTurnoInterno(
   const textoNorm = normalizarTexto(textoUsuario);
   const historicoFmt = formatarHistorico(estado.historico);
 
+  // ── 1. Confirmação pós-orientação
   if (fase === 'orientado' && ehConfirmacaoOrientacao(textoUsuario)) {
     return {
       estado: { ...estado, fase: 'encerrado' },
       resultado: {
         tipo: 'orientacao',
-        texto: '💛 Fico à disposição. Cuide-se!',
+        texto: escolherAleatorio(DESPEDIDAS),
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
           resposta_id: 'encerramento_001', regra_acionada: 'confirmacao_orientacao',
@@ -292,6 +318,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 2.5. Bloqueio de diagnóstico
   const nivelPre = classificarNivel(extraido);
   const sinalCriticoPre = nivelPre === 'critico';
 
@@ -314,6 +341,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 3. Multi-intent
   const temConhecimento = temIntent(extraido, 'conhecimento');
   const temRelatoIntent = temIntent(extraido, 'relato');
   const temNavegacao = temIntent(extraido, 'navegacao');
@@ -330,6 +358,26 @@ async function processarTurnoInterno(
     temConhecimento && !temNavegacao && !temRelatoIntent &&
     !sinalCriticoInicial && !respostaCurta
   ) {
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      console.log(`⚠️ [RAG] pergunta vaga demais: "${perguntaRAG}"`);
+      return {
+        estado: { ...estado, fase: 'coletando' },
+        resultado: {
+          tipo: 'orientacao',
+          texto: 'Pode me contar um pouco mais? Sobre o que você quer saber exatamente?',
+          decisao: {
+            categoria_interna: 'informacao_insuficiente',
+            destino: 'FALLBACK',
+            resposta_id: 'vago_contexto',
+            regra_acionada: 'rag_pergunta_vaga',
+            versao_regras: VERSAO_REGRAS,
+            nivel: 'AGENDAR',
+            motivos: ['pergunta vaga'],
+          },
+        },
+      };
+    }
+
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
       const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -341,7 +389,10 @@ async function processarTurnoInterno(
         const rodape = respostaBase.bloqueado
           ? ''
           : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
-        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+          : '';
+        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
 
         return {
           estado: { ...estado, fase: 'orientado' },
@@ -365,118 +416,128 @@ async function processarTurnoInterno(
 
   // 3b. Multi-intent: conhecimento + relato
   if (temConhecimento && temRelatoIntent && !sinalCriticoInicial && !respostaCurta) {
-    const temTopico = await temTopicoRelevante(perguntaRAG);
-    if (temTopico) {
-      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
-      if (respostaBase) {
-        const cabecalho =
-          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
-            ? `*${respostaBase.titulo}*\n\n`
-            : '';
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      console.log(`⚠️ [RAG] multi-intent com pergunta vaga: "${perguntaRAG}"`);
+    } else {
+      const temTopico = await temTopicoRelevante(perguntaRAG);
+      if (temTopico) {
+        const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+        if (respostaBase) {
+          const cabecalho =
+            respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+              ? `*${respostaBase.titulo}*\n\n`
+              : '';
 
-        const textoAcumuladoMI = estado.texto_original_acumulado
-          ? `${estado.texto_original_acumulado} ${textoUsuario}`
-          : textoUsuario;
-        const relatosMI = [...estado.relatos, extraido];
-        const atualMI = consolidar({
-          ...estado,
-          relatos: relatosMI,
-          texto_original_acumulado: textoAcumuladoMI,
-        });
-        const nivelMI = classificarNivel(atualMI);
-
-        if (nivelMI === 'critico') {
-          const decisaoCritica = aplicarMotor(atualMI, textoAcumuladoMI);
-          const msgCritica = comporResposta({
-            relato: atualMI,
-            decisao: decisaoCritica,
-            mensagemAprovada: mensagemPorId(decisaoCritica.resposta_id).texto,
+          const textoAcumuladoMI = estado.texto_original_acumulado
+            ? `${estado.texto_original_acumulado} ${textoUsuario}`
+            : textoUsuario;
+          const relatosMI = [...estado.relatos, extraido];
+          const atualMI = consolidar({
+            ...estado,
+            relatos: relatosMI,
+            texto_original_acumulado: textoAcumuladoMI,
           });
-          registrarDecisao(decisaoCritica);
-          incDecisao(decisaoCritica.nivel);
-          incDestino(decisaoCritica.destino);
-          const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${msgCritica}`;
+          const nivelMI = classificarNivel(atualMI);
+
+          if (nivelMI === 'critico') {
+            const decisaoCritica = aplicarMotor(atualMI, textoAcumuladoMI);
+            const msgCritica = comporResposta({
+              relato: atualMI,
+              decisao: decisaoCritica,
+              mensagemAprovada: mensagemPorId(decisaoCritica.resposta_id).texto,
+            });
+            registrarDecisao(decisaoCritica);
+            incDecisao(decisaoCritica.nivel);
+            incDestino(decisaoCritica.destino);
+            const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${msgCritica}`;
+            return {
+              estado: {
+                relatos: [],
+                rodadasPerguntas: 0,
+                texto_original_acumulado: '',
+                fase: 'orientado',
+                perguntasJaFeitas: [],
+                historico: estado.historico,
+              },
+              resultado: {
+                tipo: 'orientacao',
+                texto: mensagemFinal,
+                decisao: decisaoCritica,
+              },
+            };
+          }
+
+          const temaMI = escolherTemaPergunta({
+            sintomas: atualMI.sintomas, idade_grupo: atualMI.idade_grupo,
+            gestante: atualMI.gestante, risco_mental: atualMI.risco_mental,
+            falta_de_ar: atualMI.falta_de_ar, febre: atualMI.febre,
+            sinais_trauma: atualMI.sinais_trauma,
+          });
+          const perguntaMI = escolherProximaPergunta(temaMI, atualMI, perguntasJaFeitas);
+
+          if (perguntaMI) {
+            const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${perguntaMI.texto}`;
+            return {
+              estado: {
+                relatos: relatosMI,
+                rodadasPerguntas: estado.rodadasPerguntas + 1,
+                temaPergunta: temaMI,
+                texto_original_acumulado: textoAcumuladoMI,
+                fase: 'coletando',
+                perguntasJaFeitas: [...perguntasJaFeitas, perguntaMI.id],
+                ultimaPergunta: {
+                  id: perguntaMI.id,
+                  campoAlvo: perguntaMI.campoAlvo,
+                  texto: perguntaMI.texto,
+                },
+                historico: estado.historico,
+              },
+              resultado: {
+                tipo: 'orientacao',
+                texto: mensagemFinal,
+                decisao: {
+                  categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+                  resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                  regra_acionada: 'base_conhecimento_multi',
+                  versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+                  motivos: respostaBase.bloqueado
+                    ? ['base bloqueada por segurança', 'multi-intent']
+                    : ['base de conhecimento', 'multi-intent'],
+                },
+              },
+            };
+          }
+
+          const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+            ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+            : '';
+          const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
+          const mensagemFinal = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
           return {
             estado: {
               ...estado,
               relatos: relatosMI,
               texto_original_acumulado: textoAcumuladoMI,
-              fase: 'orientado',
-            },
-            resultado: {
-              tipo: 'orientacao',
-              texto: mensagemFinal,
-              decisao: decisaoCritica,
-            },
-          };
-        }
-
-        const temaMI = escolherTemaPergunta({
-          sintomas: atualMI.sintomas, idade_grupo: atualMI.idade_grupo,
-          gestante: atualMI.gestante, risco_mental: atualMI.risco_mental,
-          falta_de_ar: atualMI.falta_de_ar, febre: atualMI.febre,
-          sinais_trauma: atualMI.sinais_trauma,
-        });
-        const perguntaMI = escolherProximaPergunta(temaMI, atualMI, perguntasJaFeitas);
-
-        if (perguntaMI) {
-          const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${perguntaMI.texto}`;
-          return {
-            estado: {
-              relatos: relatosMI,
-              rodadasPerguntas: estado.rodadasPerguntas + 1,
-              temaPergunta: temaMI,
-              texto_original_acumulado: textoAcumuladoMI,
               fase: 'coletando',
-              perguntasJaFeitas: [...perguntasJaFeitas, perguntaMI.id],
-              ultimaPergunta: {
-                id: perguntaMI.id,
-                campoAlvo: perguntaMI.campoAlvo,
-                texto: perguntaMI.texto,
-              },
-              historico: estado.historico,
             },
             resultado: {
               tipo: 'orientacao',
               texto: mensagemFinal,
               decisao: {
                 categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                resposta_id: 'base_conhecimento_multi',
                 regra_acionada: 'base_conhecimento_multi',
                 versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                motivos: respostaBase.bloqueado
-                  ? ['base bloqueada por segurança', 'multi-intent']
-                  : ['base de conhecimento', 'multi-intent'],
+                motivos: ['base de conhecimento', 'multi-intent'],
               },
             },
           };
         }
-
-        const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
-        const mensagemFinal = `${cabecalho}${respostaBase.corpo}${rodape}`;
-        return {
-          estado: {
-            ...estado,
-            relatos: relatosMI,
-            texto_original_acumulado: textoAcumuladoMI,
-            fase: 'coletando',
-          },
-          resultado: {
-            tipo: 'orientacao',
-            texto: mensagemFinal,
-            decisao: {
-              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: 'base_conhecimento_multi',
-              regra_acionada: 'base_conhecimento_multi',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-              motivos: ['base de conhecimento', 'multi-intent'],
-            },
-          },
-        };
       }
     }
   }
 
+  // ── 4. Agradecimento
   if (fase === 'orientado' && ehAgradecimento(textoUsuario) && !temSintomaClinico(extraido)) {
     return {
       estado: { ...estado, fase: 'orientado' },
@@ -495,6 +556,7 @@ async function processarTurnoInterno(
   const nivel = classificarNivel(extraido);
   const sinalCritico = nivel === 'critico';
 
+  // ── 5. FAQ
   if (!temSintomaClinico(extraido) && !respostaCurta) {
     const faqEncontrada = checarFaq(textoUsuario);
     if (faqEncontrada) {
@@ -513,6 +575,7 @@ async function processarTurnoInterno(
     }
   }
 
+  // ── 6. Bloqueio de medicamento
   if (!sinalCritico && ehPedidoMedicamento(textoUsuario)) {
     const msg = mensagemPorId('recusa_medicamento');
     return {
@@ -528,6 +591,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 7. Saudação inicial
   if (
     estado.relatos.length === 0 &&
     ehSaudacao(textoUsuario) &&
@@ -559,6 +623,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 8. Reset de contexto
   const respondendoTriagem = fase === 'coletando' && !!estado.ultimaPergunta;
 
   const nadaClinico =
@@ -583,6 +648,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 9. Fora de escopo inicial
   if (
     !temSintomaClinico(extraido) &&
     !relatoComoQueixa &&
@@ -604,6 +670,7 @@ async function processarTurnoInterno(
     };
   }
 
+  // ── 10. Consolida relato
   const textoAcumulado = estado.texto_original_acumulado
     ? `${estado.texto_original_acumulado} ${textoUsuario}`
     : textoUsuario;
@@ -689,12 +756,17 @@ async function processarTurnoInterno(
   incDecisao(decisao.nivel);
   incDestino(decisao.destino);
 
+  const limparAposEmergencia =
+    decisao.nivel === 'SAMU_AGORA' ||
+    decisao.nivel === 'UPA_AGORA' ||
+    decisao.nivel === 'HOJE';
+
   return {
     estado: {
-      relatos,
+      relatos: limparAposEmergencia ? [] : relatos,
       rodadasPerguntas: 0,
       temaPergunta: undefined,
-      texto_original_acumulado: textoAcumulado,
+      texto_original_acumulado: limparAposEmergencia ? '' : textoAcumulado,
       fase: 'orientado',
       perguntasJaFeitas: [],
       ultimaPergunta: undefined,
@@ -729,7 +801,7 @@ async function processarTurnoComRelatoInterno(
       estado: { ...estado, fase: 'encerrado' },
       resultado: {
         tipo: 'orientacao',
-        texto: '💛 Fico à disposição. Cuide-se!',
+        texto: escolherAleatorio(DESPEDIDAS),
         decisao: {
           categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
           resposta_id: 'encerramento_001', regra_acionada: 'confirmacao_orientacao',
@@ -786,6 +858,26 @@ async function processarTurnoComRelatoInterno(
   const perguntaRAG = relatoPronto.pergunta || textoRepresentativo;
 
   if (temConhecimento && !temNavegacao && !temRelatoIntent && !sinalCriticoInicial) {
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      console.log(`⚠️ [RAG/áudio] pergunta vaga: "${perguntaRAG}"`);
+      return {
+        estado: { ...estado, fase: 'coletando' },
+        resultado: {
+          tipo: 'orientacao',
+          texto: 'Pode me contar um pouco mais? Sobre o que você quer saber exatamente?',
+          decisao: {
+            categoria_interna: 'informacao_insuficiente',
+            destino: 'FALLBACK',
+            resposta_id: 'vago_contexto',
+            regra_acionada: 'rag_pergunta_vaga',
+            versao_regras: VERSAO_REGRAS,
+            nivel: 'AGENDAR',
+            motivos: ['pergunta vaga'],
+          },
+        },
+      };
+    }
+
     const temTopico = await temTopicoRelevante(perguntaRAG);
     if (temTopico) {
       const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
@@ -797,7 +889,10 @@ async function processarTurnoComRelatoInterno(
         const rodape = respostaBase.bloqueado
           ? ''
           : '\n\n_Se tiver algum sintoma agora, é só me contar que eu te oriento onde buscar atendimento._';
-        const mensagem = `${cabecalho}${respostaBase.corpo}${rodape}`;
+        const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+          ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+          : '';
+        const mensagem = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
 
         return {
           estado: { ...estado, fase: 'orientado' },
@@ -820,114 +915,123 @@ async function processarTurnoComRelatoInterno(
   }
 
   if (temConhecimento && temRelatoIntent && !sinalCriticoInicial) {
-    const temTopico = await temTopicoRelevante(perguntaRAG);
-    if (temTopico) {
-      const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
-      if (respostaBase) {
-        const cabecalho =
-          respostaBase.origem === 'fallback_direto' && respostaBase.titulo
-            ? `*${respostaBase.titulo}*\n\n`
-            : '';
+    if (!perguntaTemConteudoMinimo(perguntaRAG)) {
+      console.log(`⚠️ [RAG/áudio] multi-intent com pergunta vaga`);
+    } else {
+      const temTopico = await temTopicoRelevante(perguntaRAG);
+      if (temTopico) {
+        const respostaBase = await responderDaBase(perguntaRAG, historicoFmt);
+        if (respostaBase) {
+          const cabecalho =
+            respostaBase.origem === 'fallback_direto' && respostaBase.titulo
+              ? `*${respostaBase.titulo}*\n\n`
+              : '';
 
-        const textoAcumuladoMI = estado.texto_original_acumulado
-          ? `${estado.texto_original_acumulado} ${textoRepresentativo}`
-          : textoRepresentativo;
-        const relatosMI = [...estado.relatos, relatoPronto];
-        const atualMI = consolidar({
-          ...estado,
-          relatos: relatosMI,
-          texto_original_acumulado: textoAcumuladoMI,
-        });
-        const nivelMI = classificarNivel(atualMI);
-
-        if (nivelMI === 'critico') {
-          const decisaoCritica = aplicarMotor(atualMI, textoAcumuladoMI);
-          const msgCritica = comporResposta({
-            relato: atualMI,
-            decisao: decisaoCritica,
-            mensagemAprovada: mensagemPorId(decisaoCritica.resposta_id).texto,
+          const textoAcumuladoMI = estado.texto_original_acumulado
+            ? `${estado.texto_original_acumulado} ${textoRepresentativo}`
+            : textoRepresentativo;
+          const relatosMI = [...estado.relatos, relatoPronto];
+          const atualMI = consolidar({
+            ...estado,
+            relatos: relatosMI,
+            texto_original_acumulado: textoAcumuladoMI,
           });
-          registrarDecisao(decisaoCritica);
-          incDecisao(decisaoCritica.nivel);
-          incDestino(decisaoCritica.destino);
-          const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${msgCritica}`;
+          const nivelMI = classificarNivel(atualMI);
+
+          if (nivelMI === 'critico') {
+            const decisaoCritica = aplicarMotor(atualMI, textoAcumuladoMI);
+            const msgCritica = comporResposta({
+              relato: atualMI,
+              decisao: decisaoCritica,
+              mensagemAprovada: mensagemPorId(decisaoCritica.resposta_id).texto,
+            });
+            registrarDecisao(decisaoCritica);
+            incDecisao(decisaoCritica.nivel);
+            incDestino(decisaoCritica.destino);
+            const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${msgCritica}`;
+            return {
+              estado: {
+                relatos: [],
+                rodadasPerguntas: 0,
+                texto_original_acumulado: '',
+                fase: 'orientado',
+                perguntasJaFeitas: [],
+                historico: estado.historico,
+              },
+              resultado: {
+                tipo: 'orientacao',
+                texto: mensagemFinal,
+                decisao: decisaoCritica,
+              },
+            };
+          }
+
+          const temaMI = escolherTemaPergunta({
+            sintomas: atualMI.sintomas, idade_grupo: atualMI.idade_grupo,
+            gestante: atualMI.gestante, risco_mental: atualMI.risco_mental,
+            falta_de_ar: atualMI.falta_de_ar, febre: atualMI.febre,
+            sinais_trauma: atualMI.sinais_trauma,
+          });
+          const perguntaMI = escolherProximaPergunta(temaMI, atualMI, perguntasJaFeitas);
+
+          if (perguntaMI) {
+            const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${perguntaMI.texto}`;
+            return {
+              estado: {
+                relatos: relatosMI,
+                rodadasPerguntas: estado.rodadasPerguntas + 1,
+                temaPergunta: temaMI,
+                texto_original_acumulado: textoAcumuladoMI,
+                fase: 'coletando',
+                perguntasJaFeitas: [...perguntasJaFeitas, perguntaMI.id],
+                ultimaPergunta: {
+                  id: perguntaMI.id,
+                  campoAlvo: perguntaMI.campoAlvo,
+                  texto: perguntaMI.texto,
+                },
+                historico: estado.historico,
+              },
+              resultado: {
+                tipo: 'orientacao',
+                texto: mensagemFinal,
+                decisao: {
+                  categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
+                  resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                  regra_acionada: 'base_conhecimento_multi',
+                  versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
+                  motivos: respostaBase.bloqueado
+                    ? ['base bloqueada por segurança', 'multi-intent']
+                    : ['base de conhecimento', 'multi-intent'],
+                },
+              },
+            };
+          }
+
+          const abertura = Math.random() < 0.4 && !respostaBase.bloqueado
+            ? `${escolherAleatorio(ABERTURAS_RAG)}\n\n`
+            : '';
+          const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
+          const mensagemFinal = `${abertura}${cabecalho}${respostaBase.corpo}${rodape}`;
           return {
             estado: {
               ...estado,
               relatos: relatosMI,
               texto_original_acumulado: textoAcumuladoMI,
-              fase: 'orientado',
-            },
-            resultado: {
-              tipo: 'orientacao',
-              texto: mensagemFinal,
-              decisao: decisaoCritica,
-            },
-          };
-        }
-
-        const temaMI = escolherTemaPergunta({
-          sintomas: atualMI.sintomas, idade_grupo: atualMI.idade_grupo,
-          gestante: atualMI.gestante, risco_mental: atualMI.risco_mental,
-          falta_de_ar: atualMI.falta_de_ar, febre: atualMI.febre,
-          sinais_trauma: atualMI.sinais_trauma,
-        });
-        const perguntaMI = escolherProximaPergunta(temaMI, atualMI, perguntasJaFeitas);
-
-        if (perguntaMI) {
-          const mensagemFinal = `${cabecalho}${respostaBase.corpo}\n\n---\n\n${perguntaMI.texto}`;
-          return {
-            estado: {
-              relatos: relatosMI,
-              rodadasPerguntas: estado.rodadasPerguntas + 1,
-              temaPergunta: temaMI,
-              texto_original_acumulado: textoAcumuladoMI,
               fase: 'coletando',
-              perguntasJaFeitas: [...perguntasJaFeitas, perguntaMI.id],
-              ultimaPergunta: {
-                id: perguntaMI.id,
-                campoAlvo: perguntaMI.campoAlvo,
-                texto: perguntaMI.texto,
-              },
-              historico: estado.historico,
             },
             resultado: {
               tipo: 'orientacao',
               texto: mensagemFinal,
               decisao: {
                 categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-                resposta_id: respostaBase.bloqueado ? 'base_bloqueada' : 'base_conhecimento_multi',
+                resposta_id: 'base_conhecimento_multi',
                 regra_acionada: 'base_conhecimento_multi',
                 versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-                motivos: respostaBase.bloqueado
-                  ? ['base bloqueada por segurança', 'multi-intent']
-                  : ['base de conhecimento', 'multi-intent'],
+                motivos: ['base de conhecimento', 'multi-intent'],
               },
             },
           };
         }
-
-        const rodape = '\n\n_Sobre o que você mencionou, me conta mais: desde quando começou?_';
-        const mensagemFinal = `${cabecalho}${respostaBase.corpo}${rodape}`;
-        return {
-          estado: {
-            ...estado,
-            relatos: relatosMI,
-            texto_original_acumulado: textoAcumuladoMI,
-            fase: 'coletando',
-          },
-          resultado: {
-            tipo: 'orientacao',
-            texto: mensagemFinal,
-            decisao: {
-              categoria_interna: 'fora_do_escopo', destino: 'FALLBACK',
-              resposta_id: 'base_conhecimento_multi',
-              regra_acionada: 'base_conhecimento_multi',
-              versao_regras: VERSAO_REGRAS, nivel: 'AGENDAR',
-              motivos: ['base de conhecimento', 'multi-intent'],
-            },
-          },
-        };
       }
     }
   }
@@ -1069,11 +1173,20 @@ async function processarTurnoComRelatoInterno(
   incDecisao(decisao.nivel);
   incDestino(decisao.destino);
 
+  const limparAposEmergenciaAudio =
+    decisao.nivel === 'SAMU_AGORA' ||
+    decisao.nivel === 'UPA_AGORA' ||
+    decisao.nivel === 'HOJE';
+
   return {
     estado: {
-      relatos, rodadasPerguntas: 0, temaPergunta: undefined,
-      texto_original_acumulado: textoAcumulado,
-      fase: 'orientado', perguntasJaFeitas: [], ultimaPergunta: undefined,
+      relatos: limparAposEmergenciaAudio ? [] : relatos,
+      rodadasPerguntas: 0,
+      temaPergunta: undefined,
+      texto_original_acumulado: limparAposEmergenciaAudio ? '' : textoAcumulado,
+      fase: 'orientado',
+      perguntasJaFeitas: [],
+      ultimaPergunta: undefined,
     },
     resultado: { tipo: 'orientacao', texto: mensagem, decisao },
   };

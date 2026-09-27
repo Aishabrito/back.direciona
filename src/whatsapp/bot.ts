@@ -18,6 +18,7 @@ import { processarTurno, processarTurnoComRelato, ESTADO_INICIAL } from "../ia/o
 import { mensagemPorId } from "../ia/mensagens.js";
 import { reformularPergunta } from "../ia/reformulador_pergunta.js";
 import { interpretarRespostaCurta } from "../ia/perguntas.js";
+import { escolherAleatorio, RESETS, ACOLHIMENTOS_REPETICAO } from "../ia/variacao.js";
 import {
   RELATO_VAZIO,
   type EstadoConversa,
@@ -39,23 +40,17 @@ import {
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
-// ─── URL pública (usada no QR code e no health check) ───
 const PUBLIC_URL = process.env.PUBLIC_URL ?? 'http://localhost:3000';
 
-// ─── Handlers globais — silencia erros cosméticos do Baileys ───
 process.on('unhandledRejection', (err: any) => {
   const msg = err?.message || String(err);
-  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
-    return;
-  }
+  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) return;
   console.error('❌ Unhandled rejection:', err);
 });
 
 process.on('uncaughtException', (err: any) => {
   const msg = err?.message || String(err);
-  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) {
-    return;
-  }
+  if (/Bad MAC|Unsupported state|Connection Closed|Precondition Required/i.test(msg)) return;
   console.error('❌ Uncaught exception:', err);
 });
 
@@ -67,7 +62,6 @@ const LOCALIZACAO_VALIDA_MS = 30 * 60 * 1000;
 
 const filas = new Map<string, Promise<void>>();
 
-// Rate limit do Gemini por usuário (30 chamadas/hora)
 const contadorGemini = new Map<string, number>();
 const LIMITE_GEMINI_POR_HORA = 30;
 
@@ -77,7 +71,6 @@ function podeChamarGemini(sender: string): boolean {
   const atual = contadorGemini.get(chave) ?? 0;
   if (atual >= LIMITE_GEMINI_POR_HORA) return false;
   contadorGemini.set(chave, atual + 1);
-
   if (contadorGemini.size > 5000) {
     const janelaAtual = janela;
     for (const k of contadorGemini.keys()) {
@@ -87,7 +80,6 @@ function podeChamarGemini(sender: string): boolean {
   return true;
 }
 
-// LGPD: hash do remetente para logs
 function hashSender(sender: string): string {
   return createHash('sha256').update(sender).digest('hex').slice(0, 8);
 }
@@ -128,7 +120,6 @@ const comandosReset = [
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
 ];
 
-// ─── Tolerância a typos nos comandos de reset ───
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
   if (m === 0) return n;
@@ -163,14 +154,12 @@ function ehComandoReset(entrada: string): boolean {
   return false;
 }
 
-// ─── Comando /apagar (LGPD) ───
 function ehComandoApagar(entrada: string): boolean {
   const n = entrada.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-  return /^\/?(apagar|excluir)( meus? (dados|dados|historico|conversa))?$/.test(n)
+  return /^\/?(apagar|excluir)( meus? (dados|historico|conversa))?$/.test(n)
     || /^(apagar|excluir) (meus? )?(dados|historico|conversa)$/.test(n);
 }
 
-// ─── Carrega estado do banco antes de criar novo ───
 async function obterOuCriarEstado(
   sender: string,
 ): Promise<{ estado: EstadoConversa; primeiraVez: boolean }> {
@@ -220,8 +209,6 @@ function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: s
 
 type Sock = ReturnType<typeof makeWASocket>;
 
-// [FIX] Mantém "digitando..." a cada 3s enquanto processa.
-// WhatsApp corta o status após ~5s. Sem isso, o usuário acha que travou.
 function iniciarDigitando(sock: Sock, sender: string): () => void {
   let ativo = true;
   const tick = async () => {
@@ -635,7 +622,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-  // ── RESET (com tolerância a typos) ──
+  // ── RESET ──
   if (ehComandoReset(cleanText)) {
     const estadoReset = JSON.parse(JSON.stringify(ESTADO_INICIAL)) as EstadoConversa;
     estadoReset.historico = [
@@ -645,11 +632,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     sessions.set(sender, estadoReset);
     if (sqlCliente) await salvarEstado(sqlCliente, sender, estadoReset);
 
-    await sock.sendMessage(sender, {
-      text:
-        '🔄 *Reiniciado.*\n\n' +
-        'Me conta o que está acontecendo ou o que você está sentindo que eu te oriento onde buscar atendimento.',
-    });
+    await sock.sendMessage(sender, { text: escolherAleatorio(RESETS) });
     return;
   }
 
@@ -735,6 +718,39 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   const { estado: estadoAtualProcesso } = await obterOuCriarEstado(sender);
   const primeiraMensagem = (estadoAtualProcesso.historico?.length ?? 0) === 0;
 
+  // [FIX 3] Resposta vaga durante triagem → repete pergunta sem cair em fora de escopo
+  const respostaVaga = /^(nao sei|n sei|não sei|talvez|acho que|nao tenho certeza|não tenho certeza|depende|nao lembro|não lembro|n lembro)$/i
+    .test(cleanText.trim());
+
+  if (
+    respostaVaga &&
+    estadoAtualProcesso.fase === 'coletando' &&
+    estadoAtualProcesso.ultimaPergunta
+  ) {
+    pararDigitando();
+    const textoResposta = `Tudo bem, sem problema. Vou tentar de outro jeito:\n\n${estadoAtualProcesso.ultimaPergunta.texto}`;
+    await sock.sendMessage(sender, { text: textoResposta });
+    const estadoAtualizado = {
+      ...estadoAtualProcesso,
+      historico: [
+        ...(estadoAtualProcesso.historico ?? []),
+        { role: 'user' as const, content: cleanText, ts: Date.now() },
+        { role: 'assistant' as const, content: textoResposta, ts: Date.now() },
+      ].slice(-12),
+    };
+    sessions.set(sender, estadoAtualizado);
+    if (sqlCliente) await salvarEstado(sqlCliente, sender, estadoAtualizado);
+    return;
+  }
+
+  // [FIX 5] Detecta mensagem repetida nas últimas 5 entradas do usuário
+  const userMsgs = (estadoAtualProcesso.historico ?? [])
+    .filter((m) => m.role === 'user')
+    .slice(-5)
+    .map((m) => m.content.toLowerCase().trim());
+  const ocorrencias = userMsgs.filter((t) => t === cleanText.toLowerCase().trim()).length;
+  const frustrado = ocorrencias >= 2;
+
   const { resultado, estado: novoEstado } = await processarTurno(cleanText, estadoAtualProcesso);
   if (estadoAtualProcesso.ultimaLocalizacao && !novoEstado.ultimaLocalizacao) {
     novoEstado.ultimaLocalizacao = estadoAtualProcesso.ultimaLocalizacao;
@@ -744,6 +760,11 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
 
   let mensagemFinal = resultado.texto;
+
+  // [FIX 5] Acolhe frustração se a mensagem foi repetida
+  if (frustrado && resultado.tipo === 'orientacao' && mensagemFinal.length < 300) {
+    mensagemFinal = `${escolherAleatorio(ACOLHIMENTOS_REPETICAO)}\n\n${mensagemFinal}`;
+  }
 
   const perguntaGenericaDuplicada = primeiraMensagem && resultado.tipo === "perguntas" && resultado.tema === "vago";
   if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada) {
