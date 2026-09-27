@@ -160,6 +160,17 @@ function ehComandoApagar(entrada: string): boolean {
     || /^(apagar|excluir) (meus? )?(dados|historico|conversa)$/.test(n);
 }
 
+// [FIX] Detecta se a resposta é um protocolo crítico (C.A.L.M.A., RCP, etc.)
+// e NÃO deve ser reformulada pelo LLM.
+function ehProtocoloCritico(texto: string): boolean {
+  return (
+    texto.includes('⚠️') ||
+    texto.includes('CVV') ||
+    texto.includes('Estou aqui com você') ||
+    texto.startsWith('💛')
+  );
+}
+
 async function obterOuCriarEstado(
   sender: string,
 ): Promise<{ estado: EstadoConversa; primeiraVez: boolean }> {
@@ -563,7 +574,13 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
       if (sqlCliente) await salvarEstado(sqlCliente, sender, novoEstado);
 
       let respostaAudio = resultado.texto;
-      if (resultado.tipo === "perguntas") {
+
+      // [FIX] NUNCA reformula protocolos críticos (C.A.L.M.A., RCP, etc.)
+      const ehProtocoloCriticoAudio =
+        resultado.tipo === 'perguntas' &&
+        ehProtocoloCritico(resultado.texto);
+
+      if (resultado.tipo === "perguntas" && !ehProtocoloCriticoAudio) {
         respostaAudio = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
       }
 
@@ -718,7 +735,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
   const { estado: estadoAtualProcesso } = await obterOuCriarEstado(sender);
   const primeiraMensagem = (estadoAtualProcesso.historico?.length ?? 0) === 0;
 
-  // [FIX 3] Resposta vaga durante triagem → repete pergunta sem cair em fora de escopo
+  // Resposta vaga durante triagem → repete pergunta sem cair em fora de escopo
   const respostaVaga = /^(nao sei|n sei|não sei|talvez|acho que|nao tenho certeza|não tenho certeza|depende|nao lembro|não lembro|n lembro)$/i
     .test(cleanText.trim());
 
@@ -743,7 +760,7 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
     return;
   }
 
-  // [FIX 5] Detecta mensagem repetida nas últimas 5 entradas do usuário
+  // Detecta mensagem repetida nas últimas 5 entradas do usuário
   const userMsgs = (estadoAtualProcesso.historico ?? [])
     .filter((m) => m.role === 'user')
     .slice(-5)
@@ -761,13 +778,19 @@ async function tratarMensagem(sock: Sock, msg: any, sender: string): Promise<voi
 
   let mensagemFinal = resultado.texto;
 
-  // [FIX 5] Acolhe frustração se a mensagem foi repetida
+  // Acolhe frustração se a mensagem foi repetida
   if (frustrado && resultado.tipo === 'orientacao' && mensagemFinal.length < 300) {
     mensagemFinal = `${escolherAleatorio(ACOLHIMENTOS_REPETICAO)}\n\n${mensagemFinal}`;
   }
 
   const perguntaGenericaDuplicada = primeiraMensagem && resultado.tipo === "perguntas" && resultado.tema === "vago";
-  if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada) {
+
+  // [FIX] NUNCA reformula protocolos críticos (C.A.L.M.A., RCP, etc.)
+  const ehProtocoloCriticoTexto =
+    resultado.tipo === 'perguntas' &&
+    ehProtocoloCritico(resultado.texto);
+
+  if (resultado.tipo === "perguntas" && !perguntaGenericaDuplicada && !ehProtocoloCriticoTexto) {
     mensagemFinal = await comTomNatural(resultado.texto, novoEstado.texto_original_acumulado);
   }
 
