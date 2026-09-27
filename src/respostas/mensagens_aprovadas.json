@@ -9,7 +9,7 @@
     {
       "id": "dengue_001",
       "destino": ["UPA 24h"],
-      "texto": "Os sinais que você descreveu podem ser compatíveis com dengue. Procure uma UPA 24h para avaliação e exames. Beba bastante líquido no caminho. Se surgirem dor abdominal intensa, vômitos persistentes, sangramento, tontura ao levantar ou sonolência excessiva, acione o SAMU 192 imediatamente."
+      "texto": "Febre com dor no corpo ou manchas na pele precisa de avaliação ainda hoje. Procure uma UPA 24h para avaliação e exames. Beba bastante líquido no caminho. Se surgirem dor abdominal intensa, vômitos persistentes, sangramento, tontura ao levantar ou sonolência excessiva, acione o SAMU 192 imediatamente."
     },
     {
       "id": "intoxicacao_001",
@@ -19,7 +19,7 @@
     {
       "id": "desidratacao_001",
       "destino": ["UPA 24h"],
-      "texto": "Os sinais descritos podem indicar desidratação. Procure uma UPA 24h para avaliação e, se possível, ofereça pequenas quantidades de líquido (água, soro caseiro) com frequência. Se houver sonolência excessiva, ausência de urina, olhos fundos ou piora do estado geral, acione o SAMU 192."
+      "texto": "Os sinais descritos precisam de avaliação ainda hoje. Procure uma UPA 24h para avaliação e, se possível, ofereça pequenas quantidades de líquido (água, soro caseiro) com frequência. Se houver sonolência excessiva, ausência de urina, olhos fundos ou piora do estado geral, acione o SAMU 192."
     },
     {
       "id": "odontologia_001",

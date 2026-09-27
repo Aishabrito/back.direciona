@@ -148,9 +148,11 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'emergencia_001', 'SAMU_AGORA', ['falta de ar com critério']);
   }
 
-  if (R.dor_no_peito === true && (R.falta_de_ar === true || R.desmaio === true || R.confusao === true)) {
-    return decisao('dor_toracica_com_sinais', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
-      'emergencia_001', 'SAMU_AGORA', ['dor torácica com sinais']);
+  // Diretriz SBC/MS: dor torácica aguda → SAMU, com ou sem outros sinais
+  // (alinhado com guarda_critica e sinais_criticos).
+  if (R.dor_no_peito === true) {
+    return decisao('dor_toracica_aguda', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
+      'emergencia_001', 'SAMU_AGORA', ['dor torácica']);
   }
 
   if (R.autodiagnostico_grave) {
@@ -203,7 +205,7 @@ export function aplicarMotor(relato: RelatoEstruturado, textoOriginal?: string):
       'upa_001', 'UPA_AGORA', ['falta de ar']);
   }
 
-  if (R.dor_no_peito === true || R.desmaio === true || R.confusao === true || R.sangramento === true) {
+  if (R.desmaio === true || R.confusao === true || R.sangramento === true) {
     return decisao('sinal_alarme_isolado', 'urgencia', 'UPA_24H',
       'upa_001', 'UPA_AGORA', ['sinal de alarme']);
   }

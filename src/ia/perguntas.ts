@@ -119,7 +119,7 @@ export function interpretarRespostaCurta(
   ultima: UltimaPergunta | undefined,
 ): Partial<RelatoEstruturado> | null {
   if (!ultima?.campoAlvo) return null;
-  const n = texto.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const n = texto.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
     .replace(/[.!?,;]+$/g, '').trim();
 
   if (ultima.campoAlvo === 'duracao') {
