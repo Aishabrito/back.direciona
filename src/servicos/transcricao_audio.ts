@@ -1,11 +1,7 @@
 
 
-import OpenAI, { toFile } from 'openai';
-
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
-});
+import { toFile } from 'openai';
+import { getGroq } from './ia.js';
 
 const WHISPER_MODEL =
   process.env.GROQ_WHISPER_MODEL ?? 'whisper-large-v3-turbo';
@@ -18,7 +14,9 @@ export async function transcreverAudio(
   audioBuffer: Buffer,
   mimeType: string = 'audio/ogg; codecs=opus',
 ): Promise<string> {
-  if (!process.env.GROQ_API_KEY) {
+  // Cliente criado sob demanda: importar este módulo sem a chave não derruba o app.
+  const groq = getGroq();
+  if (!groq) {
     console.warn('⚠️ [Whisper] GROQ_API_KEY ausente.');
     return '';
   }

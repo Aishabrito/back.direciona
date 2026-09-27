@@ -22,13 +22,16 @@ rotasApi.post('/chat', async (req, res) => {
   try {
     const { sessionId, mensagem } = req.body;
 
-    if (!sessionId || !mensagem) {
+    if (typeof sessionId !== 'string' || typeof mensagem !== 'string' || !sessionId || !mensagem.trim()) {
       return res.status(400).json({ erro: 'sessionId e mensagem são obrigatórios.' });
+    }
+    if (mensagem.length > 2000) {
+      return res.status(413).json({ erro: 'Mensagem muito longa (máx. 2000 caracteres).' });
     }
 
     const salva = sessoesApp.get(sessionId);
-    const estadoAtual = salva?.estado || { ...ESTADO_INICIAL };
-    const { resultado, estado: novoEstado } = await processarTurno(mensagem, estadoAtual);
+    const estadoAtual = salva?.estado || JSON.parse(JSON.stringify(ESTADO_INICIAL));
+    const { resultado, estado: novoEstado } = await processarTurno(mensagem, estadoAtual, { origem: 'api' });
 
     sessoesApp.set(sessionId, { estado: novoEstado, atualizadoEm: Date.now() });
 
@@ -39,11 +42,12 @@ rotasApi.post('/chat', async (req, res) => {
   }
 });
 
-// [NOVO Bloco 2] Métricas de qualidade — proteja com token em produção
+// Métricas de qualidade — só com METRICAS_TOKEN configurado (senão fica desligado).
 rotasApi.get('/metricas', (req, res) => {
   const token = req.headers['x-metricas-token'];
   const tokenEsperado = process.env.METRICAS_TOKEN;
-  if (tokenEsperado && token !== tokenEsperado) {
+  if (!tokenEsperado) return res.status(404).json({ erro: 'Métricas desativadas.' });
+  if (token !== tokenEsperado) {
     return res.status(401).json({ erro: 'Token inválido.' });
   }
   return res.json(metricas);

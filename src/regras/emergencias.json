@@ -3,35 +3,55 @@
   "regras": [
     {
       "id": "emergencia_inconsciencia",
-      "quando": ["nao responde", "inconsciente", "inconsciência"]
+      "quando": [
+        "nao responde",
+        "inconsciente",
+        "inconsciência"
+      ]
     },
     {
       "id": "emergencia_respiracao",
-      "quando": ["dificuldade intensa para respirar", "nao consegue falar frases", "labios roxos", "falta de ar intensa"]
-    },
-    {
-      "id": "emergencia_peito",
-      "quando": ["dor_toracica_com_sinais_associados"]
+      "quando": [
+        "dificuldade intensa para respirar",
+        "nao consegue falar frases",
+        "labios roxos",
+        "falta de ar intensa"
+      ]
     },
     {
       "id": "emergencia_neuro",
-      "quando": ["confusão súbita", "alteração da consciência", "sinais_neurologicos_subitos", "convulsao"]
+      "quando": [
+        "confusão súbita",
+        "alteração da consciência",
+        "convulsao"
+      ]
     },
     {
       "id": "emergencia_sangramento",
-      "quando": ["sangramento intenso", "hemorragia"]
+      "quando": [
+        "sangramento intenso",
+        "hemorragia"
+      ]
     },
     {
       "id": "emergencia_trauma",
-      "quando": ["trauma grave", "atropelamento", "queda de altura"]
+      "quando": [
+        "trauma grave",
+        "atropelamento",
+        "queda de altura"
+      ]
     },
     {
       "id": "emergencia_queimadura",
-      "quando": ["queimadura extensa"]
+      "quando": [
+        "queimadura extensa"
+      ]
     },
     {
       "id": "emergencia_intoxicacao_grave",
-      "quando": ["intoxicacao grave"]
+      "quando": [
+        "intoxicacao grave"
+      ]
     }
   ]
 }
