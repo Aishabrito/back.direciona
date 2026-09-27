@@ -242,36 +242,35 @@ function oferecerLocalizacao(
   return texto;
 }
 
+// Texto SEMPRE sai na hora. Se a pessoa mandou áudio, depois vem um áudio curto
+// só com a resposta principal (sem boas-vindas/privacidade/localização) —
+// assim ninguém fica esperando o TTS para receber a orientação.
 async function responder(
   sock: Sock,
   sender: string,
   texto: string,
-  responderComAudio: boolean,
+  falaAudio?: string,
 ): Promise<void> {
-  if (!responderComAudio) {
-    await sock.sendMessage(sender, { text: texto });
-    return;
-  }
+  await sock.sendMessage(sender, { text: texto });
+  if (!falaAudio) return;
 
+  const inicio = Date.now();
   try {
-    const audio = await textoParaAudio(texto, 'feminina');
+    await sock.sendPresenceUpdate("recording", sender).catch(() => {});
+    const audio = await textoParaAudio(falaAudio, 'feminina');
     if (audio && audio.length > 0) {
-      console.log(`🎤 [${hashSender(sender)}] Resposta em áudio (${(audio.length / 1024).toFixed(1)} KB)`);
+      console.log(`🎤 [${hashSender(sender)}] Áudio de resposta (${(audio.length / 1024).toFixed(1)} KB) em ${Date.now() - inicio} ms`);
       inc('gemini_tts_ok');
-      await sock.sendMessage(sender, {
-        audio,
-        mimetype: 'audio/ogg; codecs=opus',
-        ptt: true,
-      });
-      return;
+      await sock.sendMessage(sender, { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true });
+    } else {
+      inc('gemini_tts_erro');
     }
-    inc('gemini_tts_erro');
   } catch (err) {
     console.error('❌ Falha ao gerar áudio:', err);
     inc('gemini_tts_erro');
+  } finally {
+    await sock.sendPresenceUpdate("paused", sender).catch(() => {});
   }
-
-  await sock.sendMessage(sender, { text: texto });
 }
 
 let tentativasReconexao = 0;
@@ -639,7 +638,7 @@ async function processarTexto(sock: Sock, sender: string, cleanText: string, vei
 
     await persistir(sender, novoEstado);
     pararDigitando();
-    await responder(sock, sender, `${prefixoAudio}${mensagemFinal}`, veioDeAudio);
+    await responder(sock, sender, `${prefixoAudio}${mensagemFinal}`, veioDeAudio ? resultado.texto : undefined);
   } catch (err) {
     pararDigitando();
     throw err;

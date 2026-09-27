@@ -16,9 +16,39 @@ const VOZES: Record<VozTts, string> = {
   masculina: 'Charon',
 };
 
+// Fala curta = áudio rápido. O Gemini TTS demora proporcionalmente ao tamanho do
+// texto, então só a resposta principal vira voz (o texto completo vai por escrito).
+const MAX_CARACTERES_FALA = 450;
+const TIMEOUT_TTS_MS = 20_000;
+
+let clienteGemini: GoogleGenAI | null = null;
+function gemini(apiKey: string): GoogleGenAI {
+  if (!clienteGemini) clienteGemini = new GoogleGenAI({ apiKey });
+  return clienteGemini;
+}
+
+/** Limpa markdown/emojis/URLs e corta no fim de uma frase, até MAX_CARACTERES_FALA. */
+export function prepararFala(texto: string, max = MAX_CARACTERES_FALA): string {
+  const limpo = texto
+    .replace(/\*([^*]+)\*/g, '$1')       // *negrito*
+    .replace(/_([^_]+)_/g, '$1')          // _itálico_
+    .replace(/https?:\/\/\S+/g, '')       // URLs
+    .replace(/\p{Extended_Pictographic}|\uFE0F/gu, '') // emojis
+    .replace(/^\s*[-•]\s*/gm, '')         // marcadores de lista
+    .replace(/\n{2,}/g, '. ')             // parágrafos viram pausa
+    .replace(/\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\.\s*\./g, '.')
+    .trim();
+  if (limpo.length <= max) return limpo;
+  const corte = limpo.slice(0, max);
+  const fimFrase = Math.max(corte.lastIndexOf('. '), corte.lastIndexOf('! '), corte.lastIndexOf('? '));
+  return fimFrase > max * 0.5 ? corte.slice(0, fimFrase + 1) : `${corte.trimEnd()}...`;
+}
+
 /**
  * Converte texto em OGG/Opus pronto para o WhatsApp.
- * Devolve null se a API falhar ou não estiver configurada.
+ * Devolve null se a API falhar, demorar demais ou não estiver configurada.
  */
 export async function textoParaAudio(
   texto: string,
@@ -30,25 +60,14 @@ export async function textoParaAudio(
     return null;
   }
 
-  // Limpa markdown que ficaria estranho na fala
-  const limpo = texto
-    .replace(/\*([^*]+)\*/g, '$1')       // *negrito*
-    .replace(/_([^_]+)_/g, '$1')          // _itálico_
-    .replace(/\n{2,}/g, '. ')             // parágrafos viram pausa
-    .replace(/\n/g, ' ')
-    .replace(/https?:\/\/\S+/g, '')       // remove URLs
-    .replace(/\s+/g, ' ')
-    .trim();
+  const textoCortado = prepararFala(texto);
+  if (textoCortado.length === 0) return null;
 
-  if (limpo.length === 0) return null;
-
-  // Gemini TTS tem limite de tokens de saída. Corta com folga em 2000 chars.
-  const textoCortado = limpo.length > 2000 ? limpo.slice(0, 2000) + '...' : limpo;
-
+  let timer: NodeJS.Timeout | undefined;
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = gemini(apiKey);
 
-    const response = await ai.models.generateContent({
+    const geracao = ai.models.generateContent({
       model: 'gemini-2.5-flash-preview-tts',
       contents: [{ parts: [{ text: textoCortado }] }],
       config: {
@@ -60,6 +79,10 @@ export async function textoParaAudio(
         },
       },
     });
+    const limite = new Promise<never>((_, rej) => {
+      timer = setTimeout(() => rej(new Error(`timeout TTS (${TIMEOUT_TTS_MS / 1000}s)`)), TIMEOUT_TTS_MS);
+    });
+    const response = await Promise.race([geracao, limite]);
 
     // A resposta traz base64 de PCM cru. O MIME vem no inlineData.
     const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
@@ -77,9 +100,11 @@ export async function textoParaAudio(
     const wav = pcmParaWav(pcm, sampleRate, 1, 16);
     const ogg = await wavParaOggOpus(wav);
     return ogg;
-  } catch (err) {
-    console.error('❌ Gemini TTS falhou:', err);
+  } catch (err: any) {
+    console.error('❌ Gemini TTS falhou:', err?.message || err);
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
