@@ -1,7 +1,7 @@
 import {
   IDADE_GRUPOS, RELATO_VAZIO, RISCOS_MENTAIS, VALORES_SIM_NAO,
   type FlagTriState, type RelatoEstruturado, type SimNao, type RiscoMental,
-} from './tipos';
+} from './tipos.js';
 
 function asString(valor: unknown, padrao = 'nao_informado'): string {
   if (typeof valor === 'string' && valor.trim()) return valor.trim();
@@ -29,10 +29,6 @@ function asLista(valor: unknown): string[] {
     .filter((item): item is string => typeof item === 'string')
     .map((item) => item.trim())
     .filter(Boolean);
-}
-
-export function relatoPadrao(parcial: Partial<RelatoEstruturado> = {}): RelatoEstruturado {
-  return { ...RELATO_VAZIO, ...parcial };
 }
 
 export function validarRelato(entrada: unknown):
