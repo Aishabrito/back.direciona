@@ -1,4 +1,3 @@
-
 import type { RelatoEstruturado } from './tipos.js';
 
 // ═══════════════════════════════════════════════════════════
@@ -63,11 +62,11 @@ export const CRITERIOS_SAMU: CriterioCritico[] = [
       (r.fala_frases === false || r.labios_roxos === true),
   },
   {
-    id: 'dor_toracica_com_sinais',
-    motivo: 'dor torácica com sinais',
-    testar: (r) =>
-      r.dor_no_peito === true &&
-      (r.falta_de_ar === true || r.desmaio === true || r.confusao === true),
+    // [FIX CRÍTICO] Dor torácica aguda é SEMPRE emergência.
+    // Diretriz MS/SBC: suspeita de SCA vai direto pro SAMU, não espera sinais.
+    id: 'dor_toracica_aguda',
+    motivo: 'dor torácica aguda — possível síndrome coronariana',
+    testar: (r) => r.dor_no_peito === true,
   },
   {
     id: 'autodiagnostico_grave',
@@ -102,6 +101,8 @@ export const CRITERIOS_SAMU: CriterioCritico[] = [
 // ═══════════════════════════════════════════════════════════
 // CRITÉRIOS DE ALERTA (uma pergunta antes de decidir)
 // ═══════════════════════════════════════════════════════════
+// Nota: "dor_toracica_isolada" foi REMOVIDO daqui.
+// Dor no peito agora é sempre critico (SAMU), não alerta.
 
 export const CRITERIOS_ALERTA: CriterioCritico[] = [
   {
@@ -121,11 +122,6 @@ export const CRITERIOS_ALERTA: CriterioCritico[] = [
       r.sinais_trauma.includes('trauma_craniano'),
   },
   {
-    id: 'dor_toracica_isolada',
-    motivo: 'dor no peito sem sinal associado',
-    testar: (r) => r.dor_no_peito === true && r.falta_de_ar !== true,
-  },
-  {
     id: 'sangramento',
     motivo: 'sangramento',
     testar: (r) => r.sangramento === true,
@@ -134,6 +130,11 @@ export const CRITERIOS_ALERTA: CriterioCritico[] = [
     id: 'confusao_isolada',
     motivo: 'confusão',
     testar: (r) => r.confusao === true,
+  },
+  {
+    id: 'desmaio_isolado',
+    motivo: 'desmaio',
+    testar: (r) => r.desmaio === true,
   },
 ];
 
