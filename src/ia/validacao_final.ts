@@ -13,6 +13,7 @@ import { aplicarMotor } from './motor_de_regras.js';
 import { mensagemPorId, sanitizarTextoGerado } from './mensagens.js';
 import { normalizarTexto } from './normalizar.js';
 import { MAX_PERGUNTAS_POR_CASO } from './decisor.js';
+import { ehAcidenteDeTransito, acidentePassadoSemGravidade, acidenteAntigoSemGravidade, TEXTO_ACIDENTE_RECENTE } from './acidente.js';
 import type { Decisao, DecisaoRegras, DestinoDecisor, EstadoConversa } from './tipos.js';
 
 // ────────────────────────────────────────────────────
@@ -102,8 +103,11 @@ export function pisoCritico(textoCaso: string): { motivo: string; destino: Desti
   if (!textoCaso.trim()) return null;
   const relato = extrairInformacoes(textoCaso);
   // Mecanismo de trauma grave (acidente de moto/carro, atropelamento, queda de altura, arma).
-  const TRAUMA_GRAVE = ['trauma_automobilistico', 'queda_altura', 'ferimento_perfurante'];
-  if (relato.sinais_trauma.some((s) => TRAUMA_GRAVE.includes(s))) {
+  if (relato.sinais_trauma.includes('ferimento_perfurante')) {
+    return { motivo: 'ferimento por arma', destino: 'SAMU_192' };
+  }
+  const mecanismo = relato.sinais_trauma.some((s) => s === 'trauma_automobilistico' || s === 'queda_altura');
+  if (mecanismo && !acidentePassadoSemGravidade(textoCaso)) {
     return { motivo: 'mecanismo de trauma grave', destino: 'SAMU_192' };
   }
   const criterio = encontrarCriterioCritico(relato);
@@ -170,6 +174,16 @@ export function validarDecisao(
       d = { ...d, acao: 'emergencia', destino: piso.destino, texto: t.texto, resposta_id: t.resposta_id };
       motivos.push(`piso_critico: ${piso.motivo}`);
     }
+  }
+
+  // 1b. Piso de urgência — acidente de trânsito recente sem sinal grave: nunca abaixo de UPA.
+  if (d.acao === 'orientar' && d.destino !== 'UPA' && d.destino !== 'MATERNIDADE'
+      && ehAcidenteDeTransito(ctx.textoCaso) && !acidenteAntigoSemGravidade(ctx.textoCaso)) {
+    motivos.push('piso_urgencia: acidente de trânsito recente');
+    return {
+      decisao: { ...d, destino: 'UPA', texto: TEXTO_ACIDENTE_RECENTE, resposta_id: 'upa_001' },
+      alterou: true, motivos,
+    };
   }
 
   // 2. Emergência: destino tem que ser de emergência; texto do LLM vira texto aprovado.

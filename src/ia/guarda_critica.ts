@@ -8,6 +8,7 @@
 // com o LLM decisor + o piso determinístico da validação final.
 
 import { normalizarTexto } from './normalizar.js';
+import { acidentePassadoSemGravidade } from './acidente.js';
 
 export type CategoriaCritica =
   | 'suicidio'
@@ -91,7 +92,7 @@ const REGRAS: Regra[] = [
   {
     categoria: 'trauma_grave',
     motivo: 'trauma grave',
-    re: /\b(acidente (de|com) (moto|carro|transito|onibus|caminhao|bicicleta|bike)|batida de (moto|carro)|atropelad[oa]|atropelamento|atropelou|capotou|capotamento|fratura exposta|osso (aparecendo|exposto|pra fora|para fora)|esfaquead[oa]|levou (uma )?facada|levou (um )?tiro|baleado|baleada|caiu de (altura|laje|telhado|andaime|escada)|queda de altura)\b/,
+    re: /\b(acidente (de|com) (moto|carro|transito|onibus|caminhao|bicicleta|bike)|batida de (moto|carro)|(bati|bateu|capotei|capotou) (o|a|com o|com a|de) (carro|moto)|(cai|caiu) (da|de) moto|atropelad[oa]|atropelamento|atropelou|capotou|capotamento|fratura exposta|osso (aparecendo|exposto|pra fora|para fora)|esfaquead[oa]|levou (uma )?facada|levou (um )?tiro|baleado|baleada|caiu de (altura|laje|telhado|andaime|escada)|queda de altura)\b/,
   },
   {
     // Estado ATUAL de inconsciência. "Desmaiei ontem" (passado) fica com o LLM.
@@ -122,6 +123,9 @@ export function detectarCriticoRegex(texto: string): ResultadoGuard {
     // Negação logo antes ("não tenho dor no peito", "sem falta de ar")
     const antes = n.slice(0, m.index).trim().split(/\s+/).slice(-2);
     if (r.categoria !== 'pcr' && antes.some((p) => /^(nao|sem|nunca|nem|nenhum|nenhuma)$/.test(p))) continue;
+    // "bati o carro ontem, estou bem" não é SAMU agora — a validação garante no mínimo UPA.
+    if (r.categoria === 'trauma_grave' && !/fratura|osso|facad|esfaquead|tiro|balead|atropel/.test(m[0])
+        && acidentePassadoSemGravidade(n)) continue;
     return { critico: true, motivo: r.motivo, categoria: r.categoria, terceiro: ehSobreTerceiro(n) };
   }
   return { critico: false };
@@ -151,7 +155,7 @@ const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
   sangramento:
     '⚠️ Sangramento importante precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, faça pressão firme sobre o local com um pano limpo.',
   trauma_grave:
-    '⚠️ Esse tipo de acidente precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Evite se mexer até a equipe chegar.',
+    '⚠️ Acidente com ferimento precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Se sentir dor no pescoço ou nas costas, *não se mexa* até a equipe chegar. Se alguém estiver preso nas ferragens ou houver fogo, ligue também *193 (Bombeiros)*.',
   inconsciente:
     '⚠️ Pessoa desacordada precisa de atendimento imediato. Ligue *192 (SAMU)* agora.',
 };
@@ -201,12 +205,14 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 2. *NÃO retire objetos encravados.*
 3. Se possível, eleve o membro acima do nível do coração.
 4. Não use pó de café, pasta ou manteiga.`,
-  trauma_grave: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
+  trauma_grave: `⚠️ *Ligue 192 (SAMU) agora.* Se houver alguém preso nas ferragens, fogo ou vazamento, ligue também *193 (Bombeiros)*.
 
-1. *NÃO mova a pessoa* (pode haver lesão na coluna) e *NÃO tire o capacete*.
-2. Se estiver sangrando, faça *pressão firme* com pano limpo.
-3. Se houver osso aparecendo, *não tente colocar no lugar* — cubra com pano limpo.
-4. Sinalize o local para evitar novo acidente e fique com a pessoa.`,
+*Enquanto a ajuda não chega:*
+1. *Proteja o local*: pisca-alerta, triângulo ou peça para alguém sinalizar a pista. Desligue o motor do veículo.
+2. *NÃO mova a pessoa* (pode haver lesão na coluna) e *NÃO tire o capacete*.
+3. Se estiver sangrando, faça *pressão firme* com pano limpo.
+4. Se houver osso aparecendo, *não tente colocar no lugar* — cubra com pano limpo.
+5. Não dê água nem comida. Fique com a pessoa e converse com ela.`,
   inconsciente: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
 
 1. Chame a pessoa em voz alta e toque nos ombros.

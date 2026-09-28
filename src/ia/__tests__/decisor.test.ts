@@ -99,6 +99,34 @@ describe('protocolo certo para outra pessoa', () => {
   });
 });
 
+describe('acidentes de trânsito', () => {
+  it.each([
+    'sofri um acidente de moto agora, estou sangrando',
+    'bati o carro, tem uma pessoa presa nas ferragens',
+    'acidente de carro ontem, hoje estou vomitando',
+  ])('grave ou agora → guarda SAMU: "%s"', (t) => {
+    expect(detectarCriticoRegex(t)).toMatchObject({ critico: true, categoria: 'trauma_grave' });
+  });
+
+  it.each(['bati o carro ontem e estou com dor no pescoço', 'caí de moto ontem, só ralei o joelho'])(
+    'passado sem sinal grave → não é SAMU direto: "%s"', (t) => expect(detectarCriticoRegex(t).critico).toBe(false),
+  );
+
+  it('acidente de ontem: LLM diz UBS → validação sobe para UPA', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const { resultado } = await processarTurno('bati o carro ontem e estou com dor no pescoço', novoEstado());
+    expect(resultado.tipo).toBe('orientacao');
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UPA_24H');
+    expect(resultado.texto).toMatch(/lesões internas/);
+  });
+
+  it('acidente antigo e leve: UBS é aceito', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Pode acompanhar na UBS.' }));
+    const { resultado } = await processarTurno('caí de moto semana passada, o joelho ralado está cicatrizando', novoEstado());
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UBS_CLINICA_DA_FAMILIA');
+  });
+});
+
 describe('parser do decisor (schema fechado)', () => {
   it('ignora campos fora do schema e ação inválida', () => {
     expect(parsearDecisao({ acao: 'diagnosticar', texto: 'x' })).toBeNull();
