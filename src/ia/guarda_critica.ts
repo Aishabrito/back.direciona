@@ -19,7 +19,9 @@ export type CategoriaCritica =
   | 'avc'
   | 'trauma_craniano'
   | 'convulsao'
-  | 'sangramento';
+  | 'sangramento'
+  | 'trauma_grave'
+  | 'inconsciente';
 
 export type ResultadoGuard =
   | { critico: true; motivo: string; categoria: CategoriaCritica; terceiro: boolean }
@@ -27,7 +29,7 @@ export type ResultadoGuard =
 
 function ehSobreTerceiro(n: string): boolean {
   return /\b(meu|minha|nosso|nossa|o|a)\s+(pai|mae|filho|filha|marido|esposo|esposa|namorado|namorada|avo|vo|irmao|irma|tio|tia|primo|prima|amigo|amiga|vizinho|vizinha|colega|bebe|crianca|menino|menina|idoso|idosa|senhor|senhora)\b/.test(n)
-    || /\b(alguem|uma pessoa|um homem|uma mulher)\b/.test(n);
+    || /\b(alguem|uma pessoa|um homem|uma mulher|ele|ela|motoqueiro|motociclista|motorista|pedestre|ciclista|rapaz|moca|garoto|garota|vitima)\b/.test(n);
 }
 
 // Pergunta educativa ("o que fazer em caso de falta de ar?") não é emergência ativa.
@@ -84,7 +86,18 @@ const REGRAS: Regra[] = [
   {
     categoria: 'trauma_craniano',
     motivo: 'trauma craniano',
-    re: /\b(bati a cabeca|bateu a cabeca|bati com a cabeca|bateu com a cabeca|pancada na cabeca|caiu de altura|trauma craniano|cabeca aberta|corte (profundo )?na cabeca|sangrando (na|a) cabeca|sangue na cabeca)\b/,
+    re: /\b((bati|bateu|batemos|machuquei|machucou) (a |na |com a |minha |sua |a sua )?cabeca|pancada na cabeca|trauma craniano|cabeca aberta|corte (profundo )?na cabeca|sangrando (na|a) cabeca|sangue na cabeca)\b/,
+  },
+  {
+    categoria: 'trauma_grave',
+    motivo: 'trauma grave',
+    re: /\b(acidente (de|com) (moto|carro|transito|onibus|caminhao|bicicleta|bike)|batida de (moto|carro)|atropelad[oa]|atropelamento|atropelou|capotou|capotamento|fratura exposta|osso (aparecendo|exposto|pra fora|para fora)|esfaquead[oa]|levou (uma )?facada|levou (um )?tiro|baleado|baleada|caiu de (altura|laje|telhado|andaime|escada)|queda de altura)\b/,
+  },
+  {
+    // Estado ATUAL de inconsciência. "Desmaiei ontem" (passado) fica com o LLM.
+    categoria: 'inconsciente',
+    motivo: 'pessoa inconsciente',
+    re: /\b(desmaiad[oa]|desacordad[oa]|inconsciente|nao acorda|nao ta acordando|nao esta acordando|nao responde|nao reage|nao esta reagindo|apagad[oa] no chao)\b/,
   },
   {
     // Só crise ATIVA ou recém-ocorrida — "tremendo de frio" não entra.
@@ -137,6 +150,10 @@ const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
     '⚠️ Essa situação precisa de atendimento imediato. Ligue *192 (SAMU)* agora.',
   sangramento:
     '⚠️ Sangramento importante precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, faça pressão firme sobre o local com um pano limpo.',
+  trauma_grave:
+    '⚠️ Esse tipo de acidente precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Evite se mexer até a equipe chegar.',
+  inconsciente:
+    '⚠️ Pessoa desacordada precisa de atendimento imediato. Ligue *192 (SAMU)* agora.',
 };
 
 const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
@@ -184,6 +201,19 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 2. *NÃO retire objetos encravados.*
 3. Se possível, eleve o membro acima do nível do coração.
 4. Não use pó de café, pasta ou manteiga.`,
+  trauma_grave: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
+
+1. *NÃO mova a pessoa* (pode haver lesão na coluna) e *NÃO tire o capacete*.
+2. Se estiver sangrando, faça *pressão firme* com pano limpo.
+3. Se houver osso aparecendo, *não tente colocar no lugar* — cubra com pano limpo.
+4. Sinalize o local para evitar novo acidente e fique com a pessoa.`,
+  inconsciente: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
+
+1. Chame a pessoa em voz alta e toque nos ombros.
+2. Veja se o peito sobe e desce (se está respirando).
+3. *Se NÃO respira*: comprima o centro do peito com força, 100 a 120 vezes por minuto, sem parar.
+4. *Se respira* e não houve queda ou acidente: deite de lado. Se houve acidente, *não mova*.
+5. Não dê água, comida ou remédio.`,
   dor_toracica:
     '⚠️ Dor no peito precisa de atendimento imediato. *Ligue 192 (SAMU) agora.* Deixe a pessoa em repouso, sentada ou deitada, e não deixe que ela dirija.',
   falta_de_ar:
@@ -192,7 +222,8 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 
 /** Texto aprovado para a categoria. Protocolos de primeiros socorros quando é outra pessoa (ou PCR/afogamento). */
 export function textoEmergencia(categoria: CategoriaCritica, terceiro: boolean): string {
-  if (categoria === 'pcr' || categoria === 'afogamento') return PROTOCOLO[categoria]!;
+  // Quem está desacordado não está digitando: é sempre sobre outra pessoa.
+  if (categoria === 'pcr' || categoria === 'afogamento' || categoria === 'inconsciente') return PROTOCOLO[categoria]!;
   if (terceiro && PROTOCOLO[categoria]) return PROTOCOLO[categoria]!;
   return TEXTO_PROPRIO[categoria];
 }

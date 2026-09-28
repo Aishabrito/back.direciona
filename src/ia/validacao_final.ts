@@ -101,6 +101,11 @@ const CRITERIOS_IGNORADOS_NO_PISO = new Set(['autodiagnostico_grave']);
 export function pisoCritico(textoCaso: string): { motivo: string; destino: DestinoDecisor } | null {
   if (!textoCaso.trim()) return null;
   const relato = extrairInformacoes(textoCaso);
+  // Mecanismo de trauma grave (acidente de moto/carro, atropelamento, queda de altura, arma).
+  const TRAUMA_GRAVE = ['trauma_automobilistico', 'queda_altura', 'ferimento_perfurante'];
+  if (relato.sinais_trauma.some((s) => TRAUMA_GRAVE.includes(s))) {
+    return { motivo: 'mecanismo de trauma grave', destino: 'SAMU_192' };
+  }
   const criterio = encontrarCriterioCritico(relato);
   if (!criterio || CRITERIOS_IGNORADOS_NO_PISO.has(criterio.id)) return null;
   const destino: DestinoDecisor =

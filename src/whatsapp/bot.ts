@@ -66,11 +66,20 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000).unref?.();
 
+// Primeira mensagem: explica o que é o Direciona.Ai. Depois disso, respostas curtas.
 const MENSAGEM_BOAS_VINDAS =
-  "Olá! Sou o assistente virtual do *Direciona.Ai* 🏥\n\n" +
-  "Meu papel é orientar qual serviço do SUS você deve procurar (UBS, UPA, Pronto-Socorro ou SAMU 192).\n\n" +
-  "Por favor, me conte em detalhes: *o que está acontecendo ou o que você está sentindo?*\n" +
-  '_(Se quiser, você também pode tirar dúvidas como: "qual a diferença entre UBS e UPA?")_';
+  "👋 Olá! Eu sou o *Direciona.Ai*, um assistente virtual *gratuito* que ajuda você a saber " +
+  "*onde buscar atendimento no SUS* — sem precisar adivinhar se é caso de posto, UPA ou SAMU.\n\n" +
+  "*Como funciona:*\n" +
+  "1️⃣ Você me conta o que está sentindo (pode ser por *texto ou áudio* 🎤)\n" +
+  "2️⃣ Eu faço algumas perguntas rápidas\n" +
+  "3️⃣ Te digo qual serviço procurar — *UBS, UPA, Pronto-Socorro ou SAMU 192* — e posso mostrar o mais perto de você 📍\n\n" +
+  "Também tiro dúvidas sobre saúde e sobre o SUS (ex.: _\"qual a diferença entre UBS e UPA?\"_).\n\n" +
+  "⚠️ Eu *não dou diagnóstico nem receito remédio*. Em emergência, ligue *192* na hora.\n" +
+  "🔒 Não envie CPF, endereço completo ou dados de cartão. Para apagar seus dados, mande *apagar*.\n" +
+  "↩️ Para recomeçar a qualquer momento, mande *início*.";
+
+const CONVITE_RELATO = "Me conta: *o que está acontecendo ou o que você está sentindo?*";
 
 const comandosReset = [
   "/reset", "reset", "reiniciar", "comecar de novo", "começar de novo", "comecar dnv",
@@ -635,9 +644,15 @@ async function processarTexto(sock: Sock, sender: string, cleanText: string, vei
 
     let mensagemFinal = resultado.texto;
     if (primeiraMensagem) {
-      const boasVindas = `${MENSAGEM_BOAS_VINDAS}\n\n${mensagemPorId("privacidade_001").texto}`;
-      // Saudação na 1ª mensagem: as boas-vindas já pedem o relato — não duplica a pergunta.
-      mensagemFinal = resultado.acao === 'conversa' ? boasVindas : `${boasVindas}\n\n---\n\n${mensagemFinal}`;
+      if (resultado.acao === 'conversa') {
+        // "oi" na 1ª mensagem: apresentação + convite (sem duplicar a pergunta do LLM).
+        mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n${CONVITE_RELATO}`;
+      } else if (resultado.acao === 'emergencia') {
+        // Emergência: a orientação vem PRIMEIRO; a apresentação fica para depois.
+        mensagemFinal = `${mensagemFinal}\n\n---\n\n${MENSAGEM_BOAS_VINDAS}`;
+      } else {
+        mensagemFinal = `${MENSAGEM_BOAS_VINDAS}\n\n---\n\n${mensagemFinal}`;
+      }
     }
     mensagemFinal = oferecerLocalizacao(novoEstado, resultado, mensagemFinal);
     if (resultado.acao && ACOES_QUE_FECHAM.has(resultado.acao)) {

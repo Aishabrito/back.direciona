@@ -48,6 +48,10 @@ describe('guarda crítica enxuta', () => {
     ['minha mãe está com a boca torta', 'avc'],
     ['meu filho está engasgado', 'engasgo'],
     ['não tenho dor no peito, mas estou com falta de ar', 'falta_de_ar'],
+    ['Bati minha cabeça e está sangrando', 'trauma_craniano'],
+    ['meu pai caiu e está com fratura exposta na perna', 'trauma_grave'],
+    ['Teve um acidente de moto, motoqueiro está desmaiado oq faco ?', 'trauma_grave'],
+    ['meu avô está desmaiado no chão', 'inconsciente'],
   ])('"%s" → %s', (texto, categoria) => {
     const r = detectarCriticoRegex(texto);
     expect(r.critico).toBe(true);
@@ -63,6 +67,9 @@ describe('guarda crítica enxuta', () => {
     'não tenho dor no peito',
     'o que fazer em caso de falta de ar?',
     'quais os sinais de AVC?',
+    'ele não está desmaiado, só tonto',
+    'o que fazer se alguém estiver inconsciente?',
+    'desmaiei ontem mas estou bem',
   ])('NÃO dispara: "%s"', (texto) => {
     expect(detectarCriticoRegex(texto).critico).toBe(false);
   });
@@ -81,6 +88,14 @@ describe('validação final — detectores', () => {
     expect(contemPrescricao('Tome dipirona de 6 em 6 horas.')).toBe(true);
     expect(contemPrescricao('Use 500 mg de paracetamol.')).toBe(true);
     expect(contemPrescricao('Não tome antibiótico sem receita.')).toBe(false);
+  });
+});
+
+describe('protocolo certo para outra pessoa', () => {
+  it('acidente com motoqueiro → protocolo de trauma (não mover, não tirar capacete)', async () => {
+    const { resultado } = await processarTurno('Teve um acidente de moto, motoqueiro está desmaiado oq faco ?', novoEstado());
+    expect(resultado.texto).toMatch(/NÃO mova/);
+    expect(resultado.texto).toMatch(/capacete/);
   });
 });
 
