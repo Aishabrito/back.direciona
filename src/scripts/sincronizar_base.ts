@@ -1,6 +1,7 @@
 // src/scripts/sincronizar_base.ts
 // Sincroniza base_conhecimento.json com a tabela do Supabase.
-// - Pula tópicos que JÁ têm embedding no banco (economiza quota)
+// - Pula tópicos que já têm embedding E cujo título/conteúdo não mudou (economiza quota);
+//   tópico editado no JSON é refeito
 // - Retry automático quando bate no rate limit do Gemini (429)
 // - Idempotente: pode rodar várias vezes sem duplicar
 
@@ -52,7 +53,7 @@ async function main() {
   // ── 2. Conecta
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    console.error('❌ DATABASE_URL não definida.');
+    console.error('❌ DATABASE_URL não definida. Crie um arquivo .env nesta pasta (veja .env.example) com DATABASE_URL e GEMINI_API_KEY.');
     process.exit(1);
   }
 
@@ -90,19 +91,25 @@ async function main() {
     console.log(`✅ Tabela criada.`);
   }
 
-  // ── 4. Descobre quem já tem embedding (pra pular)
-  const jaTem = (await sql`
-    SELECT id FROM base_conhecimento WHERE embedding IS NOT NULL
-  `) as Array<{ id: string }>;
-  const setJaTem = new Set(jaTem.map((r) => r.id));
+  // ── 4. Descobre quem já está igual no banco (pra pular)
+  const noBanco = (await sql`
+    SELECT id, titulo, conteudo FROM base_conhecimento WHERE embedding IS NOT NULL
+  `) as Array<{ id: string; titulo: string; conteudo: string }>;
+  const porId = new Map(noBanco.map((r) => [r.id, r]));
 
-  const paraFazer = topicos.filter((t) => !setJaTem.has(t.id));
+  const novos = topicos.filter((t) => !porId.has(t.id));
+  const alterados = topicos.filter((t) => {
+    const atual = porId.get(t.id);
+    return atual !== undefined && (atual.titulo !== t.titulo || atual.conteudo !== t.conteudo);
+  });
+  const paraFazer = [...novos, ...alterados];
   const pulados = topicos.length - paraFazer.length;
 
-  console.log(`📊 ${pulados} já têm embedding, ${paraFazer.length} para processar.`);
+  console.log(`📊 ${pulados} sem mudança, ${novos.length} novos, ${alterados.length} alterados.`);
+  if (alterados.length) console.log(`   ✏️  Alterados: ${alterados.map((t) => t.id).join(', ')}`);
 
   if (paraFazer.length === 0) {
-    console.log(`\n✅ Nada a fazer. Base já está completa.`);
+    console.log(`\n✅ Nada a fazer. Base já está atualizada.`);
     await sql.end();
     return;
   }
@@ -157,7 +164,7 @@ async function main() {
 
   // ── 7. Resumo
   console.log(`\n✅ Sincronização concluída`);
-  console.log(`   Já tinha: ${pulados}`);
+  console.log(`   Sem mudança: ${pulados}`);
   console.log(`   Inseridos/atualizados agora: ${ok}`);
   console.log(`   Falhas: ${falhou}`);
 
