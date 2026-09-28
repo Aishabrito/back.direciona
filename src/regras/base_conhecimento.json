@@ -1467,14 +1467,24 @@
     },
     {
       "id": "vacinas_adulto",
-      "titulo": "Vacinação do adulto — quais tomar",
+      "titulo": "Vacinação do adulto e do idoso — quais tomar",
       "tags": [
-        "vacina adulto",
+        "caderneta",
+        "covid",
+        "dupla adulto",
+        "febre amarela",
+        "gripe",
+        "hepatite b",
         "imunizacao adulto",
+        "influenza",
+        "sarampo",
+        "tetano",
         "tetanos",
-        "hepatite b"
+        "triplice viral",
+        "vacina adulto",
+        "vacina idoso"
       ],
-      "conteudo": "Adultos devem manter em dia: hepatite B, dupla adulto (difteria e tétano) de 10 em 10 anos, tríplice viral, febre amarela (para quem viaja), influenza anual e COVID-19. Gestantes têm calendário próprio. Procure a UBS com a caderneta."
+      "conteudo": "Pelo Calendário Nacional de Vacinação do SUS, adultos (20 a 59 anos) devem manter em dia:\n- Hepatite B: 3 doses, para quem ainda não completou o esquema.\n- Dupla adulto (difteria e tétano): esquema de 3 doses e reforço a cada 10 anos.\n- Febre amarela: recomendada para todas as pessoas no Brasil que nunca tomaram, até 59 anos.\n- Tríplice viral (sarampo, caxumba e rubéola): 2 doses até 29 anos e 1 dose de 30 a 59 anos.\n- Gripe (influenza): uma vez por ano, nas campanhas.\n- COVID-19: conforme a recomendação vigente para cada grupo.\n\nIdosos (60 anos ou mais) devem tomar a vacina da gripe todo ano, manter o reforço da dupla adulto e seguir as orientações da UBS sobre COVID-19 e pneumocócica. Gestantes têm calendário próprio, que inclui a dTpa durante a gestação.\n\nTodas essas vacinas são gratuitas na UBS. Leve a caderneta de vacinação e um documento: a equipe confere o que você já tomou e diz o que falta. Se perdeu a caderneta, a UBS pode ajudar a recuperar o histórico ou recomeçar o esquema. O calendário pode mudar, então a UBS sempre tem a informação mais atualizada."
     },
     {
       "id": "como_conseguir_especialista",
