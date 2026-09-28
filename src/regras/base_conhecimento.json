@@ -1,5 +1,5 @@
 {
-  "versao": "1.4.0",
+  "versao": "1.5.0",
   "atualizado_em": "2026-09-28",
   "topicos": [
     {
@@ -60,7 +60,7 @@
         "pressao arterial",
         "dor de cabeca"
       ],
-      "conteudo": "A hipertensão é uma doença crônica comum, geralmente sem sintomas, que exige acompanhamento na UBS com medição regular da pressão arterial. Pressão alta persistente pode causar AVC, infarto e problemas nos rins.\n\nMudanças no estilo de vida ajudam: reduzir sal, praticar atividade física, controlar o peso, evitar álcool e cigarro. Se a pressão subir muito e vier acompanhada de dor de cabeça intensa, visão turva, dor no peito ou falta de ar, procure imediatamente uma UPA ou ligue 192."
+      "conteudo": "A hipertensão é uma doença crônica comum, geralmente sem sintomas, que exige acompanhamento na UBS com medição regular da pressão arterial. Pressão alta persistente pode causar AVC, infarto e problemas nos rins.\n\nMudanças no estilo de vida ajudam: reduzir sal, praticar atividade física, controlar o peso, evitar álcool e cigarro. Se a pressão subir muito e vier acompanhada de dor de cabeça intensa, visão turva, dor no peito ou falta de ar, procure imediatamente uma UPA ou ligue 192.\n\nMeça a pressão com a técnica correta (sentado, 5 minutos de repouso, braço apoiado) e anote os valores para levar à UBS. Em geral, a meta é ficar abaixo de 14 por 9, mas pode ser diferente para você. Tome o remédio todo dia, mesmo se a pressão estiver boa, e não troque nem pare sem falar com o profissional. Muitos remédios de pressão são gratuitos no Farmácia Popular."
     },
     {
       "id": "diabetes",
@@ -72,7 +72,7 @@
         "sede",
         "urinar muito"
       ],
-      "conteudo": "O diabetes é uma doença crônica caracterizada por níveis elevados de açúcar no sangue. Sintomas comuns: muita sede, urinar muito, cansaço, perda de peso sem explicação, visão embaçada, feridas que demoram a cicatrizar.\n\nO acompanhamento é feito na UBS com exames periódicos e uso de medicamentos quando prescritos. Sinais de emergência: confusão mental, hálito de acetona, respiração rápida e profunda, desmaio — procure uma UPA imediatamente."
+      "conteudo": "O diabetes é uma doença crônica caracterizada por níveis elevados de açúcar no sangue. Sintomas comuns: muita sede, urinar muito, cansaço, perda de peso sem explicação, visão embaçada, feridas que demoram a cicatrizar.\n\nO acompanhamento é feito na UBS com exames periódicos e uso de medicamentos quando prescritos. Sinais de emergência: confusão mental, hálito de acetona, respiração rápida e profunda, desmaio — procure uma UPA imediatamente.\n\nCUIDADOS COM OS PÉS: olhe os pés todos os dias (use um espelho se precisar), lave e seque bem entre os dedos, hidrate sem passar creme entre os dedos, corte as unhas retas, nunca ande descalço e use calçado confortável. Ferida, bolha, mudança de cor ou dormência nos pés: procure a UBS logo. Faça exame de vista e de rins uma vez por ano."
     },
     {
       "id": "asma",
@@ -83,7 +83,7 @@
         "falta de ar",
         "bronquite"
       ],
-      "conteudo": "A asma é uma doença inflamatória dos brônquios que causa chiado no peito, tosse seca e falta de ar. Durante uma crise, o tratamento inclui o uso de bombinhas (broncodilatadores) prescritas.\n\nNuma crise grave, com falta de ar intensa que não melhora com a bombinha, dificuldade para falar frases inteiras, ou lábios arroxeados, procure uma UPA ou ligue 192. O acompanhamento de rotina é feito na UBS, com plano de ação escrito pelo médico."
+      "conteudo": "A asma é uma doença inflamatória dos brônquios que causa chiado no peito, tosse seca e falta de ar. Durante uma crise, o tratamento inclui o uso de bombinhas (broncodilatadores) prescritas.\n\nNuma crise grave, com falta de ar intensa que não melhora com a bombinha, dificuldade para falar frases inteiras, ou lábios arroxeados, procure uma UPA ou ligue 192. O acompanhamento de rotina é feito na UBS, com plano de ação escrito pelo médico.\n\nPLANO DE AÇÃO: peça à UBS um plano por escrito dizendo que bombinha usar todo dia, qual usar na crise e quando procurar atendimento. A bombinha de manutenção deve ser usada mesmo sem sintomas, se foi receitada assim. Use espaçador. Evite fumaça, poeira, mofo e cheiros fortes, e mantenha a vacina da gripe em dia."
     },
     {
       "id": "alergia",
@@ -879,7 +879,7 @@
         "atividade física",
         "saúde"
       ],
-      "conteudo": "A obesidade é uma condição de saúde influenciada por fatores biológicos, emocionais, sociais e ambientais. O cuidado deve ser individualizado e sem culpa ou estigma. Procure a UBS para avaliação de pressão, glicemia, colesterol, sono e outras condições associadas. Evite dietas extremas e medicamentos para emagrecer sem prescrição. Mudanças graduais e acompanhamento profissional são mais seguros."
+      "conteudo": "A obesidade é uma condição de saúde influenciada por fatores biológicos, emocionais, sociais e ambientais. O cuidado deve ser individualizado e sem culpa ou estigma. Procure a UBS para avaliação de pressão, glicemia, colesterol, sono e outras condições associadas. Evite dietas extremas e medicamentos para emagrecer sem prescrição. Mudanças graduais e acompanhamento profissional são mais seguros.\n\nO SUS oferece acompanhamento com equipe da UBS (nutrição, atividade física, saúde mental) e, quando indicado, cirurgia bariátrica. Em geral, a cirurgia é considerada para IMC a partir de 40, ou a partir de 35 com doenças associadas, depois de um período de acompanhamento. O encaminhamento começa na UBS."
     },
     {
       "id": "alimentacao_saudavel",
@@ -1071,7 +1071,7 @@
         "inchaço",
         "cansaço"
       ],
-      "conteudo": "Insuficiência cardíaca pode causar falta de ar aos esforços, cansaço, inchaço nas pernas e aumento rápido de peso por retenção de líquido. Use os medicamentos exatamente como prescritos e acompanhe o peso conforme orientação. Procure a UBS se os sintomas estiverem aumentando. Falta de ar em repouso, dor no peito, confusão, lábios arroxeados ou dificuldade para deitar exigem UPA ou SAMU 192."
+      "conteudo": "Insuficiência cardíaca pode causar falta de ar aos esforços, cansaço, inchaço nas pernas e aumento rápido de peso por retenção de líquido. Use os medicamentos exatamente como prescritos e acompanhe o peso conforme orientação. Procure a UBS se os sintomas estiverem aumentando. Falta de ar em repouso, dor no peito, confusão, lábios arroxeados ou dificuldade para deitar exigem UPA ou SAMU 192.\n\nPese-se todos os dias pela manhã, depois de urinar e antes do café, e anote. Ganho de mais de 1 kg em um dia ou de 2 kg em 3 dias, inchaço aumentando ou falta de ar para deitar: procure a UBS ou a UPA no mesmo dia. Controle o sal e a quantidade de líquidos se o profissional orientar."
     },
     {
       "id": "arritmia",
@@ -1095,7 +1095,7 @@
         "pressão alta",
         "diabetes"
       ],
-      "conteudo": "Doenças renais podem evoluir sem sintomas, especialmente em pessoas com hipertensão ou diabetes. O acompanhamento inclui controle da pressão, glicemia, exames de sangue e urina quando indicados. Evite usar anti-inflamatórios repetidamente sem orientação. Procure uma UBS se houver inchaço, alterações persistentes na urina ou cansaço. Pouca ou nenhuma urina, falta de ar e confusão exigem atendimento urgente."
+      "conteudo": "Doenças renais podem evoluir sem sintomas, especialmente em pessoas com hipertensão ou diabetes. O acompanhamento inclui controle da pressão, glicemia, exames de sangue e urina quando indicados. Evite usar anti-inflamatórios repetidamente sem orientação. Procure uma UBS se houver inchaço, alterações persistentes na urina ou cansaço. Pouca ou nenhuma urina, falta de ar e confusão exigem atendimento urgente.\n\nEvite anti-inflamatórios e remédios para dor sem orientação, e avise sempre que tem problema nos rins antes de fazer exame com contraste. A alimentação (sal, proteína, potássio) é ajustada pela equipe conforme o estágio da doença. Inchaço, falta de ar ou urinar muito pouco: procure a UPA."
     },
     {
       "id": "infeccao_urinaria",
@@ -1845,6 +1845,690 @@
         "pedido de exame"
       ],
       "conteudo": "Atestado, receita, laudo e pedido de exame só podem ser feitos pelo profissional de saúde que atender a pessoa. Na UBS / Clínica da Família é possível pedir consulta para isso, e quem foi atendido numa UPA pode pedir o atestado lá mesmo.\n\nResultados de exame devem ser levados ao profissional que pediu ou à UBS: só ele pode interpretar os valores junto com a sua história. Antibiótico só com receita, porque o uso errado causa resistência. Se você está com algum sintoma agora, conte o que sente para saber onde buscar atendimento."
+    },
+    {
+      "id": "dpoc",
+      "titulo": "DPOC (enfisema e bronquite crônica)",
+      "tags": [
+        "dpoc",
+        "enfisema",
+        "bronquite cronica",
+        "falta de ar fumante",
+        "pulmao",
+        "cigarro"
+      ],
+      "conteudo": "A DPOC é uma doença crônica dos pulmões, quase sempre ligada ao cigarro, à fumaça de fogão a lenha ou a poeiras no trabalho. Causa falta de ar que piora aos poucos, tosse com catarro por muito tempo e chiado. Diferente da asma, costuma começar depois dos 40 anos e a falta de ar não some entre as crises.\n\nO diagnóstico é feito na UBS, com o exame de sopro (espirometria). O que mais ajuda: parar de fumar (o SUS tem tratamento gratuito), manter as vacinas de gripe e covid em dia, fazer atividade física e reabilitação pulmonar quando indicada, e usar as bombinhas como foram receitadas. Oxigênio em casa só com prescrição e acompanhamento.\n\nProcure uma UPA se a falta de ar ou o catarro piorarem. Ligue 192 se houver lábios roxos, sonolência, confusão ou falta de ar em repouso."
+    },
+    {
+      "id": "hipotireoidismo",
+      "titulo": "Hipotireoidismo (tireoide lenta)",
+      "tags": [
+        "tireoide",
+        "hipotireoidismo",
+        "tsh",
+        "tireoide lenta",
+        "hormonio da tireoide"
+      ],
+      "conteudo": "Quando a tireoide produz pouco hormônio, o corpo fica mais lento: cansaço, sono, frio fora do normal, pele seca, intestino preso, ganho de peso, queda de cabelo, desânimo e menstruação irregular. É mais comum em mulheres e depois dos 40 anos.\n\nO diagnóstico é feito com exame de sangue pedido na UBS. O tratamento repõe o hormônio com um comprimido receitado, tomado todos os dias em jejum, sempre no mesmo horário. Não pare nem mude a dose por conta própria, e faça os exames de controle pedidos. Gestantes com problema de tireoide precisam de acompanhamento mais próximo no pré-natal."
+    },
+    {
+      "id": "osteoporose",
+      "titulo": "Osteoporose — ossos fracos",
+      "tags": [
+        "osteoporose",
+        "osso fraco",
+        "densitometria",
+        "calcio",
+        "vitamina d",
+        "fratura idoso"
+      ],
+      "conteudo": "A osteoporose deixa os ossos frágeis e não dá sintomas até acontecer uma fratura, principalmente no quadril, punho ou coluna. É mais comum em mulheres depois da menopausa, idosos, fumantes e em quem usa corticoide por muito tempo.\n\nPrevenção: alimentação com cálcio (leite, queijo, iogurte, verduras verde-escuras), sol com moderação para a vitamina D, exercícios de força e equilíbrio, e evitar cigarro e excesso de álcool. Suplementos e remédios só com orientação.\n\nNa UBS o profissional avalia o risco e pede densitometria quando indicado. Prevenir quedas é tão importante quanto tratar o osso: boa iluminação, tapetes presos, barras no banheiro e calçado firme. Idoso que caiu e não consegue apoiar a perna precisa ir à UPA."
+    },
+    {
+      "id": "demencia_alzheimer",
+      "titulo": "Demência e Alzheimer — sinais e cuidado",
+      "tags": [
+        "demencia",
+        "alzheimer",
+        "esquecimento",
+        "perda de memoria",
+        "idoso esquecido",
+        "cuidador"
+      ],
+      "conteudo": "Esquecer um nome ou onde deixou a chave de vez em quando é normal. Procure a UBS quando o esquecimento começar a atrapalhar a rotina: repetir as mesmas perguntas, se perder em lugares conhecidos, esquecer compromissos e contas, dificuldade para achar palavras, mudanças de humor ou desconfiança fora do normal.\n\nA avaliação começa na UBS, que pede exames para descartar causas tratáveis (como tireoide, falta de vitamina B12, depressão ou efeito de remédios) e encaminha ao especialista quando precisa. Alguns remédios para Alzheimer são fornecidos pelo SUS. O cuidador também precisa de apoio: a UBS e o programa Melhor em Casa podem orientar.\n\nConfusão que aparece de repente, em horas ou poucos dias, NÃO é demência: pode ser infecção, desidratação ou AVC. Procure uma UPA, ou ligue 192 se vier com fraqueza de um lado, fala enrolada ou sonolência."
+    },
+    {
+      "id": "transtorno_bipolar",
+      "titulo": "Transtorno bipolar",
+      "tags": [
+        "bipolar",
+        "transtorno bipolar",
+        "euforia",
+        "mania",
+        "oscilacao de humor"
+      ],
+      "conteudo": "O transtorno bipolar alterna fases de depressão com fases de euforia ou irritação: dormir muito pouco sem sentir cansaço, falar e pensar acelerado, gastar demais, fazer planos grandiosos ou se arriscar. Mudança de humor ao longo do dia, por si só, não é bipolaridade.\n\nO tratamento é contínuo, com remédio receitado e acompanhamento no CAPS ou na UBS. Não pare o remédio quando se sentir bem, porque as crises costumam voltar. Faça os exames de sangue que o médico pedir, mantenha horários regulares de sono e evite álcool e drogas.\n\nEm crise com risco (agressividade, ideias de se machucar, não dorme há dias), ligue 192. Pensamentos de morrer: CVV 188."
+    },
+    {
+      "id": "tdah",
+      "titulo": "TDAH em crianças e adultos",
+      "tags": [
+        "tdah",
+        "deficit de atencao",
+        "hiperatividade",
+        "desatencao",
+        "ddah"
+      ],
+      "conteudo": "O TDAH causa dificuldade de manter a atenção, desorganização, esquecimentos, impulsividade e, às vezes, agitação. Começa na infância, mas muitos adultos só descobrem depois. O diagnóstico é feito por profissional, com uma avaliação da história de vida, não com um teste da internet.\n\nProcure a UBS, que avalia e encaminha para psicologia, psiquiatria ou CAPS infantil quando necessário. O tratamento pode incluir orientação à família e à escola, terapia e, em alguns casos, remédio. A oferta de medicamento pelo SUS varia de estado para estado."
+    },
+    {
+      "id": "psicose_esquizofrenia",
+      "titulo": "Esquizofrenia e crises psicóticas",
+      "tags": [
+        "esquizofrenia",
+        "psicose",
+        "surto",
+        "ouvindo vozes",
+        "delirio",
+        "alucinacao",
+        "paranoia"
+      ],
+      "conteudo": "Na crise psicótica a pessoa pode ouvir vozes, ver coisas que não existem, achar que está sendo perseguida, falar de forma confusa ou se isolar. Não discuta nem ria das ideias; fale com calma e fique por perto.\n\nO acompanhamento é feito no CAPS, que atende de portas abertas, sem precisar de encaminhamento. O tratamento com remédio e o apoio da família e da equipe permitem que muitas pessoas estudem, trabalhem e vivam bem. Não interrompa o remédio sem conversar com a equipe.\n\nLigue 192 se houver agressividade, risco para a pessoa ou para outros, ou se ela não come nem dorme há dias. Pensamentos de morrer: CVV 188."
+    },
+    {
+      "id": "luto",
+      "titulo": "Luto — quando buscar ajuda",
+      "tags": [
+        "luto",
+        "perda",
+        "morte de parente",
+        "saudade",
+        "falecimento",
+        "morreu"
+      ],
+      "conteudo": "Tristeza, choro, saudade, raiva, culpa e dificuldade para dormir são reações normais depois de uma perda. Não existe prazo certo, e cada pessoa vive o luto do seu jeito. Conversar sobre quem se foi, manter uma rotina mínima e aceitar ajuda de amigos ajudam.\n\nProcure a UBS ou o CAPS se, depois de muitos meses, a dor continua tão forte quanto no início e impede de trabalhar, cuidar da casa ou de si; se aumentou o uso de álcool ou remédios; ou se a pessoa se isolou de todos. Pensamentos de morrer ou de se juntar a quem se foi: ligue para o CVV 188 (24h, gratuito)."
+    },
+    {
+      "id": "burnout",
+      "titulo": "Burnout — esgotamento pelo trabalho",
+      "tags": [
+        "burnout",
+        "esgotamento",
+        "estresse no trabalho",
+        "cansaco do trabalho",
+        "sindrome de burnout"
+      ],
+      "conteudo": "O burnout é um esgotamento causado pelo trabalho: cansaço que não passa com descanso, irritação, sensação de fracasso, distanciamento do trabalho, dificuldade de concentração, dor de cabeça e problemas de sono.\n\nProcure a UBS. Os sintomas podem se parecer com depressão ou com outros problemas de saúde, e o profissional avalia o melhor cuidado, que pode incluir afastamento, psicoterapia e mudanças na rotina. O burnout pode ser reconhecido como doença relacionada ao trabalho; o CEREST (Centro de Referência em Saúde do Trabalhador) orienta sobre direitos. Pensamentos de morrer: CVV 188."
+    },
+    {
+      "id": "insonia",
+      "titulo": "Insônia — dificuldade para dormir",
+      "tags": [
+        "insonia",
+        "nao consigo dormir",
+        "sono",
+        "dormir mal",
+        "acordar de madrugada"
+      ],
+      "conteudo": "Hábitos que ajudam: deitar e acordar sempre no mesmo horário, evitar café, chá preto, energético e álcool à noite, desligar celular e TV pelo menos 1 hora antes, usar a cama só para dormir, fazer atividade física durante o dia e evitar cochilos longos. Se não pegar no sono em 20 minutos, levante e faça algo calmo até sentir sono.\n\nProcure a UBS se a insônia dura mais de 3 meses, atrapalha o dia, vem com tristeza ou ansiedade, ou se alguém percebe ronco alto com pausas na respiração. Não use remédio para dormir sem receita: alguns causam dependência e quedas, principalmente em idosos."
+    },
+    {
+      "id": "dor_garganta",
+      "titulo": "Dor de garganta — quando é urgente",
+      "tags": [
+        "dor de garganta",
+        "garganta inflamada",
+        "garganta inchada",
+        "dificuldade para engolir"
+      ],
+      "conteudo": "A maioria das dores de garganta é causada por vírus e melhora em até uma semana com repouso, líquidos e alimentos macios. Antibiótico só com receita, porque nem toda dor de garganta precisa.\n\nProcure a UBS se a febre dura mais de 3 dias, se há placas brancas com febre alta ou se a dor não melhora em uma semana. Procure uma UPA se não consegue engolir nem a saliva (babando), se a voz ficou abafada, se não consegue abrir a boca ou se o pescoço inchou de um lado. Ligue 192 se houver falta de ar ou barulho ao respirar."
+    },
+    {
+      "id": "tosse_cronica",
+      "titulo": "Tosse há mais de 3 semanas",
+      "tags": [
+        "tosse cronica",
+        "tosse que nao passa",
+        "tosse ha semanas",
+        "tosse persistente",
+        "tosse seca"
+      ],
+      "conteudo": "Tosse que dura mais de 3 semanas precisa ser avaliada na UBS, mesmo que seja leve. As causas mais comuns são restos de uma virose, rinite e gotejamento do nariz, asma, refluxo, cigarro e efeito de alguns remédios de pressão. A tuberculose também precisa ser investigada: o exame de escarro é gratuito.\n\nProcure logo a UBS se vier com febre à tarde, suor à noite ou perda de peso. Procure uma UPA se tossir sangue ou tiver falta de ar."
+    },
+    {
+      "id": "cansaco_fadiga",
+      "titulo": "Cansaço constante",
+      "tags": [
+        "cansaco",
+        "fadiga",
+        "fraqueza",
+        "sem energia",
+        "indisposicao",
+        "desanimo"
+      ],
+      "conteudo": "Cansaço que dura semanas pode ter muitas causas: pouco sono, estresse, anemia, tireoide, diabetes, depressão, infecções ou efeito de remédios. Vale anotar desde quando está assim e o que mais sente.\n\nProcure a UBS para avaliação e exames de sangue. Procure antes, numa UPA, se o cansaço vier com falta de ar ao fazer pouco esforço, palidez intensa, fezes pretas ou desmaio. Ligue 192 se houver dor no peito ou falta de ar em repouso."
+    },
+    {
+      "id": "nausea",
+      "titulo": "Enjoo (náusea)",
+      "tags": [
+        "enjoo",
+        "nausea",
+        "estomago embrulhado",
+        "vontade de vomitar",
+        "mal estar no estomago"
+      ],
+      "conteudo": "Enjoo pode vir de virose, alimentação, refluxo, ansiedade, gravidez, enxaqueca, labirinto ou efeito de remédios. Ajuda comer pouco e várias vezes, evitar gordura e frituras, beber líquidos em pequenos goles e não deitar logo depois de comer. Se houver chance de gravidez, faça um teste.\n\nProcure a UBS se o enjoo dura mais de uma semana ou vem com perda de peso. Procure uma UPA se virar vômito que não para ou se não consegue beber líquidos. Ligue 192 se o enjoo vier com dor ou aperto no peito, suor frio ou falta de ar, principalmente em idosos, mulheres e diabéticos, em quem o problema no coração pode aparecer assim."
+    },
+    {
+      "id": "dor_dente",
+      "titulo": "Dor de dente — UBS ou urgência",
+      "tags": [
+        "dor de dente",
+        "dente doendo",
+        "dente inflamado",
+        "abscesso",
+        "inchaco no rosto dente",
+        "dentista urgencia"
+      ],
+      "conteudo": "Dor de dente é atendida pela equipe de saúde bucal da UBS. Enquanto isso, mantenha a boca limpa, evite alimentos muito quentes, frios ou doces, e não coloque remédio, álcool ou outros produtos sobre o dente ou a gengiva.\n\nProcure uma UPA ou pronto-socorro odontológico se houver inchaço no rosto, febre, dificuldade para abrir a boca ou para engolir. Ligue 192 se o inchaço descer para o pescoço ou houver falta de ar."
+    },
+    {
+      "id": "coceira_pele",
+      "titulo": "Coceira na pele",
+      "tags": [
+        "coceira",
+        "coceira no corpo",
+        "escabiose",
+        "sarna",
+        "dermatite",
+        "alergia de pele",
+        "pele coçando"
+      ],
+      "conteudo": "Coceira pode ser pele seca, alergia de contato (sabão, perfume, tecido), picada de inseto, dermatite ou sarna (escabiose). A sarna coça mais à noite, aparece entre os dedos, punhos, cintura e partes íntimas, e costuma pegar várias pessoas da casa: todas precisam ser tratadas ao mesmo tempo e as roupas de cama lavadas em água quente.\n\nEvite banhos muito quentes e buchas, use sabonete neutro e hidrate a pele. Não passe pomada com corticoide sem receita.\n\nProcure a UBS se a coceira dura mais de uma semana, espalha ou atrapalha o sono. Procure uma UPA se surgirem placas pelo corpo todo com inchaço. Ligue 192 se houver inchaço na boca, língua ou falta de ar."
+    },
+    {
+      "id": "manchas_pele",
+      "titulo": "Manchas e pintas na pele",
+      "tags": [
+        "mancha na pele",
+        "pinta",
+        "sinal na pele",
+        "mancha roxa",
+        "mancha branca",
+        "melanoma",
+        "hanseniase mancha"
+      ],
+      "conteudo": "Procure a UBS se uma pinta cresce, muda de cor ou de formato, tem bordas irregulares, várias cores, sangra ou coça; se aparece uma ferida que não cicatriza em 4 semanas; ou se surge uma mancha mais clara ou avermelhada com dormência (perda de sensibilidade), que precisa ser examinada para hanseníase.\n\nManchas vermelhas pelo corpo com febre em criança devem ser avaliadas no mesmo dia. Ligue 192 se aparecerem manchas roxas ou vermelho-escuras que não somem quando você aperta com um copo, junto com febre. Use protetor solar e evite sol entre 10h e 16h."
+    },
+    {
+      "id": "verrugas_hpv",
+      "titulo": "Verrugas e HPV",
+      "tags": [
+        "verruga",
+        "verruga genital",
+        "hpv",
+        "condiloma",
+        "crista de galo"
+      ],
+      "conteudo": "Verrugas comuns nas mãos e pés são causadas por vírus, não são perigosas e muitas somem sozinhas. Não corte, não queime e não use produtos caseiros. A UBS pode tratar quando incomodam.\n\nVerrugas nos genitais ou no ânus são causadas pelo HPV, uma infecção sexualmente transmissível. O tratamento é gratuito na UBS, e as parcerias sexuais também devem ser avaliadas. A camisinha reduz o risco, e a vacina contra o HPV é gratuita no SUS para meninas e meninos na faixa etária indicada pela campanha e para alguns grupos especiais. Mulheres devem manter o preventivo em dia."
+    },
+    {
+      "id": "colica_bebe",
+      "titulo": "Cólica em bebê",
+      "tags": [
+        "colica bebe",
+        "colica do recem nascido",
+        "bebe chorando muito",
+        "choro do bebe",
+        "gases bebe"
+      ],
+      "conteudo": "A cólica é comum nos primeiros 3 a 4 meses: o bebê chora forte, geralmente no fim da tarde ou à noite, encolhe as perninhas e depois se acalma. O bebê continua mamando bem, ganhando peso e sem febre.\n\nO que ajuda: colo, ambiente calmo, massagem suave na barriga em movimentos circulares, bicicletinha com as pernas e compressa morna (testada no seu braço antes). Até os 6 meses o bebê deve receber só leite materno: não dê chás, água com açúcar nem remédios sem receita.\n\nProcure a UBS se o choro for diferente do habitual. Procure uma UPA se houver vômitos repetidos, sangue nas fezes, barriga muito inchada, recusa das mamadas ou choro que não para de jeito nenhum. Bebê com menos de 3 meses com febre: ligue 192."
+    },
+    {
+      "id": "introducao_alimentar",
+      "titulo": "Introdução alimentar do bebê",
+      "tags": [
+        "introducao alimentar",
+        "papinha",
+        "comida do bebe",
+        "6 meses",
+        "alimentacao do bebe",
+        "blw"
+      ],
+      "conteudo": "A partir dos 6 meses o bebê começa a comer, mas o leite materno continua até 2 anos ou mais. Ofereça comida de verdade: legumes, verduras, frutas, feijão, arroz, carnes e ovo, amassados com o garfo (não liquidificados), em pedaços cada vez maiores. Ofereça água nos intervalos.\n\nAté os 2 anos, evite açúcar, doces, refrigerante, suco de caixinha, salgadinhos e embutidos. Mel só depois de 1 ano. Use pouco sal. Corte alimentos redondos, como uva e tomate-cereja, em pedaços pequenos e sempre acompanhe o bebê durante as refeições.\n\nRecusar um alimento novo é normal: ofereça de novo em outros dias. A UBS acompanha o crescimento pela Caderneta da Criança."
+    },
+    {
+      "id": "desenvolvimento_infantil",
+      "titulo": "Crescimento e desenvolvimento da criança",
+      "tags": [
+        "desenvolvimento infantil",
+        "marcos do desenvolvimento",
+        "atraso na fala",
+        "autismo",
+        "tea",
+        "crescimento",
+        "puericultura",
+        "caderneta da crianca"
+      ],
+      "conteudo": "A UBS acompanha a criança nas consultas de rotina (puericultura), usando a Caderneta da Criança para registrar peso, altura, vacinas e marcos. Cada criança tem seu ritmo, mas, em geral: sustenta a cabeça por volta dos 3 meses, senta sem apoio perto dos 6 a 9 meses, anda entre 12 e 18 meses e fala as primeiras palavras por volta de 1 ano.\n\nProcure a UBS se a criança não olha nos olhos, não sorri de volta, não responde quando é chamada pelo nome por volta de 1 ano, não fala nenhuma palavra aos 18 meses, ou se perdeu habilidades que já tinha. Quanto mais cedo a avaliação, melhor: a UBS encaminha para os serviços de estimulação e reabilitação."
+    },
+    {
+      "id": "comportamento_birra",
+      "titulo": "Birra e comportamento infantil",
+      "tags": [
+        "birra",
+        "comportamento da crianca",
+        "crianca agressiva",
+        "crianca nervosa",
+        "limites",
+        "disciplina"
+      ],
+      "conteudo": "Birras são comuns entre 1 e 4 anos, quando a criança ainda não sabe lidar com frustração. Mantenha a calma, garanta a segurança, dê nome ao que ela sente e mantenha o limite com firmeza e carinho. Elogie o bom comportamento e mantenha regras e rotina previsíveis. Bater ou gritar piora o comportamento.\n\nProcure a UBS se as crises forem muito frequentes ou intensas, se a criança se machuca ou machuca os outros com frequência, se há mudança brusca de comportamento, problemas na escola, ou se a família está esgotada. A UBS pode encaminhar para psicologia ou para o CAPS infantil."
+    },
+    {
+      "id": "enurese_xixi_na_cama",
+      "titulo": "Xixi na cama (enurese)",
+      "tags": [
+        "xixi na cama",
+        "enurese",
+        "faz xixi dormindo",
+        "crianca molha a cama"
+      ],
+      "conteudo": "Fazer xixi na cama é comum até os 5 anos e costuma melhorar sozinho com o tempo. Não castigue nem exponha a criança: isso aumenta a ansiedade. Ajuda ir ao banheiro antes de dormir, reduzir líquidos à noite (sem deixar de beber durante o dia) e elogiar as noites secas.\n\nProcure a UBS se continuar depois dos 5 ou 6 anos, se voltou depois de um período seco, ou se vier com ardência ao urinar, muita sede, perda de peso, intestino preso ou escapes de xixi durante o dia. Mudanças de comportamento junto com o xixi na cama também merecem atenção."
+    },
+    {
+      "id": "menstruacao_irregular",
+      "titulo": "Menstruação irregular ou atrasada",
+      "tags": [
+        "menstruacao irregular",
+        "menstruacao atrasada",
+        "ciclo irregular",
+        "nao menstruo",
+        "sop",
+        "ovario policistico"
+      ],
+      "conteudo": "Ciclos irregulares são comuns nos primeiros anos após a primeira menstruação e perto da menopausa. Também podem ser causados por estresse, mudança de peso, exercício intenso, anticoncepcional, amamentação, problemas de tireoide ou ovário policístico. Se houver chance de gravidez, faça um teste (é gratuito na UBS).\n\nProcure a UBS se ficar mais de 3 meses sem menstruar sem estar grávida, se o sangramento for muito intenso ou durar mais de 7 dias, se sangrar entre as menstruações ou depois da relação, ou se voltar a sangrar após a menopausa. Procure uma UPA se o sangramento for muito forte, com tontura ou fraqueza. Dor forte na barriga com atraso menstrual: procure a maternidade."
+    },
+    {
+      "id": "menopausa_climaterio",
+      "titulo": "Menopausa e climatério",
+      "tags": [
+        "menopausa",
+        "climaterio",
+        "calores",
+        "fogacho",
+        "ondas de calor",
+        "reposicao hormonal"
+      ],
+      "conteudo": "O climatério é a transição para o fim da fase reprodutiva, geralmente entre 45 e 55 anos. A menopausa é a última menstruação, confirmada depois de 12 meses sem menstruar. Podem aparecer ondas de calor, suor à noite, alterações de sono e humor, secura vaginal e diminuição da vontade sexual.\n\nAjudam atividade física, sono regular, evitar cigarro e excesso de álcool, e lubrificante à base de água na relação. A UBS avalia e conversa sobre tratamento com ou sem hormônio, que é decidido caso a caso. Continue fazendo preventivo e mamografia conforme a idade.\n\nProcure a UBS se voltar a sangrar depois de 1 ano sem menstruar."
+    },
+    {
+      "id": "preventivo_colo_utero",
+      "titulo": "Preventivo (Papanicolau) e câncer de colo do útero",
+      "tags": [
+        "preventivo",
+        "papanicolau",
+        "cancer de colo do utero",
+        "exame preventivo",
+        "colo do utero",
+        "dna hpv"
+      ],
+      "conteudo": "O câncer de colo do útero pode ser evitado. O preventivo é gratuito na UBS para mulheres e pessoas com colo do útero de 25 a 64 anos que já tiveram relação sexual. Depois de 2 exames normais seguidos, com 1 ano de intervalo, o exame pode ser feito a cada 3 anos. Em algumas cidades o SUS já usa o teste de DNA-HPV, que é repetido a cada 5 anos quando dá negativo. Siga a orientação da sua UBS.\n\nA vacina contra o HPV protege contra os tipos que mais causam esse câncer. Procure a UBS antes do prazo se tiver sangramento depois da relação, entre as menstruações ou após a menopausa, ou corrimento com mau cheiro."
+    },
+    {
+      "id": "cancer_mama",
+      "titulo": "Câncer de mama — mamografia e sinais",
+      "tags": [
+        "cancer de mama",
+        "mamografia",
+        "caroco no seio",
+        "nodulo na mama",
+        "autoexame",
+        "mama"
+      ],
+      "conteudo": "Conheça seu corpo: observe e toque as mamas no dia a dia. Procure a UBS logo, em qualquer idade, se notar caroço endurecido, pele da mama repuxada ou com aspecto de casca de laranja, mamilo que afunda, saída de líquido com sangue ou caroço na axila.\n\nA mamografia de rastreamento, sem sintomas, é oferecida pelo SUS a cada 2 anos para mulheres de 50 a 74 anos. Entre 40 e 49 anos, pode ser feita a pedido da mulher, depois de conversar com o profissional sobre benefícios e riscos. Quem tem histórico familiar forte (mãe ou irmã com câncer de mama jovem) deve conversar com a UBS sobre começar antes."
+    },
+    {
+      "id": "puerperio",
+      "titulo": "Pós-parto (puerpério)",
+      "tags": [
+        "pos parto",
+        "puerperio",
+        "resguardo",
+        "depressao pos parto",
+        "cuidados pos parto",
+        "pontos da cesarea"
+      ],
+      "conteudo": "Nas primeiras 6 semanas depois do parto, faça a consulta de revisão na UBS (de preferência na primeira semana, junto com o teste do pezinho do bebê). Sangramento parecido com menstruação que vai diminuindo, cólicas ao amamentar e cansaço são esperados. Mantenha os pontos limpos e secos.\n\nProcure a maternidade ou ligue 192 se houver sangramento muito forte (encharcar um absorvente por hora), febre, dor forte na barriga, corrimento com mau cheiro, dor e inchaço em uma perna, falta de ar, dor de cabeça forte com visão turva, ou se os pontos abrirem com pus.\n\nTristeza e choro nos primeiros dias são comuns. Se a tristeza dura mais de 2 semanas, se a mãe não consegue cuidar de si ou do bebê, procure a UBS ou o CAPS. Pensamentos de machucar a si ou ao bebê: ligue para o CVV 188 ou 192 e peça que alguém fique com ela."
+    },
+    {
+      "id": "cancer_prostata",
+      "titulo": "Próstata — quando procurar e exame de PSA",
+      "tags": [
+        "prostata",
+        "psa",
+        "exame de toque",
+        "cancer de prostata",
+        "jato fraco",
+        "urinar a noite"
+      ],
+      "conteudo": "Com a idade é comum a próstata crescer, causando jato de urina fraco, vontade de urinar várias vezes à noite e sensação de não esvaziar a bexiga. Procure a UBS se tiver esses sintomas, sangue na urina ou dor ao urinar.\n\nPara homens sem sintomas, o Ministério da Saúde não recomenda fazer o PSA de rotina em todos, porque o exame pode levar a tratamentos desnecessários. A decisão de fazer é individual: converse na UBS, principalmente se você tem mais de 50 anos, é negro ou tem pai ou irmão que teve câncer de próstata. Se não conseguir urinar nada e a barriga ficar dolorida e estufada, procure uma UPA."
+    },
+    {
+      "id": "disfuncao_eretil",
+      "titulo": "Disfunção erétil",
+      "tags": [
+        "disfuncao eretil",
+        "impotencia",
+        "ereção",
+        "nao consigo ter erecao",
+        "saude sexual masculina"
+      ],
+      "conteudo": "Dificuldade para ter ou manter a ereção é comum e tem tratamento. Pode estar ligada a diabetes, pressão alta, colesterol, cigarro, álcool, sedentarismo, ansiedade, depressão ou efeito de remédios. Às vezes é um primeiro sinal de problema nos vasos do coração.\n\nProcure a UBS para avaliação, sem vergonha: o atendimento é sigiloso. Não compre remédio para ereção sem receita, principalmente se você tem problema no coração ou usa remédio para dor no peito, porque a combinação pode ser perigosa."
+    },
+    {
+      "id": "vasectomia_laqueadura",
+      "titulo": "Vasectomia e laqueadura pelo SUS",
+      "tags": [
+        "vasectomia",
+        "laqueadura",
+        "ligar as trompas",
+        "esterilizacao",
+        "nao quero mais filhos",
+        "planejamento familiar definitivo"
+      ],
+      "conteudo": "A vasectomia e a laqueadura são gratuitas pelo SUS. Pela lei atual, podem fazer pessoas com mais de 21 anos ou com pelo menos 2 filhos vivos, e não é preciso autorização do cônjuge. Há um prazo mínimo de 60 dias entre o pedido e a cirurgia, com aconselhamento sobre os outros métodos. A laqueadura pode ser feita no parto, se pedida com antecedência.\n\nO caminho começa na UBS. Depois da vasectomia, use outro método até o exame do esperma confirmar que não há mais espermatozoides. Nenhuma das duas protege contra ISTs: a camisinha continua importante."
+    },
+    {
+      "id": "polifarmacia",
+      "titulo": "Muitos remédios ao mesmo tempo (idosos)",
+      "tags": [
+        "muitos remedios",
+        "polifarmacia",
+        "interacao de remedios",
+        "idoso toma muitos remedios",
+        "revisar remedios"
+      ],
+      "conteudo": "Quem usa 5 remédios ou mais tem mais risco de efeitos colaterais, interações, tontura, quedas e confusão. Leve todos os remédios que usa (inclusive vitaminas, chás e os comprados sem receita) numa sacola para a consulta na UBS e peça uma revisão. O farmacêutico da UBS também pode ajudar.\n\nNão pare nem mude remédios por conta própria. Use um organizador de comprimidos ou uma tabela com os horários, e mantenha uma lista atualizada na carteira. Se surgir tontura, sonolência ou confusão depois de começar um remédio novo, avise a UBS. Confusão de repente: procure uma UPA."
+    },
+    {
+      "id": "incontinencia_urinaria",
+      "titulo": "Perda de urina (incontinência)",
+      "tags": [
+        "incontinencia urinaria",
+        "perda de urina",
+        "escape de xixi",
+        "nao seguro o xixi",
+        "bexiga"
+      ],
+      "conteudo": "Perder urina ao tossir, espirrar ou fazer força, ou ter vontade súbita que não dá tempo de chegar ao banheiro, é comum, principalmente em mulheres depois de partos e em idosos, mas não é normal da idade e tem tratamento. Exercícios para o assoalho pélvico, fisioterapia, ajustes em remédios e hábitos ajudam muito.\n\nProcure a UBS para avaliação. Procure uma UPA se vier com febre, dor forte ou sangue na urina. Ligue 192 se a perda de urina começou de repente junto com fraqueza ou dormência nas pernas."
+    },
+    {
+      "id": "vacinas_idoso",
+      "titulo": "Vacinas para pessoas idosas",
+      "tags": [
+        "vacina idoso",
+        "vacina 60 anos",
+        "vacina da gripe idoso",
+        "vacina pneumonia",
+        "herpes zoster",
+        "vacinas terceira idade"
+      ],
+      "conteudo": "Leve a caderneta de vacinação à UBS para conferir. Para pessoas com 60 anos ou mais, o SUS oferece: vacina da gripe todo ano; vacina da covid nas doses periódicas definidas pelo Ministério da Saúde; dupla adulto (difteria e tétano) a cada 10 anos; hepatite B para quem não completou as 3 doses. A vacina contra pneumonia (pneumocócica) é oferecida para grupos específicos, como pessoas acamadas, que vivem em instituições ou com algumas doenças crônicas.\n\nA vacina de febre amarela depois dos 60 anos depende de avaliação do risco. A vacina contra herpes-zóster não faz parte da rotina do SUS para todos os idosos; pergunte na UBS se você se encaixa em algum grupo com indicação."
+    },
+    {
+      "id": "checkup_por_idade",
+      "titulo": "Check-up: o que fazer em cada idade",
+      "tags": [
+        "check up",
+        "checkup",
+        "exames de rotina",
+        "exames preventivos",
+        "rastreamento",
+        "exame anual"
+      ],
+      "conteudo": "Fazer muitos exames sem indicação não é o melhor caminho: a UBS define o que você precisa pela idade, pela história e pelos fatores de risco. Em geral:\n- Adultos: medir a pressão pelo menos 1 vez por ano; glicemia e colesterol conforme o risco (peso, pressão, histórico familiar); vacinas em dia; dentista uma vez por ano.\n- Testes rápidos de HIV, sífilis e hepatites B e C: pelo menos uma vez na vida e sempre que houver risco ou gravidez.\n- Mulheres de 25 a 64 anos: preventivo. De 50 a 74 anos: mamografia a cada 2 anos.\n- A partir dos 50 anos: converse na UBS sobre exame para câncer de intestino, principalmente se houver sangue nas fezes ou casos na família.\n- Homens a partir dos 50: conversem sobre próstata.\n- Idosos: visão, audição, memória, risco de quedas e revisão dos remédios."
+    },
+    {
+      "id": "saude_bucal_prevencao",
+      "titulo": "Cuidados com os dentes (prevenção)",
+      "tags": [
+        "escovacao",
+        "escovar os dentes",
+        "fio dental",
+        "fluor",
+        "carie",
+        "cuidado com os dentes",
+        "dente de crianca"
+      ],
+      "conteudo": "Escove os dentes pelo menos 2 a 3 vezes por dia, principalmente antes de dormir, com creme dental com flúor, e use fio dental. Em crianças, comece a escovar assim que nascer o primeiro dente: até 3 anos use uma quantidade do tamanho de um grão de arroz; depois, de uma ervilha. Um adulto deve ajudar na escovação até a criança ter firmeza nas mãos.\n\nDiminua açúcar e bebidas doces entre as refeições e não deixe o bebê dormir com mamadeira de leite ou suco. Vá ao dentista da UBS pelo menos uma vez por ano. Feridas na boca que não cicatrizam em 2 semanas devem ser avaliadas, principalmente em fumantes."
+    },
+    {
+      "id": "saude_trabalhador",
+      "titulo": "Saúde do trabalhador — acidente e doença do trabalho",
+      "tags": [
+        "saude do trabalhador",
+        "acidente de trabalho",
+        "cat",
+        "ler",
+        "dort",
+        "doenca do trabalho",
+        "cerest",
+        "afastamento"
+      ],
+      "conteudo": "Acidente de trabalho, inclusive no trajeto entre casa e trabalho, e doenças causadas pelo trabalho (como LER/DORT, perda auditiva por barulho, intoxicação por produtos, problemas de coluna e burnout) devem ser registrados. O atendimento é feito pelo SUS normalmente: UPA ou SAMU na urgência, UBS no acompanhamento.\n\nA CAT (Comunicação de Acidente de Trabalho) deve ser emitida pela empresa. Se ela não emitir, o próprio trabalhador, o sindicato, o médico ou a autoridade pública podem fazer no site ou aplicativo do INSS. Trabalhadores informais também têm direito ao atendimento e à notificação pelo SUS. O CEREST (Centro de Referência em Saúde do Trabalhador) orienta sobre direitos e investiga as condições de trabalho."
+    },
+    {
+      "id": "segunda_opiniao",
+      "titulo": "Segunda opinião e acesso ao prontuário",
+      "tags": [
+        "segunda opiniao",
+        "outro medico",
+        "discordo do diagnostico",
+        "prontuario",
+        "copia do prontuario",
+        "direitos do paciente"
+      ],
+      "conteudo": "Todo usuário do SUS tem direito a informação clara sobre seu diagnóstico e tratamento, a pedir outra avaliação profissional e a receber cópia do seu prontuário e dos seus exames. Peça na unidade onde foi atendido; o pedido pode ser feito por escrito.\n\nPara outra avaliação, marque uma nova consulta na UBS e leve os exames e receitas anteriores. Se tiver dificuldade ou se sentir desrespeitado, registre na Ouvidoria do SUS, pelo telefone 136."
+    },
+    {
+      "id": "reabilitacao_cer",
+      "titulo": "Reabilitação pelo SUS (CER): fisioterapia, fono e terapia ocupacional",
+      "tags": [
+        "reabilitacao",
+        "cer",
+        "fisioterapia",
+        "fonoaudiologia",
+        "terapia ocupacional",
+        "cadeira de rodas",
+        "protese",
+        "orteses",
+        "aparelho auditivo"
+      ],
+      "conteudo": "O SUS oferece reabilitação física, auditiva, visual e intelectual nos CER (Centros Especializados em Reabilitação) e em outros serviços de reabilitação. Lá são feitos fisioterapia, fonoaudiologia, terapia ocupacional e psicologia, além da entrega de cadeiras de rodas, próteses, órteses, aparelhos auditivos e outros recursos.\n\nO acesso começa na UBS, que faz o encaminhamento pela regulação. Leve laudos e exames que tiver. Pessoas acamadas podem ter atendimento em casa pelo Melhor em Casa."
+    },
+    {
+      "id": "ceo_dentista_especialista",
+      "titulo": "CEO — dentista especialista pelo SUS",
+      "tags": [
+        "ceo",
+        "centro de especialidades odontologicas",
+        "tratamento de canal",
+        "dentadura",
+        "protese dentaria",
+        "brasil sorridente",
+        "dentista especialista"
+      ],
+      "conteudo": "Os CEO (Centros de Especialidades Odontológicas) fazem tratamento de canal, tratamento de gengiva, pequenas cirurgias na boca, diagnóstico de lesões e câncer bucal, e atendimento a pessoas com deficiência. Em muitas cidades o SUS também oferece dentaduras e outras próteses dentárias pelo programa Brasil Sorridente.\n\nO acesso é pelo dentista da UBS, que faz a avaliação e o encaminhamento. Pergunte na sua UBS como funciona a fila da sua cidade."
+    },
+    {
+      "id": "curativo_ferida_cirurgica",
+      "titulo": "Curativo e cuidados com a cirurgia em casa",
+      "tags": [
+        "curativo",
+        "ferida cirurgica",
+        "pontos",
+        "tirar pontos",
+        "cicatriz",
+        "cuidado pos operatorio",
+        "ferida"
+      ],
+      "conteudo": "Lave as mãos antes de mexer no curativo. Siga a orientação que recebeu na alta. Em geral, a ferida pode ser lavada no banho com água e sabão neutro, sem esfregar, e depois seca com toalha limpa ou gaze, sem abafar. Não use pó de café, pomadas caseiras, açúcar ou outros produtos. A UBS faz curativos e retira pontos no prazo indicado.\n\nProcure a UBS se a ferida ficar mais vermelha, quente e inchada, se sair pus ou mau cheiro, ou se os pontos abrirem. Procure uma UPA se houver febre, sangramento que não para com pressão, ou dor que aumenta muito."
+    },
+    {
+      "id": "cuidado_acamado",
+      "titulo": "Cuidados com pessoa acamada",
+      "tags": [
+        "acamado",
+        "escara",
+        "lesao por pressao",
+        "banho no leito",
+        "cuidador",
+        "ferida de cama"
+      ],
+      "conteudo": "Para prevenir feridas de pressão (escaras): mude a pessoa de posição pelo menos a cada 2 horas, mantenha a pele limpa, seca e hidratada, use travesseiros entre joelhos e sob os calcanhares, e não arraste a pessoa no lençol. Verifique todos os dias calcanhares, quadril, parte baixa das costas e cotovelos.\n\nNo banho no leito, use água morna, lave do rosto para os pés e as partes íntimas por último, seque bem as dobras e troque fraldas assim que estiverem molhadas. Ofereça líquidos e alimentação na posição sentada.\n\nProcure a UBS se aparecer uma área vermelha que não clareia depois de 30 minutos sem pressão, ou uma ferida. O programa Melhor em Casa e o agente comunitário de saúde podem ajudar. Febre, confusão ou falta de ar: procure uma UPA ou ligue 192."
+    },
+    {
+      "id": "medir_pressao_casa",
+      "titulo": "Como medir a pressão em casa",
+      "tags": [
+        "medir pressao",
+        "aparelho de pressao",
+        "pressao em casa",
+        "como medir pressao",
+        "valor da pressao"
+      ],
+      "conteudo": "Prefira aparelho automático de braço. Antes de medir: fique 5 minutos sentado em repouso, com a bexiga vazia, sem ter tomado café, fumado ou feito exercício nos 30 minutos anteriores. Sente com as costas apoiadas, pés no chão e pernas descruzadas, braço apoiado na altura do coração, e não converse durante a medida.\n\nMeça 2 vezes, com 1 minuto de intervalo, e anote os valores, a data e a hora para levar à UBS. Em geral, valores abaixo de 14 por 9 são considerados controlados, mas a meta é definida pelo profissional.\n\nLigue 192 se a pressão estiver muito alta (18 por 11 ou mais) junto com dor no peito, falta de ar, fraqueza de um lado, fala enrolada ou visão turva. Muito alta sem sintomas: procure a UBS no mesmo dia."
+    },
+    {
+      "id": "medir_glicemia",
+      "titulo": "Como medir a glicose (glicemia) em casa",
+      "tags": [
+        "medir glicose",
+        "glicemia capilar",
+        "glicosimetro",
+        "ponta de dedo",
+        "medir acucar"
+      ],
+      "conteudo": "Lave as mãos com água e sabão e seque bem (restos de comida ou álcool alteram o resultado). Fure a lateral da ponta do dedo, trocando o dedo a cada vez, e encoste a gota na fita. Anote o valor, a hora e se foi em jejum ou depois de comer, para levar à UBS. Descarte as lancetas numa garrafa plástica dura e entregue na UBS. Quem usa insulina recebe o aparelho e as fitas pelo SUS.\n\nGlicose abaixo de 70 com a pessoa acordada: dê açúcar (1 colher de sopa em meio copo de água, ou meio copo de suco ou refrigerante comum) e meça de novo em 15 minutos. Ligue 192 se houver confusão, sonolência ou desmaio. Glicose acima de 300 com muita sede, vômitos ou respiração rápida: procure uma UPA."
+    },
+    {
+      "id": "usar_bombinha",
+      "titulo": "Como usar a bombinha (inalador) e o espaçador",
+      "tags": [
+        "bombinha",
+        "inalador",
+        "espacador",
+        "como usar bombinha",
+        "aerossol",
+        "asma bombinha"
+      ],
+      "conteudo": "Com espaçador (recomendado, principalmente para crianças e idosos): agite a bombinha, encaixe no espaçador, solte o ar, coloque o bocal na boca (ou a máscara bem vedada no rosto da criança), aperte 1 jato e respire devagar e fundo, ou faça 5 a 10 respirações normais. Para um novo jato, espere cerca de 30 segundos e repita. Um espaçador pode ser feito com garrafa plástica, conforme orientação da UBS.\n\nSem espaçador: solte o ar, coloque a bombinha na boca, aperte no começo de uma inspiração lenta e profunda e segure o ar por 10 segundos.\n\nDepois de bombinha com corticoide, enxágue a boca e cuspa. Use apenas as bombinhas e o número de jatos receitados. Se a crise não melhora com a bombinha, ou a pessoa não consegue falar frases, ligue 192."
+    },
+    {
+      "id": "soro_caseiro",
+      "titulo": "Soro caseiro e reidratação",
+      "tags": [
+        "soro caseiro",
+        "soro de reidratacao",
+        "reidratacao",
+        "desidratacao diarreia",
+        "como fazer soro"
+      ],
+      "conteudo": "O soro de reidratação oral em sachê é distribuído gratuitamente nas UBS e é a melhor opção: prepare exatamente como diz a embalagem. Se não tiver, o soro caseiro é feito com 1 litro de água filtrada ou fervida (já fria), 1 colher de chá rasa de sal e 2 colheres de sopa rasas de açúcar. Misture bem e use em até 24 horas.\n\nOfereça em pequenos goles, várias vezes, depois de cada evacuação líquida ou vômito, e continue a alimentação e a amamentação. Refrigerante, isotônico e suco não substituem o soro.\n\nProcure uma UPA se houver sinais de desidratação (boca muito seca, pouco xixi, olhos fundos, criança muito sonolenta ou irritada), vômitos que não deixam beber, ou sangue nas fezes."
+    },
+    {
+      "id": "medir_temperatura",
+      "titulo": "Como medir a temperatura (febre)",
+      "tags": [
+        "termometro",
+        "medir febre",
+        "temperatura",
+        "quantos graus e febre",
+        "febre quanto"
+      ],
+      "conteudo": "Use termômetro digital na axila: seque a axila, coloque a ponta no centro e mantenha o braço junto ao corpo até o aparelho apitar. Não meça logo após o banho ou com a pessoa muito agasalhada. Tocar a testa com a mão não é confiável.\n\nNa axila, 37,8 °C ou mais é considerado febre. Anote o valor e a hora. Bebê com menos de 3 meses com febre: ligue 192. Febre por 3 dias ou mais, ou febre com manchas, falta de ar, pescoço duro ou sonolência: procure atendimento no mesmo dia."
+    },
+    {
+      "id": "insulina_cuidados",
+      "titulo": "Insulina — como guardar e aplicar com segurança",
+      "tags": [
+        "insulina",
+        "guardar insulina",
+        "aplicar insulina",
+        "caneta de insulina",
+        "rodizio de aplicacao"
+      ],
+      "conteudo": "Guarde a insulina fechada na geladeira, na parte de baixo ou na gaveta de verduras, nunca no congelador nem na porta. Depois de aberta, pode ficar em temperatura ambiente, longe do sol e do calor, pelo tempo indicado na bula. Insulina congelada ou que mudou de aspecto não deve ser usada.\n\nFaça rodízio dos locais de aplicação (barriga, coxa, braço, nádega) para evitar caroços. Use a dose e os horários receitados e peça à UBS para revisar sua técnica de aplicação. Agulhas e lancetas usadas devem ir para uma garrafa plástica dura e ser entregues na UBS. Tremedeira, suor frio ou confusão depois da insulina podem ser glicose baixa."
+    },
+    {
+      "id": "saude_adolescente",
+      "titulo": "Saúde do adolescente",
+      "tags": [
+        "adolescente",
+        "adolescencia",
+        "consulta sozinho",
+        "sigilo adolescente",
+        "anticoncepcional adolescente",
+        "jovem"
+      ],
+      "conteudo": "Adolescentes podem ser atendidos na UBS, inclusive sozinhos, e têm direito a sigilo. A família só é informada em situações de risco à vida ou à saúde. Na UBS é possível conversar sobre sexualidade, métodos para evitar a gravidez, camisinha, testes rápidos de ISTs, vacinas (como HPV e meningite), alimentação, uso de álcool, cigarro eletrônico e outras drogas, e saúde mental.\n\nTristeza que não passa, isolamento, automutilação ou pensamentos de morrer precisam de ajuda: procure a UBS ou o CAPS, ou ligue para o CVV 188. Violência ou abuso podem ser denunciados pelo Disque 100."
+    },
+    {
+      "id": "saude_lgbtqia",
+      "titulo": "Saúde da população LGBTQIA+",
+      "tags": [
+        "lgbt",
+        "lgbtqia",
+        "nome social",
+        "trans",
+        "transexual",
+        "travesti",
+        "hormonizacao",
+        "processo transexualizador",
+        "homossexual"
+      ],
+      "conteudo": "Todas as pessoas têm direito a atendimento no SUS sem discriminação. O nome social pode ser usado no cartão do SUS e deve ser respeitado em todos os serviços. Peça a atualização na UBS.\n\nPessoas trans e travestis podem ser acompanhadas no Processo Transexualizador do SUS, que inclui acompanhamento, hormonização com prescrição e, em alguns serviços, cirurgias. A UBS orienta e encaminha. Não use hormônio sem acompanhamento. O SUS também oferece PrEP e PEP para prevenção do HIV, testes rápidos e cuidado em saúde mental. Discriminação pode ser denunciada à Ouvidoria (136) ou ao Disque 100."
+    },
+    {
+      "id": "populacao_situacao_rua",
+      "titulo": "Saúde para pessoas em situação de rua",
+      "tags": [
+        "situacao de rua",
+        "morador de rua",
+        "consultorio na rua",
+        "sem endereco",
+        "sem documento sus"
+      ],
+      "conteudo": "Pessoas em situação de rua têm direito a atendimento em qualquer UBS, UPA ou hospital, mesmo sem comprovante de endereço e sem documentos. O cartão do SUS pode ser feito sem endereço fixo.\n\nEm muitas cidades, as equipes do Consultório na Rua vão até os locais onde as pessoas estão, com médico, enfermagem, saúde mental e cuidados com álcool e drogas. O CAPS AD também acolhe sem encaminhamento. O CRAS e o Centro POP (assistência social) ajudam com documentos, alimentação e abrigo."
+    },
+    {
+      "id": "saude_prisional",
+      "titulo": "Saúde de pessoas privadas de liberdade",
+      "tags": [
+        "preso",
+        "presidio",
+        "sistema prisional",
+        "saude na prisao",
+        "detento",
+        "familiar preso"
+      ],
+      "conteudo": "Pessoas presas têm direito à saúde pelo SUS. Muitas unidades prisionais têm equipe de saúde, e os casos que precisam de especialista, exames, internação ou urgência são encaminhados para a rede do SUS. Tratamentos de HIV, tuberculose, diabetes, hipertensão e saúde mental devem continuar.\n\nSe um familiar preso não está recebendo atendimento, a família pode procurar a direção da unidade, a Defensoria Pública, a Ouvidoria do SUS (136) ou o Ministério Público."
+    },
+    {
+      "id": "imigrantes_sus",
+      "titulo": "Imigrantes e refugiados no SUS",
+      "tags": [
+        "imigrante",
+        "refugiado",
+        "estrangeiro",
+        "sus para estrangeiro",
+        "venezuelano",
+        "haitiano",
+        "sem documento"
+      ],
+      "conteudo": "O SUS é para todas as pessoas que estão no Brasil, inclusive imigrantes e refugiados, com ou sem documentos e qualquer que seja a situação migratória. O atendimento não pode ser negado por isso, e em urgência nenhum documento é exigido.\n\nO cartão do SUS pode ser feito na UBS com passaporte, protocolo de refúgio, carteira de registro migratório ou outro documento. Se houver dificuldade de idioma, peça ajuda à unidade ou leve alguém de confiança. Vacinas, pré-natal, remédios e acompanhamento são gratuitos como para qualquer brasileiro."
     }
   ]
 }

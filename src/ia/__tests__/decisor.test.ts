@@ -284,6 +284,30 @@ describe('contexto da conversa', () => {
   });
 });
 
+describe('base de conhecimento passa pelos filtros', () => {
+  it('nenhum tópico é bloqueado como diagnóstico ou receita', async () => {
+    const base = (await import('../../regras/base_conhecimento.json')).default as { topicos: { id: string; conteudo: string }[] };
+    const bloqueados = base.topicos.filter((t) => contemDiagnostico(t.conteudo) || contemPrescricao(t.conteudo)).map((t) => t.id);
+    expect(bloqueados).toEqual([]);
+  });
+
+  it.each([
+    'Você pode estar com dengue.',
+    'Seu diagnóstico é gripe.',
+    'Diagnóstico provável: sinusite.',
+    'Ela pode ter uma infecção.',
+  ])('continua bloqueando diagnóstico: "%s"', (t) => {
+    expect(contemDiagnostico(t)).toBe(true);
+  });
+
+  it.each([
+    'Use antibiótico por 7 dias.',
+    'Pode tomar dipirona.',
+  ])('continua bloqueando receita: "%s"', (t) => {
+    expect(contemPrescricao(t)).toBe(true);
+  });
+});
+
 describe('parser do decisor (schema fechado)', () => {
   it('ignora campos fora do schema e ação inválida', () => {
     expect(parsearDecisao({ acao: 'diagnosticar', texto: 'x' })).toBeNull();

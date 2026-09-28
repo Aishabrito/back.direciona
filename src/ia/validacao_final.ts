@@ -58,22 +58,24 @@ const DOENCAS =
   'gripe|influenza|dengue|zika|chikungunya|covid|coronavirus|pneumonia|infarto|avc|derrame|meningite|apendicite|cancer|gastrite|sinusite|amigdalite|bronquite|asma|hepatite|tuberculose|hanseniase|infeccao urinaria|enxaqueca|virose|trombose|embolia';
 
 const PADROES_DIAGNOSTICO: RegExp[] = [
-  /\b(voce|o senhor|a senhora|ele|ela|seu filho|sua filha)\b[^.!?]{0,40}\b(pode|deve|parece|provavelmente|possivelmente)\b[^.!?]{0,30}\b(ter|estar com|ser)\b/,
+  // "Você pode ter X" — mas não "pode ser atendido", "pode ter direito", "pode ter diversas causas".
+  /\b(voce|o senhor|a senhora|ele|ela|seu filho|sua filha)\b[^.!?]{0,40}\b(pode|deve|parece|provavelmente|possivelmente)\b[^.!?]{0,30}\b(ter|estar com|ser)\b(?! (direito|acesso|diversas|varias|muitas|atendid|acompanhad|feit|encaminhad|vacinad|avaliad|tratad|examinad|orientad|internad|observad|levad|ouvid))/,
   /\b(seus?|esses?|teus?)\s+sintomas?\b[^.!?]{0,40}\b(sao de|indicam|sugerem|apontam|revelam|batem com|sao compativeis|sao tipicos)\b/,
   new RegExp(`\\b(isso|isto|esse quadro|esse caso)\\b[^.!?]{0,30}\\b(e|pode ser|deve ser|parece)\\b[^.!?]{0,20}\\b(${DOENCAS})\\b`),
   // Só quando atribuído à pessoa ("você tem suspeita de", "parece um quadro de");
   // texto educativo como "se houver suspeita de dengue, procure a UBS" passa.
   new RegExp(`\\b(tem|esta com|parece|e|eh)\\s+(um\\s+|uma\\s+)?(quadro|caso|suspeita)\\s+de\\s+(${DOENCAS})\\b`),
   new RegExp(`\\b(compativel|compativeis)\\s+com\\s+(${DOENCAS})\\b`),
-  /\b(diagnostico|prognostico)\b[^.!?]{0,30}\b(e|provavel|sugere|indica)\b/,
+  // Atribuído à pessoa ("seu diagnóstico é…", "diagnóstico provável"); "o diagnóstico é feito na UBS" passa.
+  /\b(seu|teu|o seu|dele|dela)\s+(diagnostico|prognostico)\s+(e|eh|parece|provavelmente|sugere|indica)\b(?! (tratamento|exames?|prontuario|cuidados?))|\b(diagnostico|prognostico)\s+(provavel|sugerid[oa]|indicad[oa]|mais provavel)\b/,
   new RegExp(`\\b(provavelmente|possivelmente|aparentemente)\\b[^.!?]{0,30}\\b(${DOENCAS})\\b`),
 ];
 
 const REMEDIOS =
-  'dipirona|paracetamol|ibuprofeno|aspirina|aas|diclofenaco|nimesulida|amoxicilina|azitromicina|omeprazol|buscopan|loratadina|dramin|plasil|soro|antibiotico|anti inflamatorio|antiinflamatorio|cha de|xarope';
+  'dipirona|paracetamol|ibuprofeno|aspirina|aas|diclofenaco|nimesulida|amoxicilina|azitromicina|omeprazol|buscopan|loratadina|dramin|plasil|antibiotico|anti inflamatorio|antiinflamatorio|cha de|xarope';
 
 const PADROES_PRESCRICAO: RegExp[] = [
-  new RegExp(`(?<!nao )(?<!nunca )\\b(tome|tomar|use|usar|pode tomar|recomendo|indico|passe|aplique)\\b[^.!?]{0,30}\\b(${REMEDIOS})\\b`),
+  new RegExp(`(?<!nao )(?<!nunca )\\b(tome|tomar|use|usar|pode tomar|recomendo|indico|passe|aplique)\\b[^.!?]{0,30}\\b(${REMEDIOS})\\b(?![^.!?]{0,20}\\b(somente|so|apenas) (com (receita|prescricao)|quando (prescrito|receitado)))`),
   /\b\d+\s*(mg|ml|gotas|comprimidos?)\b/,
   /\bde\s+\d+\s+em\s+\d+\s+horas\b/,
 ];
@@ -88,8 +90,10 @@ export function contemPrescricao(texto: string): boolean {
   return PADROES_PRESCRICAO.some((p) => p.test(n));
 }
 
-function textoInseguro(texto: string): boolean {
-  return contemDiagnostico(texto) || contemPrescricao(texto) || sanitizarTextoGerado(texto) !== texto;
+function textoInseguro(texto: string, opcoes: { rag?: boolean } = {}): boolean {
+  if (contemDiagnostico(texto) || contemPrescricao(texto)) return true;
+  // A blocklist de jargão vale para texto livre do LLM; a base curada pode explicar esses termos.
+  return !opcoes.rag && sanitizarTextoGerado(texto) !== texto;
 }
 
 // ────────────────────────────────────────────────────
@@ -353,7 +357,7 @@ export function validarDecisao(
   }
 
   // 6. responder_rag / conversa / fora_escopo: só checa o texto.
-  if (textoInseguro(d.texto)) {
+  if (textoInseguro(d.texto, { rag: d.acao === 'responder_rag' })) {
     motivos.push('texto_inseguro');
     d.texto = d.acao === 'responder_rag' ? TEXTO_SEGURO_RAG : mensagemPorId('fora_escopo_001').texto;
   }
