@@ -78,7 +78,7 @@ function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegra
   }
 
   if (R.sintomas.includes('queimadura') &&
-      contemAlgum(texto, ['extensa', 'grande', 'grave', '2 grau', '3 grau', 'muito'])) {
+      contemAlgum(texto, ['extensa', 'muito grande', 'corpo todo', '3 grau', 'terceiro grau', 'carbonizad', 'quimica', 'eletrica', 'fumaca'])) {
     return decisao('queimadura_grave', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['queimadura grave']);
   }

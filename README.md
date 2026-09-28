@@ -11,7 +11,7 @@ A pessoa conta o que está sentindo (por texto ou áudio). O bot faz algumas per
 ## ✨ O que o bot faz
 
 - **Triagem por WhatsApp**, por texto ou áudio. O áudio é transcrito e segue o mesmo fluxo do texto.
-- **Emergências vão direto ao SAMU 192**, com orientação de primeiros socorros: dor no peito, falta de ar, sinais de AVC, convulsão, pessoa desacordada, acidente grave, pensamentos suicidas (encaminha ao **CVV 188**) e outras.
+- **Emergências vão direto ao SAMU 192**, com orientação de primeiros socorros: dor no peito, falta de ar, sinais de AVC, convulsão, pessoa desacordada, acidente grave, queimadura elétrica/química/extensa, pensamentos suicidas (encaminha ao **CVV 188**) e outras.
 - **Orientação de destino**: UBS, UPA, CAPS ou maternidade, com os sinais que devem fazer a pessoa voltar ou ligar 192.
 - **Unidade mais próxima**: a pessoa envia a localização ou o bairro e cidade.
 - **Dúvidas de saúde e SUS**: respostas com base numa base de conhecimento curada, com mais de 140 tópicos.
@@ -50,7 +50,8 @@ Mensagem
    ▼
 [4] Validação final
    │   • piso de segurança: se há critério crítico, nunca fica abaixo de emergência
-   │   • acidente recente: nunca abaixo de UPA
+   │   • piso de UPA: acidente recente, queimadura com bolha/área nobre/grupo de risco,
+   │     choque elétrico, dor de cabeça + nuca + febre
    │   • emergência sempre usa texto aprovado (não o texto do LLM)
    │   • texto com diagnóstico ou remédio é trocado
    ▼

@@ -119,6 +119,51 @@ export function pisoCritico(textoCaso: string): { motivo: string; destino: Desti
   return { motivo: criterio.motivo, destino };
 }
 
+// Piso de urgência: situações em que UBS é pouco — precisa de avaliação HOJE.
+const TEXTO_CEFALEIA_FEBRE =
+  '🤕 Dor de cabeça com febre e dor na nuca precisa ser avaliada *ainda hoje* numa *UPA 24h*.\n\n' +
+  '*Ligue 192 na hora* se o pescoço ficar duro (não consegue encostar o queixo no peito), aparecerem manchas roxas na pele, ' +
+  'sonolência, confusão, vômitos repetidos ou convulsão.';
+
+const TEXTO_QUEIMADURA_UPA =
+  '🔥 Essa queimadura precisa ser avaliada *ainda hoje* numa *UPA 24h*.\n\n' +
+  '*Agora:* resfrie com água corrente em temperatura ambiente por até 20 minutos (sem gelo), tire anéis e relógios, ' +
+  'e cubra com pano limpo. *Não* passe manteiga, pasta de dente, pó de café nem pomada, e *não* estoure bolhas.\n\n' +
+  '*Ligue 192* se a queimadura for grande, a pele ficar branca ou preta, houver falta de ar, rouquidão ou se tiver inalado fumaça.';
+
+const TEXTO_CHOQUE_UPA =
+  '⚡ Depois de um choque elétrico, procure uma *UPA 24h ainda hoje*, mesmo que pareça bem: ' +
+  'o choque pode afetar o coração e causar lesões por dentro.\n\n' +
+  '*Ligue 192* se houver desmaio, falta de ar, dor no peito, batedeira, confusão ou queimadura na pele.';
+
+// Queimadura (não "queimando"/"queimação") com bolha, em área nobre, ou em bebê/criança/idoso.
+function queimaduraQueExigeUpa(n: string): boolean {
+  const queimadura = /\b(queimadura|queimei|queimou|queimad[oa]|me queimei|se queimou|escaldad[oa]|escaldou)\b/.test(n);
+  if (!queimadura) return false;
+  const bolha = /\bbolha/.test(n);
+  const local = /\b(rosto|face|olho|olhos|orelha|pescoco|mao|maos|pe|pes|genita\w*|virilha|penis|vagina|saco|joelho|cotovelo|axila|articula\w*)\b/.test(n);
+  const grupo = /\b(bebe|nenem|recem nascido|crianca|meu filho|minha filha|idos[oa]|vo|avo|gravida|gestante|diabetic[oa]|diabetes)\b/.test(n);
+  const grande = /\b(maior que (a |uma )?(palma|mao)|grande|extensa|braco (todo|inteiro)|perna (toda|inteira)|barriga toda|costas todas?)\b/.test(n);
+  const aparencia = /\b(branca|esbranquicad\w*|sem sensibilidade|nao doi nada)\b/.test(n);
+  return bolha || local || grupo || grande || aparencia;
+}
+
+export function pisoUrgencia(textoCaso: string): { motivo: string; texto: string } | null {
+  const n = normalizarTexto(textoCaso);
+  const cefaleia = /\b(dor de cabeca|cabeca doendo|cefaleia|enxaqueca)\b/.test(n);
+  const nuca = /\b(nuca|pescoco)\b/.test(n);
+  const febre = /\b(febre|febril|temperatura alta|38|39|40 graus)\b/.test(n) && !/\b(sem|nao tenho|nao tem) febre\b/.test(n);
+  if (cefaleia && nuca && febre) return { motivo: 'dor de cabeça + nuca + febre', texto: TEXTO_CEFALEIA_FEBRE };
+  if (queimaduraQueExigeUpa(n)) return { motivo: 'queimadura com critério de UPA', texto: TEXTO_QUEIMADURA_UPA };
+  if (/\b(levou|tomou|levei|tomei|levou um|deu um) (um )?choque\b|\bchoque eletrico\b/.test(n) && !/\bnao (levou|tomou|levei|tomei)/.test(n)) {
+    return { motivo: 'choque elétrico', texto: TEXTO_CHOQUE_UPA };
+  }
+  if (ehAcidenteDeTransito(textoCaso) && !acidenteAntigoSemGravidade(textoCaso)) {
+    return { motivo: 'acidente de trânsito recente', texto: TEXTO_ACIDENTE_RECENTE };
+  }
+  return null;
+}
+
 // ────────────────────────────────────────────────────
 // MOTOR (usado quando o decisor não consegue fechar a decisão)
 // ────────────────────────────────────────────────────
@@ -176,14 +221,16 @@ export function validarDecisao(
     }
   }
 
-  // 1b. Piso de urgência — acidente de trânsito recente sem sinal grave: nunca abaixo de UPA.
-  if (d.acao === 'orientar' && d.destino !== 'UPA' && d.destino !== 'MATERNIDADE'
-      && ehAcidenteDeTransito(ctx.textoCaso) && !acidenteAntigoSemGravidade(ctx.textoCaso)) {
-    motivos.push('piso_urgencia: acidente de trânsito recente');
-    return {
-      decisao: { ...d, destino: 'UPA', texto: TEXTO_ACIDENTE_RECENTE, resposta_id: 'upa_001' },
-      alterou: true, motivos,
-    };
+  // 1b. Piso de urgência — casos que nunca podem sair abaixo de UPA.
+  if (d.acao === 'orientar' && d.destino !== 'UPA' && d.destino !== 'MATERNIDADE') {
+    const urg = pisoUrgencia(ctx.textoCaso);
+    if (urg) {
+      motivos.push(`piso_urgencia: ${urg.motivo}`);
+      return {
+        decisao: { ...d, destino: 'UPA', texto: urg.texto, resposta_id: 'upa_001' },
+        alterou: true, motivos,
+      };
+    }
   }
 
   // 2. Emergência: destino tem que ser de emergência; texto do LLM vira texto aprovado.
