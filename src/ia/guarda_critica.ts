@@ -4,7 +4,7 @@
 //
 // Enxuta de propósito — só as categorias mais críticas e só frases
 // inequívocas. Se casar, escala DIRETO (sem pergunta, sem LLM).
-// Casos ambíguos (desmaio passado, febre em bebê, queimadura, etc.) ficam
+// Casos ambíguos (desmaio passado, febre em bebê, queimadura comum, etc.) ficam
 // com o LLM decisor + o piso determinístico da validação final.
 
 import { normalizarTexto } from './normalizar.js';
@@ -23,7 +23,8 @@ export type CategoriaCritica =
   | 'sangramento'
   | 'trauma_grave'
   | 'inconsciente'
-  | 'cefaleia_alarme';
+  | 'cefaleia_alarme'
+  | 'queimadura_grave';
 
 export type ResultadoGuard =
   | { critico: true; motivo: string; categoria: CategoriaCritica; terceiro: boolean }
@@ -108,6 +109,14 @@ const REGRAS: Regra[] = [
     re: /\b(pior dor de cabeca (da|de) (minha )?vida|dor de cabeca (muito forte|fortissima|insuportavel|explosiva|absurda)[^.!?]{0,25}(de repente|do nada|subit\w*|de uma vez)|dor de cabeca (de repente|subita|do nada)[^.!?]{0,15}(muito forte|fortissima|insuportavel|explosiva)|(pescoco|nuca) (duro|dura|rigid\w*|travad\w*)|rigidez (na|de|no) (nuca|pescoco)|nao consigo (dobrar|abaixar|encostar)[^.!?]{0,20}(pescoco|queixo|cabeca))\b/,
   },
   {
+    // Só a queimadura inequivocamente grave: elétrica, química, fumaça, extensa ou carbonizada.
+    // Queimadura com bolha / no rosto / nas mãos fica com o piso de UPA (validacao_final).
+    // "Queimando" (xixi queimando, estômago queimando) NÃO entra.
+    categoria: 'queimadura_grave',
+    motivo: 'queimadura grave',
+    re: /\b(queimadura (quimica|eletrica|por choque|por acido|por soda|de soda|de terceiro grau|de 3 grau|de 3o grau|no corpo todo|extensa|enorme|muito grande)|(queimou|queimei|queimad[oa]|caiu|jogou|jogaram) [^.!?]{0,20}(acido|soda caustica|produto quimico)|(acido|soda caustica|produto quimico|agua sanitaria|cloro) (no|nos|na) (olho|olhos|rosto|cara)|eletrocutad[oa]|choque (de|na|no) (alta tensao|fio do poste|poste|rede eletrica)|(levou|tomou|levei|tomei) (um )?choque [^.!?]{0,20}(desmai\w*|apagou|parou|poste|alta tensao|fio de alta)|atingid[oa] por (um )?raio|(pegou|pegando|pegaram) fogo (na roupa|no corpo|nele|nela|em mim|no cabelo)|(inalou|respirou|engoliu) (muita )?fumaca|pele (carbonizada|preta de queimad\w*)|ficou carbonizad[oa])\b/,
+  },
+  {
     // Só crise ATIVA ou recém-ocorrida — "tremendo de frio" não entra.
     categoria: 'convulsao',
     motivo: 'convulsão',
@@ -163,6 +172,8 @@ const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
     '⚠️ Sangramento importante precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, faça pressão firme sobre o local com um pano limpo.',
   cefaleia_alarme:
     '⚠️ Dor de cabeça muito forte que começa de repente, ou com pescoço duro, precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá já a um Pronto-Socorro. Não tome remédio por conta própria e não dirija.',
+  queimadura_grave:
+    '⚠️ Queimadura desse tipo precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, lave/resfrie com *água corrente em temperatura ambiente* (não use gelo) e cubra com pano limpo. Não passe manteiga, pasta de dente, pó de café nem pomada, e não estoure bolhas.',
   trauma_grave:
     '⚠️ Acidente com ferimento precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Se sentir dor no pescoço ou nas costas, *não se mexa* até a equipe chegar. Se alguém estiver preso nas ferragens ou houver fogo, ligue também *193 (Bombeiros)*.',
   inconsciente:
@@ -229,6 +240,14 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 3. *Se NÃO respira*: comprima o centro do peito com força, 100 a 120 vezes por minuto, sem parar.
 4. *Se respira* e não houve queda ou acidente: deite de lado. Se houve acidente, *não mova*.
 5. Não dê água, comida ou remédio.`,
+  queimadura_grave: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto a ajuda não chega:
+
+1. *Afaste da fonte.* Em choque elétrico, *desligue a energia antes de tocar* na pessoa.
+2. *Produto químico:* tire a roupa atingida e lave com *muita água corrente por 20 minutos*. No olho, lave sem parar.
+3. *Fogo/água quente:* resfrie com água corrente em temperatura ambiente por até 20 minutos. *Não use gelo.* Se a queimadura for grande, cubra com pano limpo e mantenha a pessoa aquecida.
+4. Tire anéis, relógios e roupas apertadas que não estejam grudados na pele.
+5. *NÃO* passe manteiga, pasta de dente, pó de café nem pomada, e *não estoure bolhas*.
+6. Se inalou fumaça, leve para o ar livre e observe a respiração.`,
   dor_toracica:
     '⚠️ Dor no peito precisa de atendimento imediato. *Ligue 192 (SAMU) agora.* Deixe a pessoa em repouso, sentada ou deitada, e não deixe que ela dirija.',
   falta_de_ar:
