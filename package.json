@@ -9,7 +9,8 @@
     "build": "tsc",
     "prod": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sincronizar-base": "tsx src/scripts/sincronizar_base.ts"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

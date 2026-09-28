@@ -1,4 +1,5 @@
 import { contemAlgum, normalizarTexto } from './normalizar.js';
+import { acidentePassadoSemGravidade } from './acidente.js';
 import { VERSAO_REGRAS, type DecisaoRegras, type RelatoEstruturado, type Nivel } from './tipos.js';
 import emergencias from '../regras/emergencias.json';
 import saudeMental from '../regras/saude_mental.json';
@@ -61,8 +62,9 @@ function verificarTraumaGrave(R: RelatoEstruturado, texto: string): DecisaoRegra
       'emergencia_001', 'SAMU_AGORA', ['trauma craniano com sinal']);
   }
 
-  if (sinais.includes('trauma_automobilistico') || sinais.includes('queda_altura') ||
-      contemAlgum(texto, ['atropelamento', 'acidente de carro', 'colisao', 'capotamento', 'queda de altura'])) {
+  if ((sinais.includes('trauma_automobilistico') || sinais.includes('queda_altura') ||
+      contemAlgum(texto, ['atropelamento', 'acidente de carro', 'colisao', 'capotamento', 'queda de altura'])) &&
+      !acidentePassadoSemGravidade(texto)) {
     return decisao('trauma_grave_mecanismo', 'emergencia', 'SAMU_192_PRONTO_SOCORRO',
       'emergencia_001', 'SAMU_AGORA', ['mecanismo de trauma grave']);
   }

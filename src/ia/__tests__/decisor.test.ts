@@ -48,6 +48,10 @@ describe('guarda crítica enxuta', () => {
     ['minha mãe está com a boca torta', 'avc'],
     ['meu filho está engasgado', 'engasgo'],
     ['não tenho dor no peito, mas estou com falta de ar', 'falta_de_ar'],
+    ['Bati minha cabeça e está sangrando', 'trauma_craniano'],
+    ['meu pai caiu e está com fratura exposta na perna', 'trauma_grave'],
+    ['Teve um acidente de moto, motoqueiro está desmaiado oq faco ?', 'trauma_grave'],
+    ['meu avô está desmaiado no chão', 'inconsciente'],
   ])('"%s" → %s', (texto, categoria) => {
     const r = detectarCriticoRegex(texto);
     expect(r.critico).toBe(true);
@@ -63,6 +67,9 @@ describe('guarda crítica enxuta', () => {
     'não tenho dor no peito',
     'o que fazer em caso de falta de ar?',
     'quais os sinais de AVC?',
+    'ele não está desmaiado, só tonto',
+    'o que fazer se alguém estiver inconsciente?',
+    'desmaiei ontem mas estou bem',
   ])('NÃO dispara: "%s"', (texto) => {
     expect(detectarCriticoRegex(texto).critico).toBe(false);
   });
@@ -81,6 +88,42 @@ describe('validação final — detectores', () => {
     expect(contemPrescricao('Tome dipirona de 6 em 6 horas.')).toBe(true);
     expect(contemPrescricao('Use 500 mg de paracetamol.')).toBe(true);
     expect(contemPrescricao('Não tome antibiótico sem receita.')).toBe(false);
+  });
+});
+
+describe('protocolo certo para outra pessoa', () => {
+  it('acidente com motoqueiro → protocolo de trauma (não mover, não tirar capacete)', async () => {
+    const { resultado } = await processarTurno('Teve um acidente de moto, motoqueiro está desmaiado oq faco ?', novoEstado());
+    expect(resultado.texto).toMatch(/NÃO mova/);
+    expect(resultado.texto).toMatch(/capacete/);
+  });
+});
+
+describe('acidentes de trânsito', () => {
+  it.each([
+    'sofri um acidente de moto agora, estou sangrando',
+    'bati o carro, tem uma pessoa presa nas ferragens',
+    'acidente de carro ontem, hoje estou vomitando',
+  ])('grave ou agora → guarda SAMU: "%s"', (t) => {
+    expect(detectarCriticoRegex(t)).toMatchObject({ critico: true, categoria: 'trauma_grave' });
+  });
+
+  it.each(['bati o carro ontem e estou com dor no pescoço', 'caí de moto ontem, só ralei o joelho'])(
+    'passado sem sinal grave → não é SAMU direto: "%s"', (t) => expect(detectarCriticoRegex(t).critico).toBe(false),
+  );
+
+  it('acidente de ontem: LLM diz UBS → validação sobe para UPA', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const { resultado } = await processarTurno('bati o carro ontem e estou com dor no pescoço', novoEstado());
+    expect(resultado.tipo).toBe('orientacao');
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UPA_24H');
+    expect(resultado.texto).toMatch(/lesões internas/);
+  });
+
+  it('acidente antigo e leve: UBS é aceito', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Pode acompanhar na UBS.' }));
+    const { resultado } = await processarTurno('caí de moto semana passada, o joelho ralado está cicatrizando', novoEstado());
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UBS_CLINICA_DA_FAMILIA');
   });
 });
 
