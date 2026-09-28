@@ -13,7 +13,7 @@ vi.mock('../../servicos/ia.js', () => ({
 
 import { gerarJSON } from '../../servicos/ia.js';
 import { processarTurno, ESTADO_INICIAL, TEXTO_ESCALONAMENTO } from '../orquestrador.js';
-import { detectarCriticoRegex } from '../guarda_critica.js';
+import { detectarCriticoRegex, textoEmergencia } from '../guarda_critica.js';
 import { contemDiagnostico, contemPrescricao, TEXTO_SEGURO_RAG } from '../validacao_final.js';
 import { parsearDecisao } from '../decisor.js';
 import { ehReformulacao } from '../memoria.js';
@@ -195,6 +195,92 @@ describe('queimaduras', () => {
     respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Pode procurar a UBS.' }));
     const { resultado } = await processarTurno('queimei o braço com água quente, ficou só vermelho, do tamanho de uma moeda', novoEstado());
     if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UBS_CLINICA_DA_FAMILIA');
+  });
+});
+
+describe('situações novas da guarda', () => {
+  it.each([
+    ['meu filho bebeu água sanitária', 'intoxicacao'],
+    ['tomei a cartela inteira de remédio pra me matar', 'intoxicacao'],
+    ['a criança engoliu uma pilha', 'intoxicacao'],
+    ['minha língua está inchando depois do camarão', 'anafilaxia'],
+    ['meu pai é diabético e está confuso', 'hipoglicemia'],
+  ])('"%s" → %s', (t, cat) => {
+    expect(detectarCriticoRegex(t)).toMatchObject({ critico: true, categoria: cat });
+  });
+
+  it('tentativa com remédio cita SAMU e CVV', () => {
+    const r = detectarCriticoRegex('tomei a cartela inteira de remédio pra me matar');
+    expect(r.critico && textoEmergencia(r.categoria, r.terceiro)).toMatch(/192[\s\S]*CVV 188/);
+  });
+
+  it.each([
+    'meu filho quase se afogou hoje de manhã, mas está bem',
+    'meu nariz está sangrando e não para',
+    'meu irmão tem epilepsia, teve uma crise igual às de sempre, já passou e ele está bem',
+    'estou com intoxicação alimentar',
+    'tomei 2 comprimidos de dipirona',
+    'meu avô tem diabetes e está confuso com os remédios',
+    'minha garganta está inchada e dói para engolir',
+  ])('não é SAMU direto: "%s"', (t) => {
+    expect(detectarCriticoRegex(t).critico).toBe(false);
+  });
+
+  it.each([
+    'meu filho tem epilepsia, teve convulsão, já passou mas durou mais de 5 minutos',
+    'meu nariz não para de sangrar e estou tonto',
+    'teve uma convulsão pela primeira vez',
+  ])('continua SAMU: "%s"', (t) => {
+    expect(detectarCriticoRegex(t).critico).toBe(true);
+  });
+});
+
+describe('pisos novos (LLM diz UBS)', () => {
+  it.each([
+    ['meu filho caiu da bicicleta e o dente saiu inteiro', 'UPA_24H', /leite/],
+    ['meu nariz está sangrando e não para', 'UPA_24H', /para frente/],
+    ['meu filho quase se afogou hoje de manhã, mas está bem', 'UPA_24H', /horas depois/],
+    ['dor forte no pé da barriga e a menstruação está atrasada', 'MATERNIDADE_PRONTO_SOCORRO_OBSTETRICO', /maternidade/],
+  ])('"%s"', async (t, destino, re) => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const { resultado } = await processarTurno(t, novoEstado());
+    expect(resultado.tipo).toBe('orientacao');
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe(destino);
+    expect(resultado.texto).toMatch(re);
+  });
+
+  it('dente de leite mole que caiu sozinho não vai à UPA', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Tudo certo, é normal.' }));
+    const { resultado } = await processarTurno('o dente de leite do meu filho estava mole e caiu sozinho', novoEstado());
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UBS_CLINICA_DA_FAMILIA');
+  });
+});
+
+describe('contexto da conversa', () => {
+  it('dúvida no meio da triagem: responde e retoma a pergunta', async () => {
+    respostasLLM.push(llm({ acao: 'perguntar', texto: 'Há quantos dias está com febre?', pergunta_proxima: 'Há quantos dias está com febre?' }));
+    const r1 = await processarTurno('estou com febre', novoEstado());
+    respostasLLM.push(llm({ acao: 'responder_rag', pergunta_rag: 'Onde tomar vacina da gripe?' }));
+    respostasLLM.push({ texto: 'A vacina da gripe é aplicada na UBS.' });
+    const r2 = await processarTurno('onde tomo a vacina da gripe?', r1.estado);
+    expect(r2.resultado.texto).toMatch(/Voltando ao que você me contou:.*Há quantos dias/);
+    expect(r2.estado.fase).toBe('coletando');
+  });
+
+  it('"piorou" depois de orientação: o caso anterior volta a valer para os pisos', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const r1 = await processarTurno('dor de cabeça e dor na nuca desde ontem', novoEstado());
+    expect(r1.estado.ultimo_caso).toMatch(/nuca/);
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const r2 = await processarTurno('piorou, agora estou com febre', r1.estado);
+    if (r2.resultado.tipo === 'orientacao') expect(r2.resultado.decisao.destino).toBe('UPA_24H');
+  });
+
+  it('"obrigado" depois de emergência não repete a emergência', async () => {
+    const r1 = await processarTurno('estou com dor no peito', novoEstado());
+    respostasLLM.push(llm({ acao: 'conversa', texto: 'Cuide-se!' }));
+    const r2 = await processarTurno('obrigado', r1.estado);
+    expect(r2.resultado.texto).toBe('Cuide-se!');
   });
 });
 

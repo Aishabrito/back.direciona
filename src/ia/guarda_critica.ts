@@ -24,7 +24,10 @@ export type CategoriaCritica =
   | 'trauma_grave'
   | 'inconsciente'
   | 'cefaleia_alarme'
-  | 'queimadura_grave';
+  | 'queimadura_grave'
+  | 'intoxicacao'
+  | 'anafilaxia'
+  | 'hipoglicemia';
 
 export type ResultadoGuard =
   | { critico: true; motivo: string; categoria: CategoriaCritica; terceiro: boolean }
@@ -49,6 +52,12 @@ function ehPerguntaEducativa(n: string, original: string): boolean {
 type Regra = { categoria: CategoriaCritica; motivo: string; re: RegExp };
 
 const REGRAS: Regra[] = [
+  {
+    // Antes de suicídio: tentativa com remédio/veneno precisa de SAMU primeiro (o texto cita o CVV).
+    categoria: 'intoxicacao',
+    motivo: 'intoxicação / ingestão perigosa',
+    re: /\b((tomei|tomou|tomaram|engoli|engoliu|bebi|bebeu|ingeriu|ingeri) [^.!?]{0,25}(cartela|caixa|vidro|frasco|pote) (inteir[oa]|tod[oa])|(tomei|tomou|engoli|engoliu|ingeriu) (muitos|varios|um monte de|todos os|todas as|[1-9]\d+) (comprimidos|remedios|capsulas|pilulas)|overdose|(bebeu|bebi|engoliu|engoli|tomou|tomei|ingeriu|ingeri) [^.!?]{0,15}(agua sanitaria|cloro|soda caustica|veneno|chumbinho|raticida|querosene|gasolina|thinner|solvente|desinfetante|produto de limpeza|inseticida|agrotoxico|removedor|acido)|engoliu (uma |um )?(bateria|pilha|ima|bateria de relogio)|envenenad[oa]|envenenamento)\b/,
+  },
   {
     categoria: 'suicidio',
     motivo: 'risco de autoagressão',
@@ -77,6 +86,11 @@ const REGRAS: Regra[] = [
     re: /\b(dor (no|do|de)?\s*peito|dor toracica|aperto (no|do)\s*peito|peito apertado|pressao (no|do)\s*peito|peso (no|do)\s*peito|peito doendo|doendo o peito|dor (no|do)\s*coracao|pontada (no|do)\s*peito|peito apertando)\b/,
   },
   {
+    categoria: 'anafilaxia',
+    motivo: 'reação alérgica grave',
+    re: /\b((inchaco|inchou|inchad[oa]|inchando) (na |da |a )?(lingua|glote)|(lingua|glote) (esta |ta |ficou |comecou a )?(inchando|inchad[oa]|inchou|inchar)|choque anafilatico|anafilaxia|reacao alergica grave)\b/,
+  },
+  {
     categoria: 'falta_de_ar',
     motivo: 'falta de ar',
     re: /\b(falta de ar|nao consigo respirar|nao (esta|ta|to|tou|estou) conseguindo respirar|nao consegue respirar|dificuldade (para|pra|de) respirar|sufocando|sem ar|nao entra ar|garganta fechando|labios? (roxos?|arroxeados?))\b/,
@@ -95,6 +109,12 @@ const REGRAS: Regra[] = [
     categoria: 'trauma_grave',
     motivo: 'trauma grave',
     re: /\b(acidente (de|com) (moto|carro|transito|onibus|caminhao|bicicleta|bike)|batida de (moto|carro)|(bati|bateu|capotei|capotou) (o|a|com o|com a|de) (carro|moto)|(cai|caiu) (da|de) moto|atropelad[oa]|atropelamento|atropelou|capotou|capotamento|fratura exposta|osso (aparecendo|exposto|pra fora|para fora)|esfaquead[oa]|levou (uma )?facada|levou (um )?tiro|baleado|baleada|caiu de (altura|laje|telhado|andaime|escada)|queda de altura)\b/,
+  },
+  {
+    // Antes de "inconsciente": diabético confuso/desmaiado recebe o protocolo do açúcar.
+    categoria: 'hipoglicemia',
+    motivo: 'possível glicose baixa grave',
+    re: /\b(glicose|glicemia|diabetic[oa]|diabete|diabetes|hipoglicemia|insulina)\b[^.!?]{0,40}\b(confus[oa](?! (com|sobre|em relacao))|desmai\w*|desacordad[oa]|nao responde|nao acorda|muito sonolent[oa]|convulsion\w*|falando enrolado|falando coisa sem sentido)\b/,
   },
   {
     // Estado ATUAL de inconsciência. "Desmaiei ontem" (passado) fica com o LLM.
@@ -142,9 +162,32 @@ export function detectarCriticoRegex(texto: string): ResultadoGuard {
     // "bati o carro ontem, estou bem" não é SAMU agora — a validação garante no mínimo UPA.
     if (r.categoria === 'trauma_grave' && !/fratura|osso|facad|esfaquead|tiro|balead|atropel/.test(m[0])
         && acidentePassadoSemGravidade(n)) continue;
+    if (r.categoria === 'afogamento' && afogamentoPassadoEstavel(n)) continue;
+    if (r.categoria === 'sangramento' && sangramentoNasalSemGravidade(n)) continue;
+    if (r.categoria === 'convulsao' && criseHabitualJaPassou(n)) continue;
     return { critico: true, motivo: r.motivo, categoria: r.categoria, terceiro: ehSobreTerceiro(n) };
   }
   return { critico: false };
+}
+
+// "Quase se afogou ontem, está bem" → não é SAMU agora; a validação garante UPA (sinais tardios).
+export function afogamentoPassadoEstavel(n: string): boolean {
+  return /\b(ontem|mais cedo|hoje cedo|de manha|a tarde|semana passada|ha \d+ horas?|horas atras|no fim de semana)\b/.test(n)
+    && /\b(esta bem|ta bem|parece bem|ficou bem|acordad[oa]|consciente|respirando normal|brincando)\b/.test(n)
+    && !/\b(nao respira|desacordad|inconsciente|roxo|roxa|falta de ar|sonolent|confus)/.test(n);
+}
+
+// Sangramento pelo nariz sem sinal de choque → piso de UPA/orientação, não SAMU direto.
+export function sangramentoNasalSemGravidade(n: string): boolean {
+  return /\b(nariz|nasal)\b/.test(n)
+    && !/\b(desmai\w*|tont\w*|fraco|fraca|palid\w*|vomit\w*|pancada|bateu|batida|acidente|queda|caiu)\b/.test(n);
+}
+
+// Pessoa com epilepsia conhecida, crise igual às de sempre, que já passou e acordou → LLM decide (UBS/UPA).
+export function criseHabitualJaPassou(n: string): boolean {
+  return /\b(epilep\w*|tem crises?|crise de sempre|crises? (convulsivas? )?(desde|ha anos))\b/.test(n)
+    && /\b(ja passou|passou|acabou|ja acordou|acordou|esta bem|ta bem|igual (as|a|aos) de sempre|como sempre|a de sempre)\b/.test(n)
+    && !/\b(mais de (5|cinco)|nao para|nao parou|outra crise|em seguida|seguidas|primeira vez|bateu a cabeca|machucou|gravida|gestante|nao acorda|nao respira|roxo|roxa|diferente)\b/.test(n);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -174,6 +217,12 @@ const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
     '⚠️ Dor de cabeça muito forte que começa de repente, ou com pescoço duro, precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá já a um Pronto-Socorro. Não tome remédio por conta própria e não dirija.',
   queimadura_grave:
     '⚠️ Queimadura desse tipo precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, lave/resfrie com *água corrente em temperatura ambiente* (não use gelo) e cubra com pano limpo. Não passe manteiga, pasta de dente, pó de café nem pomada, e não estoure bolhas.',
+  intoxicacao:
+    '⚠️ Ligue *192 (SAMU)* agora. *Não provoque vômito* e não tome leite, óleo nem outro líquido. Separe a embalagem do produto ou remédio para mostrar à equipe. Orientação 24h: *Disque-Intoxicação 0800 722 6001*. Se tomou de propósito porque está sofrendo, o *CVV 188* também está aqui para você.',
+  anafilaxia:
+    '⚠️ Inchaço na língua ou na garganta é emergência. Ligue *192 (SAMU)* agora. Se você tem caneta de adrenalina receitada, use agora na coxa. Fique sentado se estiver com falta de ar.',
+  hipoglicemia:
+    '⚠️ Ligue *192 (SAMU)*. Se a pessoa está acordada e consegue engolir, dê *açúcar agora*: 1 colher de sopa em meio copo de água, ou meio copo de suco ou refrigerante comum (não diet). Se estiver sonolenta demais ou desacordada, *não dê nada pela boca* e deite de lado.',
   trauma_grave:
     '⚠️ Acidente com ferimento precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Se sentir dor no pescoço ou nas costas, *não se mexa* até a equipe chegar. Se alguém estiver preso nas ferragens ou houver fogo, ligue também *193 (Bombeiros)*.',
   inconsciente:
@@ -200,13 +249,15 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 2. Se *NÃO consegue respirar, falar ou tossir*: fique atrás dela, abrace, punho fechado acima do umbigo, comprima para dentro e para cima.
 3. Em *bebês (menos de 1 ano)*: 5 golpes nas costas + 5 compressões no peito.
 4. Em *gestante ou pessoa obesa*: compressões no peito, não no abdômen.
-5. Se perder a consciência: ligue *192* e inicie compressões no peito.`,
+5. Não tente tirar o objeto com o dedo se não estiver vendo ele.
+6. Se perder a consciência: ligue *192* e inicie compressões no peito.`,
   convulsao: `⚠️ *Ligue 192 (SAMU).* Enquanto a crise acontece:
 
 1. *Proteja a cabeça* com algo macio e afaste objetos.
 2. *Não coloque nada na boca* e não segure braços e pernas.
 3. *Anote a hora* que começou.
-4. Quando a crise passar, deite a pessoa de lado e fique com ela.`,
+4. Quando a crise passar, deite a pessoa de lado e fique com ela.
+5. Em criança com febre: tire o excesso de roupa. *Não dê banho nem remédio pela boca durante a crise.*`,
   avc: `⚠️ *Ligue 192 (SAMU) agora.* Enquanto o SAMU não chega:
 
 1. *Anote a hora exata* que os sintomas começaram.
@@ -248,6 +299,26 @@ const PROTOCOLO: Partial<Record<CategoriaCritica, string>> = {
 4. Tire anéis, relógios e roupas apertadas que não estejam grudados na pele.
 5. *NÃO* passe manteiga, pasta de dente, pó de café nem pomada, e *não estoure bolhas*.
 6. Se inalou fumaça, leve para o ar livre e observe a respiração.`,
+  intoxicacao: `⚠️ *Ligue 192 (SAMU) agora.* Orientação especializada 24h: *Disque-Intoxicação 0800 722 6001*.
+
+1. *NÃO provoque vômito* e não dê leite, óleo, água com sal nem nada pela boca.
+2. *Separe a embalagem*, o frasco ou a cartela e leve junto (ou tire foto).
+3. Anote *o que foi, quanto e a que horas*.
+4. Se o produto caiu na pele ou nos olhos, lave com muita água corrente por 15 a 20 minutos.
+5. Se a pessoa estiver sonolenta, deite de lado. Se não respirar, comece compressões no peito.
+6. Se foi de propósito, fique junto da pessoa. Depois, o *CVV 188* pode ajudar.`,
+  anafilaxia: `⚠️ *Ligue 192 (SAMU) agora.*
+
+1. Se a pessoa tem *caneta de adrenalina* receitada, use agora na parte de fora da coxa.
+2. Se tiver falta de ar, deixe sentada. Se estiver tonta ou fraca, deite com as pernas elevadas.
+3. Afaste o que causou a reação (picada, comida, remédio) e não dê nada pela boca.
+4. Se parar de respirar, comece compressões no peito.`,
+  hipoglicemia: `⚠️ *Ligue 192 (SAMU).* Enquanto isso:
+
+1. *Se está acordada e consegue engolir:* dê açúcar agora (1 colher de sopa em meio copo de água, ou meio copo de suco ou refrigerante comum, não diet).
+2. *Se está muito sonolenta, desacordada ou convulsionando:* *não dê nada pela boca.* Deite de lado.
+3. Se tiver aparelho, meça a glicose e diga o valor à equipe.
+4. Se não respirar, comece compressões no peito.`,
   dor_toracica:
     '⚠️ Dor no peito precisa de atendimento imediato. *Ligue 192 (SAMU) agora.* Deixe a pessoa em repouso, sentada ou deitada, e não deixe que ela dirija.',
   falta_de_ar:

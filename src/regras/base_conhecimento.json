@@ -1,5 +1,5 @@
 {
-  "versao": "1.3.0",
+  "versao": "1.4.0",
   "atualizado_em": "2026-09-28",
   "topicos": [
     {
@@ -299,7 +299,7 @@
         "tremor",
         "crise"
       ],
-      "conteudo": "Durante uma convulsão: afaste objetos, proteja a cabeça, não coloque nada na boca, não tente segurar a pessoa. Depois da crise, deite-a de lado.\n\nLigue 192 se durar mais de 5 minutos, se repetir, ou se for a primeira vez. Mesmo que passe rápido, procure uma UPA para avaliação. Se a pessoa tem epilepsia diagnosticada e a crise foi igual às habituais, siga o plano do médico."
+      "conteudo": "Durante uma convulsão: afaste objetos, proteja a cabeça, não coloque nada na boca e não segure braços e pernas. Anote a hora. Depois da crise, deite a pessoa de lado e fique com ela.\n\nLigue 192 se for a primeira vez, se durar mais de 5 minutos, se repetir, se a pessoa não acordar, se for gestante ou se bateu a cabeça. Em criança com febre: tire o excesso de roupa, não dê banho nem remédio pela boca durante a crise e procure atendimento (a primeira crise com febre sempre precisa ser avaliada). Se a pessoa tem epilepsia e a crise foi igual às habituais, curta e ela já acordou bem, siga o plano do médico e avise a UBS."
     },
     {
       "id": "queimadura",
@@ -568,7 +568,7 @@
         "piscina",
         "quase afogou"
       ],
-      "conteudo": "Em afogamento, não entre na água sem treinamento — chame ajuda (192). Jogue algo flutuante para a pessoa.\n\nApós retirar da água, se a pessoa não respira, inicie RCP (compressões no peito) e ligue 192 imediatamente. Toda vítima de afogamento deve ser avaliada em UPA, mesmo que pareça bem — pode haver complicação pulmonar depois."
+      "conteudo": "Em afogamento, não entre na água sem treinamento: chame ajuda (192 ou 193) e jogue algo que boie para a pessoa.\n\nApós retirar da água, se a pessoa não respira, inicie RCP (compressões no peito) e ligue 192. Se respira, deite de lado e mantenha aquecida.\n\nQuem quase se afogou deve ser avaliado numa UPA no mesmo dia, mesmo que pareça bem. Nas horas seguintes, ligue 192 se surgir tosse que não para, falta de ar, respiração rápida, lábios roxos, sonolência, confusão ou vômitos."
     },
     {
       "id": "sangramento_nasal",
@@ -1803,6 +1803,48 @@
         "quando ir na ubs"
       ],
       "conteudo": "Sem sinais de alarme, estes casos podem ser acompanhados na UBS / Clínica da Família: dor de cabeça com cansaço; febre baixa com nariz escorrendo há 1 a 2 dias em adulto; diarreia sem sangue em adulto que consegue beber líquidos e está urinando; tosse sem falta de ar; cansaço sem falta de ar; dor muscular depois de exercício. Tosse há 3 semanas ou mais precisa de avaliação na UBS.\n\nProcure uma UPA se surgir febre alta que não baixa, vômitos que não param, sinais de desidratação ou dor forte. Ligue 192 se houver dor no peito (mesmo que tenha aparecido no esforço e passado no repouso), falta de ar, desmaio ou confusão. Urina cor de café depois de exercício muito intenso: UPA no mesmo dia."
+    },
+    {
+      "id": "trauma_dentario",
+      "titulo": "Dente quebrado ou arrancado por pancada",
+      "tags": [
+        "dente",
+        "dente quebrado",
+        "dente arrancado",
+        "dente caiu",
+        "trauma dental",
+        "bati o dente"
+      ],
+      "conteudo": "Dente permanente que saiu inteiro por pancada tem mais chance de ser salvo se atendido em até 1 hora. Segure o dente pela parte branca (coroa), nunca pela raiz. Se estiver sujo, passe só em água corrente, sem esfregar e sem escovar. Leve dentro de um copo de leite ou na saliva (dentro da boca de um adulto consciente). Não embrulhe em papel e não deixe secar. Dente de leite não se recoloca.\n\nProcure uma UPA ou pronto-socorro odontológico o quanto antes. Dente só lascado, sem dor forte, pode ser visto no dentista da UBS. Ligue 192 se houve pancada forte na cabeça, desmaio, vômito ou sangramento que não para."
+    },
+    {
+      "id": "hipoglicemia",
+      "titulo": "Glicose baixa (hipoglicemia) — o que fazer",
+      "tags": [
+        "glicose baixa",
+        "hipoglicemia",
+        "acucar baixo",
+        "diabetes",
+        "insulina",
+        "tremedeira",
+        "suor frio"
+      ],
+      "conteudo": "Sinais: tremedeira, suor frio, fome, coração acelerado, fraqueza, confusão, fala enrolada, sonolência. É mais comum em quem usa insulina ou alguns remédios para diabetes.\n\nSe a pessoa está acordada e consegue engolir: dê açúcar (1 colher de sopa em meio copo de água, ou meio copo de suco ou refrigerante comum, não diet). Meça de novo em 15 minutos. Quando melhorar, faça um lanche.\n\nLigue 192 se a pessoa estiver confusa, muito sonolenta, desacordada ou convulsionando. Nesses casos, não dê nada pela boca e deite de lado. Episódios repetidos: procure a UBS para rever o tratamento."
+    },
+    {
+      "id": "pedidos_atestado_receita_exame",
+      "titulo": "Atestado, receita, laudo e resultado de exame",
+      "tags": [
+        "atestado",
+        "receita",
+        "laudo",
+        "resultado de exame",
+        "interpretar exame",
+        "segunda opiniao",
+        "antibiotico",
+        "pedido de exame"
+      ],
+      "conteudo": "Atestado, receita, laudo e pedido de exame só podem ser feitos pelo profissional de saúde que atender a pessoa. Na UBS / Clínica da Família é possível pedir consulta para isso, e quem foi atendido numa UPA pode pedir o atestado lá mesmo.\n\nResultados de exame devem ser levados ao profissional que pediu ou à UBS: só ele pode interpretar os valores junto com a sua história. Antibiótico só com receita, porque o uso errado causa resistência. Se você está com algum sintoma agora, conte o que sente para saber onde buscar atendimento."
     }
   ]
 }

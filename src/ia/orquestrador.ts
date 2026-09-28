@@ -30,6 +30,7 @@ import {
 import { inc, incDecisao, incDestino, metricas } from '../servicos/metricas.js';
 import { logTurno, iniciarTimer } from '../servicos/log_conversa.js';
 import type { UsoLLM } from '../servicos/ia.js';
+import { normalizarTexto } from './normalizar.js';
 
 export { ESTADO_INICIAL };
 
@@ -60,6 +61,15 @@ const CASO_VAZIO = {
   ultimaPergunta: undefined as UltimaPergunta | undefined,
   temaPergunta: undefined as string | undefined,
 };
+
+// "Piorou", "não melhorou", "continua doendo" depois de uma orientação: o caso anterior
+// volta a valer para os pisos de segurança (só pode subir o nível, nunca baixar).
+const RE_PIORA = /\b(piorou|piorando|ficou pior|(esta|ta|to|tou|estou|fiquei) pior|nao melhorou|nao passou|nao melhora|continua (com|doendo|sentindo|a dor|a febre)|voltou a (doer|sentir|ter)|comecou a ter tambem|apareceu (tambem|outra))\b/;
+
+export function ehRelatoDePiora(texto: string): boolean {
+  const n = normalizarTexto(texto);
+  return RE_PIORA.test(n) && !/\bnao (piorou|ficou pior)\b/.test(n);
+}
 
 // Estados salvos por versões antigas podem não ter os campos novos.
 function normalizarEstado(e: EstadoConversa | undefined): EstadoConversa {
@@ -152,7 +162,9 @@ export async function processarTurno(
 
     const textoCaso = coletando && estado.texto_original_acumulado
       ? `${estado.texto_original_acumulado} ${texto}`
-      : texto;
+      : estado.fase === 'orientado' && estado.ultimo_caso && ehRelatoDePiora(texto)
+        ? `${estado.ultimo_caso} ${texto}`
+        : texto;
 
     let decisao: Decisao;
     let uso: UsoLLM = { tokens_in: 0, tokens_out: 0 };
@@ -211,6 +223,11 @@ export async function processarTurno(
     // 5. Validação final.
     const validacao = validarDecisao(decisao, { textoCaso, estado });
     decisao = validacao.decisao;
+
+    // Dúvida no meio da triagem: responde e retoma o caso de onde parou.
+    if (coletando && decisao.acao === 'responder_rag' && estado.ultimaPergunta?.texto) {
+      decisao = { ...decisao, texto: `${decisao.texto}\n\n↩️ *Voltando ao que você me contou:* ${estado.ultimaPergunta.texto}` };
+    }
     if (validacao.alterou) {
       inc('validacao_alterou');
       console.warn(`🛡️ [validação] ${validacao.motivos.join(', ')}`);
@@ -222,7 +239,7 @@ export async function processarTurno(
     novo.falhasSeguidas = escalado ? 0 : falhas;
 
     if (decisao.acao === 'emergencia' || decisao.acao === 'orientar') {
-      novo = { ...novo, ...CASO_VAZIO, fase: 'orientado' };
+      novo = { ...novo, ...CASO_VAZIO, fase: 'orientado', ultimo_caso: textoCaso.slice(-800) };
     } else if (decisao.acao === 'perguntar') {
       const pergunta = decisao.pergunta_proxima || decisao.texto;
       const anteriores = coletando ? estado.perguntasJaFeitas : [];
