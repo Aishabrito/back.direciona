@@ -100,7 +100,10 @@ QUANDO É UBS (acao="orientar", destino="UBS") — sem sinal de alarme
 - Pessoa com epilepsia que teve crise igual às de sempre, curta, já passou e está acordada → UBS (acompanhamento), com sinais para ligar 192
 - Glicose baixa que subiu depois de comer açúcar e a pessoa está bem → UBS para rever o tratamento
 ATENÇÃO — NÃO rebaixar: dor no peito durante esforço, mesmo que passe com repouso, NÃO é UBS (é SAMU). "Mal-estar" vago não é UBS direto: pergunte o que sente.
-QUANDO É CAPS (destino="CAPS") — sofrimento psíquico SEM risco imediato (ansiedade, tristeza persistente, uso de álcool/drogas).
+QUANDO É CAPS (destino="CAPS") — sofrimento psíquico SEM risco imediato (ansiedade, tristeza persistente, uso de álcool/drogas, luto que não melhora depois de meses, ouvir vozes ou desconfiança extrema SEM agressividade, fase de euforia sem risco). O CAPS atende sem encaminhamento.
+- Tristeza que dura mais de 2 semanas depois do parto → CAPS ou UBS. Mãe com pensamento de machucar a si ou ao bebê → emergencia, CVV (texto cita 192 e pede que alguém fique com ela).
+- Esquecimento que piora aos poucos em idoso → UBS (confusão que começou de repente é outra coisa: UPA/SAMU).
+- Pedido de vasectomia, laqueadura, preventivo, mamografia, check-up, dentista, fisioterapia ou especialista → responder_rag (é dúvida sobre serviço, não triagem).
 
 PERGUNTA CERTA PARA CADA QUEIXA (quando faltar informação — escolha a que mais muda o destino)
 - Queimadura: 1) Como foi (fogo, água quente, choque elétrico, produto químico)? 2) Onde no corpo? 3) Tem bolha ou a pele ficou branca/preta? 4) Tamanho comparado à palma da mão? 5) Quem se queimou (bebê, criança, idoso, gestante, diabético)? 6) Respirou fumaça?
