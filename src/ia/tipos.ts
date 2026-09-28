@@ -165,6 +165,8 @@ export type EstadoConversa = {
   memoria?: MemoriaUsuario;
   // Quantas vezes seguidas o usuário repetiu/reformulou a mesma coisa.
   falhasSeguidas?: number;
+  // Relato do último caso já orientado — usado se a pessoa voltar dizendo que piorou.
+  ultimo_caso?: string;
 };
 
 export const MEMORIA_VAZIA: MemoriaUsuario = { fatos: {}, turnosDesdeResumo: 0 };

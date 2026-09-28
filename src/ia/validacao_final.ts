@@ -136,6 +136,44 @@ const TEXTO_CHOQUE_UPA =
   'o choque pode afetar o coração e causar lesões por dentro.\n\n' +
   '*Ligue 192* se houver desmaio, falta de ar, dor no peito, batedeira, confusão ou queimadura na pele.';
 
+const TEXTO_DENTE_TRAUMA =
+  '🦷 Dente arrancado ou quebrado por pancada precisa de atendimento *o quanto antes* (o ideal é em até 1 hora): ' +
+  'procure uma *UPA* ou um pronto-socorro odontológico.\n\n' +
+  '*Se o dente saiu inteiro:* segure pela parte branca, *nunca pela raiz*. Se estiver sujo, passe só em água corrente, sem esfregar. ' +
+  'Leve dentro de um copo de *leite* (ou na saliva, dentro da boca). Não embrulhe em papel e não deixe secar. ' +
+  '*Dente de leite não se recoloca.*\n\n' +
+  '*Ligue 192* se houve pancada forte na cabeça, desmaio, vômito ou sangramento que não para.';
+
+const TEXTO_NARIZ_UPA =
+  '🩸 *Agora:* sente, incline a cabeça *para frente* (não para trás) e aperte a parte mole do nariz por 10 a 15 minutos sem soltar. Cuspa o sangue que for para a boca.\n\n' +
+  'Se não parar depois de 20 minutos apertando, se a pessoa usa remédio para afinar o sangue, ou se o sangramento é muito forte, procure *agora* uma *UPA 24h*.\n\n' +
+  '*Ligue 192* se houver tontura forte, desmaio ou palidez.';
+
+const TEXTO_AFOGAMENTO_UPA =
+  '🌊 Mesmo que a pessoa pareça bem, quem quase se afogou precisa ser avaliado *hoje* numa *UPA 24h*: a água no pulmão pode causar problemas horas depois.\n\n' +
+  '*Ligue 192* se aparecer tosse que não para, falta de ar, respiração rápida, lábios roxos, sonolência, confusão ou vômitos.';
+
+const TEXTO_DOR_ATRASO =
+  '🤰 Dor na barriga com atraso menstrual ou gravidez no início precisa ser avaliada *hoje*: procure a *maternidade* / pronto-socorro obstétrico (ou uma UPA, se for mais perto).\n\n' +
+  '*Ligue 192* se a dor for muito forte, se tiver sangramento com tontura ou desmaio, ou dor no ombro.';
+
+function denteTraumatizado(n: string): boolean {
+  const dente = /\b(dente|dentes)\b[^.!?]{0,30}\b(saiu|caiu|arrancou|arrancad[oa]s?|voou|quebrou|quebrad[oa]s?|lascou|entortou|afundou)\b|\b(quebrei|quebrou|arranquei|arrancou|perdi|perdeu|lasquei|lascou) (o |um |uma |os |dois )?(dente|dentes|pedaco do dente)\b/.test(n);
+  const trauma = /\b(bati|bateu|queda|tombo|pancada|soco|batida|acidente|bolada|briga|cai (de|da|do|no|na)|caiu (de|da|do|no|na)|tropecei|tropecou|levou uma)\b/.test(n);
+  return dente && trauma && !/\bdente de leite\b[^.!?]{0,20}\b(mole|caiu sozinho)\b/.test(n);
+}
+
+function sangramentoNasalQueExigeUpa(n: string): boolean {
+  return /\b(nariz|nasal)\b/.test(n) && /\b(sangr\w*|sangue)\b/.test(n)
+    && /\b(nao para|nao parou|nao estanca|mais de (20|vinte|meia)|muito|muita|forte|anticoagul\w*|afinar o sangue|marevan|varfarina|xarelto|rivaroxabana|clopidogrel)\b/.test(n);
+}
+
+function dorComAtrasoMenstrual(n: string): boolean {
+  const possivelGravidez = /\b(atraso (menstrual|da menstruacao)|menstruacao (esta |ta )?(atrasada|nao veio)|(teste|beta)( de gravidez)? (deu )?positivo|gravidez no (inicio|comeco)|posso estar gravida|acho que (estou|to|tou) gravida|gravida de (\d|um|uma|dois|duas|poucas) semanas?)\b/.test(n);
+  const dor = /\b(dor (forte |muito forte |intensa )?(na|no|de|do) (barriga|pe da barriga|ventre|baixo ventre|lado|abdomen)|colica (muito )?forte|dor abdominal)\b/.test(n);
+  return possivelGravidez && dor;
+}
+
 // Queimadura (não "queimando"/"queimação") com bolha, em área nobre, ou em bebê/criança/idoso.
 function queimaduraQueExigeUpa(n: string): boolean {
   const queimadura = /\b(queimadura|queimei|queimou|queimad[oa]|me queimei|se queimou|escaldad[oa]|escaldou)\b/.test(n);
@@ -148,7 +186,7 @@ function queimaduraQueExigeUpa(n: string): boolean {
   return bolha || local || grupo || grande || aparencia;
 }
 
-export function pisoUrgencia(textoCaso: string): { motivo: string; texto: string } | null {
+export function pisoUrgencia(textoCaso: string): { motivo: string; texto: string; destino?: DestinoDecisor } | null {
   const n = normalizarTexto(textoCaso);
   const cefaleia = /\b(dor de cabeca|cabeca doendo|cefaleia|enxaqueca)\b/.test(n);
   const nuca = /\b(nuca|pescoco)\b/.test(n);
@@ -158,6 +196,12 @@ export function pisoUrgencia(textoCaso: string): { motivo: string; texto: string
   if (/\b(levou|tomou|levei|tomei|levou um|deu um) (um )?choque\b|\bchoque eletrico\b/.test(n) && !/\bnao (levou|tomou|levei|tomei)/.test(n)) {
     return { motivo: 'choque elétrico', texto: TEXTO_CHOQUE_UPA };
   }
+  if (denteTraumatizado(n)) return { motivo: 'trauma dentário', texto: TEXTO_DENTE_TRAUMA };
+  if (sangramentoNasalQueExigeUpa(n)) return { motivo: 'sangramento nasal que exige UPA', texto: TEXTO_NARIZ_UPA };
+  if (/\b(afog\w*|quase se afogou|engoliu muita agua|ficou (embaixo|debaixo) d.?agua)\b/.test(n)) {
+    return { motivo: 'afogamento recente', texto: TEXTO_AFOGAMENTO_UPA };
+  }
+  if (dorComAtrasoMenstrual(n)) return { motivo: 'dor + possível gravidez inicial', texto: TEXTO_DOR_ATRASO, destino: 'MATERNIDADE' };
   if (ehAcidenteDeTransito(textoCaso) && !acidenteAntigoSemGravidade(textoCaso)) {
     return { motivo: 'acidente de trânsito recente', texto: TEXTO_ACIDENTE_RECENTE };
   }
@@ -227,7 +271,10 @@ export function validarDecisao(
     if (urg) {
       motivos.push(`piso_urgencia: ${urg.motivo}`);
       return {
-        decisao: { ...d, destino: 'UPA', texto: urg.texto, resposta_id: 'upa_001' },
+        decisao: {
+          ...d, destino: urg.destino ?? 'UPA', texto: urg.texto,
+          resposta_id: urg.destino === 'MATERNIDADE' ? 'obstetricia_001' : 'upa_001',
+        },
         alterou: true, motivos,
       };
     }
