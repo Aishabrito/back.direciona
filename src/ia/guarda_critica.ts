@@ -22,7 +22,8 @@ export type CategoriaCritica =
   | 'convulsao'
   | 'sangramento'
   | 'trauma_grave'
-  | 'inconsciente';
+  | 'inconsciente'
+  | 'cefaleia_alarme';
 
 export type ResultadoGuard =
   | { critico: true; motivo: string; categoria: CategoriaCritica; terceiro: boolean }
@@ -101,6 +102,12 @@ const REGRAS: Regra[] = [
     re: /\b(desmaiad[oa]|desacordad[oa]|inconsciente|nao acorda|nao ta acordando|nao esta acordando|nao responde|nao reage|nao esta reagindo|apagad[oa] no chao)\b/,
   },
   {
+    // Dor de cabeça "trovão" (súbita e explosiva) ou rigidez de nuca: sangramento cerebral / meningite.
+    categoria: 'cefaleia_alarme',
+    motivo: 'dor de cabeça com sinal de alarme',
+    re: /\b(pior dor de cabeca (da|de) (minha )?vida|dor de cabeca (muito forte|fortissima|insuportavel|explosiva|absurda)[^.!?]{0,25}(de repente|do nada|subit\w*|de uma vez)|dor de cabeca (de repente|subita|do nada)[^.!?]{0,15}(muito forte|fortissima|insuportavel|explosiva)|(pescoco|nuca) (duro|dura|rigid\w*|travad\w*)|rigidez (na|de|no) (nuca|pescoco)|nao consigo (dobrar|abaixar|encostar)[^.!?]{0,20}(pescoco|queixo|cabeca))\b/,
+  },
+  {
     // Só crise ATIVA ou recém-ocorrida — "tremendo de frio" não entra.
     categoria: 'convulsao',
     motivo: 'convulsão',
@@ -154,6 +161,8 @@ const TEXTO_PROPRIO: Record<CategoriaCritica, string> = {
     '⚠️ Essa situação precisa de atendimento imediato. Ligue *192 (SAMU)* agora.',
   sangramento:
     '⚠️ Sangramento importante precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Enquanto isso, faça pressão firme sobre o local com um pano limpo.',
+  cefaleia_alarme:
+    '⚠️ Dor de cabeça muito forte que começa de repente, ou com pescoço duro, precisa de atendimento imediato. Ligue *192 (SAMU)* agora ou vá já a um Pronto-Socorro. Não tome remédio por conta própria e não dirija.',
   trauma_grave:
     '⚠️ Acidente com ferimento precisa de atendimento imediato. Ligue *192 (SAMU)* agora. Se sentir dor no pescoço ou nas costas, *não se mexa* até a equipe chegar. Se alguém estiver preso nas ferragens ou houver fogo, ligue também *193 (Bombeiros)*.',
   inconsciente:

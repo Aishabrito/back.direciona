@@ -119,6 +119,24 @@ export function pisoCritico(textoCaso: string): { motivo: string; destino: Desti
   return { motivo: criterio.motivo, destino };
 }
 
+// Piso de urgência: situações em que UBS é pouco — precisa de avaliação HOJE.
+const TEXTO_CEFALEIA_FEBRE =
+  '🤕 Dor de cabeça com febre e dor na nuca precisa ser avaliada *ainda hoje* numa *UPA 24h*.\n\n' +
+  '*Ligue 192 na hora* se o pescoço ficar duro (não consegue encostar o queixo no peito), aparecerem manchas roxas na pele, ' +
+  'sonolência, confusão, vômitos repetidos ou convulsão.';
+
+export function pisoUrgencia(textoCaso: string): { motivo: string; texto: string } | null {
+  const n = normalizarTexto(textoCaso);
+  const cefaleia = /\b(dor de cabeca|cabeca doendo|cefaleia|enxaqueca)\b/.test(n);
+  const nuca = /\b(nuca|pescoco)\b/.test(n);
+  const febre = /\b(febre|febril|temperatura alta|38|39|40 graus)\b/.test(n) && !/\b(sem|nao tenho|nao tem) febre\b/.test(n);
+  if (cefaleia && nuca && febre) return { motivo: 'dor de cabeça + nuca + febre', texto: TEXTO_CEFALEIA_FEBRE };
+  if (ehAcidenteDeTransito(textoCaso) && !acidenteAntigoSemGravidade(textoCaso)) {
+    return { motivo: 'acidente de trânsito recente', texto: TEXTO_ACIDENTE_RECENTE };
+  }
+  return null;
+}
+
 // ────────────────────────────────────────────────────
 // MOTOR (usado quando o decisor não consegue fechar a decisão)
 // ────────────────────────────────────────────────────
@@ -176,14 +194,16 @@ export function validarDecisao(
     }
   }
 
-  // 1b. Piso de urgência — acidente de trânsito recente sem sinal grave: nunca abaixo de UPA.
-  if (d.acao === 'orientar' && d.destino !== 'UPA' && d.destino !== 'MATERNIDADE'
-      && ehAcidenteDeTransito(ctx.textoCaso) && !acidenteAntigoSemGravidade(ctx.textoCaso)) {
-    motivos.push('piso_urgencia: acidente de trânsito recente');
-    return {
-      decisao: { ...d, destino: 'UPA', texto: TEXTO_ACIDENTE_RECENTE, resposta_id: 'upa_001' },
-      alterou: true, motivos,
-    };
+  // 1b. Piso de urgência — casos que nunca podem sair abaixo de UPA.
+  if (d.acao === 'orientar' && d.destino !== 'UPA' && d.destino !== 'MATERNIDADE') {
+    const urg = pisoUrgencia(ctx.textoCaso);
+    if (urg) {
+      motivos.push(`piso_urgencia: ${urg.motivo}`);
+      return {
+        decisao: { ...d, destino: 'UPA', texto: urg.texto, resposta_id: 'upa_001' },
+        alterou: true, motivos,
+      };
+    }
   }
 
   // 2. Emergência: destino tem que ser de emergência; texto do LLM vira texto aprovado.

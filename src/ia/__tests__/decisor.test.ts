@@ -127,6 +127,36 @@ describe('acidentes de trânsito', () => {
   });
 });
 
+describe('dor de cabeça', () => {
+  it.each([
+    'a pior dor de cabeça da minha vida, começou do nada',
+    'estou com dor de cabeça forte, febre e o pescoço duro',
+    'dor de cabeça muito forte que começou de repente',
+  ])('sinal de alarme → SAMU: "%s"', (t) => {
+    expect(detectarCriticoRegex(t)).toMatchObject({ critico: true, categoria: 'cefaleia_alarme' });
+  });
+
+  it('dor de cabeça + nuca não dispara SAMU sozinha', () => {
+    expect(detectarCriticoRegex('estou com dor de cabeca e dor na nuca').critico).toBe(false);
+  });
+
+  it('com febre: LLM diz UBS → validação sobe para UPA', async () => {
+    let estado = novoEstado();
+    respostasLLM.push(llm({ acao: 'perguntar', texto: 'Tem febre?', pergunta_proxima: 'Tem febre?' }));
+    estado = (await processarTurno('estou com dor de cabeca e dor na nuca', estado)).estado;
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Procure a UBS.' }));
+    const { resultado } = await processarTurno('sim, febre desde ontem', estado);
+    expect(resultado.tipo).toBe('orientacao');
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UPA_24H');
+  });
+
+  it('sem febre, há dias: UBS é aceito', async () => {
+    respostasLLM.push(llm({ acao: 'orientar', destino: 'UBS', texto: 'Pode procurar a UBS.' }));
+    const { resultado } = await processarTurno('dor de cabeça e nuca tensa há 3 dias, sem febre', novoEstado());
+    if (resultado.tipo === 'orientacao') expect(resultado.decisao.destino).toBe('UBS_CLINICA_DA_FAMILIA');
+  });
+});
+
 describe('parser do decisor (schema fechado)', () => {
   it('ignora campos fora do schema e ação inválida', () => {
     expect(parsearDecisao({ acao: 'diagnosticar', texto: 'x' })).toBeNull();
