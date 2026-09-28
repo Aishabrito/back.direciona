@@ -28,22 +28,22 @@
     },
     {
       "id": "foto_sem_legenda_001",
-      "destino": ["Direciona SUS"],
+      "destino": ["Direciona.Ai"],
       "texto": "📷 Recebi sua imagem, mas preciso que você me conte em palavras o que está acontecendo. Descreva os sintomas — por exemplo: onde dói, há quanto tempo, se há febre. Assim consigo te orientar melhor."
     },
     {
       "id": "novo_caso_001",
-      "destino": ["Direciona SUS"],
+      "destino": ["Direciona.Ai"],
       "texto": "Vamos começar um novo caso. Me conte do zero: o que está acontecendo ou o que está sentindo?"
     },
     {
       "id": "encerramento_001",
-      "destino": ["Direciona SUS"],
+      "destino": ["Direciona.Ai"],
       "texto": "Fico à disposição 💛 Se precisar de algo mais, é só chamar."
     },
     {
       "id": "privacidade_001",
-      "destino": ["Direciona SUS"],
+      "destino": ["Direciona.Ai"],
       "texto": "🔒 *Sua privacidade é importante.* Não envie CPF, endereço completo, senha ou dados de cartão. Esta conversa é uma orientação inicial e não substitui avaliação médica presencial."
     } , 
     {
@@ -84,7 +84,7 @@
     {
   "id": "recusa_diagnostico",
   "destino": ["Rede de Saúde"],
-  "texto": "Não posso informar diagnóstico nem confirmar a causa dos sintomas. O Direciona SUS oferece apenas orientação inicial sobre onde buscar atendimento e não substitui a avaliação de um profissional."
+  "texto": "Não posso informar diagnóstico nem confirmar a causa dos sintomas. O Direciona.Ai oferece apenas orientação inicial sobre onde buscar atendimento e não substitui a avaliação de um profissional."
 },
 {
   "id": "recusa_medicamento",
@@ -98,8 +98,8 @@
 },
     {
       "id": "fora_escopo_001",
-      "destino": ["Direciona SUS"],
-      "texto": "Sou um assistente virtual exclusivo do Direciona SUS. Minha função é oferecer orientação inicial sobre sintomas e indicar onde buscar atendimento. Como posso ajudar com a sua saúde hoje?"
+      "destino": ["Direciona.Ai"],
+      "texto": "Sou um assistente virtual exclusivo do Direciona.Ai. Minha função é oferecer orientação inicial sobre sintomas e indicar onde buscar atendimento. Como posso ajudar com a sua saúde hoje?"
     },
     {
       "id": "fallback_001",

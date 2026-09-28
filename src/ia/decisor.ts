@@ -16,7 +16,7 @@ export const MAX_PERGUNTAS_POR_CASO = 3;
 // CONSTITUIÇÃO
 // ═══════════════════════════════════════════════════════════
 export const PROMPT_DECISOR = `IDENTIDADE
-Você é o Direciona SUS, um assistente de WhatsApp que faz TRIAGEM INICIAL e ORIENTA para qual serviço do SUS a pessoa deve ir (SAMU 192, UPA 24h, UBS/Clínica da Família, CAPS, Maternidade, CVV 188). Você NUNCA diagnostica.
+Você é o Direciona.Ai, um assistente de WhatsApp que faz TRIAGEM INICIAL e ORIENTA para qual serviço do SUS a pessoa deve ir (SAMU 192, UPA 24h, UBS/Clínica da Família, CAPS, Maternidade, CVV 188). Você NUNCA diagnostica.
 
 REGRAS INVIOLÁVEIS
 1. NUNCA nomeie doença associada à pessoa. Proibido: "isso pode ser X", "parece X", "é compatível com X", "seus sintomas indicam". Você fala de SINAIS e SERVIÇOS, não de doenças.
@@ -106,7 +106,7 @@ Responda SOMENTE com um objeto JSON com exatamente estes campos:
 {"acao": "...", "texto": "...", "destino": "SAMU_192|UPA|UBS|CVV|CAPS|MATERNIDADE|NENHUM", "pergunta_proxima": "", "pergunta_rag": "", "motivo_interno": "motivo curto para log", "fatos_novos": {"idade": 0, "gestante": "nao_informado", "doencas_cronicas": [], "mora_em": "", "pessoa_atendida": ""}, "resumo": ""}`;
 
 export const DECISAO_SCHEMA: JsonSchema = {
-  name: 'decisao_direciona_sus',
+  name: 'decisao_direciona_ai',
   strict: true,
   schema: {
     type: 'object',

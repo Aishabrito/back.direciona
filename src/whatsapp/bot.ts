@@ -67,7 +67,7 @@ setInterval(() => {
 }, 5 * 60 * 1000).unref?.();
 
 const MENSAGEM_BOAS_VINDAS =
-  "Olá! Sou o assistente virtual do *Direciona SUS* 🏥\n\n" +
+  "Olá! Sou o assistente virtual do *Direciona.Ai* 🏥\n\n" +
   "Meu papel é orientar qual serviço do SUS você deve procurar (UBS, UPA, Pronto-Socorro ou SAMU 192).\n\n" +
   "Por favor, me conte em detalhes: *o que está acontecendo ou o que você está sentindo?*\n" +
   '_(Se quiser, você também pode tirar dúvidas como: "qual a diferença entre UBS e UPA?")_';
@@ -76,7 +76,12 @@ const comandosReset = [
   "/reset", "reset", "reiniciar", "comecar de novo", "começar de novo", "comecar dnv",
   "vamos comecar dnv", "vamos começar de novo", "voltar pro inicio", "voltar para o inicio",
   "voltar ao inicio", "inicio", "início", "menu", "cancelar",
+  "recomecar", "recomeçar", "novo atendimento", "nova consulta", "voltar ao começo", "voltar pro começo",
 ];
+
+// Rodapé das respostas que fecham um atendimento: a pessoa não precisa saber de /reset.
+const RODAPE_RECOMECAR = '↩️ _Para começar um novo atendimento, é só mandar *início*._';
+const ACOES_QUE_FECHAM = new Set(['emergencia', 'orientar', 'responder_rag']);
 
 function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
@@ -242,36 +247,35 @@ function oferecerLocalizacao(
   return texto;
 }
 
+// Texto SEMPRE sai na hora. Se a pessoa mandou áudio, depois vem um áudio curto
+// só com a resposta principal (sem boas-vindas/privacidade/localização) —
+// assim ninguém fica esperando o TTS para receber a orientação.
 async function responder(
   sock: Sock,
   sender: string,
   texto: string,
-  responderComAudio: boolean,
+  falaAudio?: string,
 ): Promise<void> {
-  if (!responderComAudio) {
-    await sock.sendMessage(sender, { text: texto });
-    return;
-  }
+  await sock.sendMessage(sender, { text: texto });
+  if (!falaAudio) return;
 
+  const inicio = Date.now();
   try {
-    const audio = await textoParaAudio(texto, 'feminina');
+    await sock.sendPresenceUpdate("recording", sender).catch(() => {});
+    const audio = await textoParaAudio(falaAudio, 'feminina');
     if (audio && audio.length > 0) {
-      console.log(`🎤 [${hashSender(sender)}] Resposta em áudio (${(audio.length / 1024).toFixed(1)} KB)`);
+      console.log(`🎤 [${hashSender(sender)}] Áudio de resposta (${(audio.length / 1024).toFixed(1)} KB) em ${Date.now() - inicio} ms`);
       inc('gemini_tts_ok');
-      await sock.sendMessage(sender, {
-        audio,
-        mimetype: 'audio/ogg; codecs=opus',
-        ptt: true,
-      });
-      return;
+      await sock.sendMessage(sender, { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true });
+    } else {
+      inc('gemini_tts_erro');
     }
-    inc('gemini_tts_erro');
   } catch (err) {
     console.error('❌ Falha ao gerar áudio:', err);
     inc('gemini_tts_erro');
+  } finally {
+    await sock.sendPresenceUpdate("paused", sender).catch(() => {});
   }
-
-  await sock.sendMessage(sender, { text: texto });
 }
 
 let tentativasReconexao = 0;
@@ -330,7 +334,7 @@ export async function startWhatsAppBot(): Promise<void> {
       keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }) as any),
     },
     logger: pino({ level: "silent" }) as any,
-    browser: ["Direciona SUS", "Chrome", "1.0.0"],
+    browser: ["Direciona.Ai", "Chrome", "1.0.0"],
   });
 
   socketAtual = sock;
@@ -636,10 +640,13 @@ async function processarTexto(sock: Sock, sender: string, cleanText: string, vei
       mensagemFinal = resultado.acao === 'conversa' ? boasVindas : `${boasVindas}\n\n---\n\n${mensagemFinal}`;
     }
     mensagemFinal = oferecerLocalizacao(novoEstado, resultado, mensagemFinal);
+    if (resultado.acao && ACOES_QUE_FECHAM.has(resultado.acao)) {
+      mensagemFinal = `${mensagemFinal}\n\n${RODAPE_RECOMECAR}`;
+    }
 
     await persistir(sender, novoEstado);
     pararDigitando();
-    await responder(sock, sender, `${prefixoAudio}${mensagemFinal}`, veioDeAudio);
+    await responder(sock, sender, `${prefixoAudio}${mensagemFinal}`, veioDeAudio ? resultado.texto : undefined);
   } catch (err) {
     pararDigitando();
     throw err;

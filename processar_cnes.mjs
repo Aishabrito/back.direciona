@@ -84,7 +84,7 @@ async function geocodificar(endereco) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(endereco)}`;
   try {
     const resp = await fetch(url, {
-      headers: { 'User-Agent': 'DirecionaSUSBot-import/1.0 (contato: aisha.paola14@gmail.com)' },
+      headers: { 'User-Agent': 'DirecionaAiBot-import/1.0 (contato: aisha.paola14@gmail.com)' },
     });
     if (!resp.ok) return null;
     const data = await resp.json();
