@@ -100,7 +100,8 @@ src/
 ├── regras/                   # JSON de regras + base_conhecimento.json
 ├── respostas/                # mensagens aprovadas (textos fixos)
 ├── servicos/                 # Groq, Gemini (TTS/embeddings), mapas, logs, métricas
-├── api/rotas.ts              # POST /api/chat, GET /api/metricas
+├── atendimento/atendimento.ts # a conversa (comandos, áudio, localização, triagem): WhatsApp e app
+├── api/rotas.ts              # API do app (chat, áudio, localização) + /api/metricas
 └── scripts/sincronizar_base.ts # envia a base de conhecimento para o Supabase
 dados/unidades_saude.json     # unidades do CNES (Niterói e Rio de Janeiro)
 processar_cnes.mjs            # gera dados/unidades_saude.json a partir do CNES
@@ -172,6 +173,17 @@ curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"sessionId": "teste-1", "mensagem": "estou com febre há 4 dias"}'
 ```
+
+A resposta traz `mensagens` (cada uma com `texto` e, para quem mandou áudio, `audio` em MP3/base64) e `aguardandoLocalizacao` (quando o bot ofereceu buscar a unidade mais próxima).
+
+O app mobile ([direciona-sus](https://github.com/Aishabrito/direciona-sus)) usa o **mesmo atendimento do WhatsApp** (`src/atendimento/atendimento.ts`), com estas rotas:
+
+| Rota | Equivale no WhatsApp a |
+|---|---|
+| `POST /api/chat` `{ sessionId, mensagem }` | mensagem de texto (inclusive `início`, `apagar`, `sim`, bairro e cidade) |
+| `POST /api/audio` `{ sessionId, audio, mime }` | áudio (base64); a resposta volta também em áudio |
+| `POST /api/localizacao` `{ sessionId, lat, lng }` | 📎 → Localização |
+| `GET /api/boas-vindas` | apresentação da 1ª mensagem |
 
 Outros endpoints:
 - `GET /health`: checagem de saúde.
