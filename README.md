@@ -100,7 +100,7 @@ src/
 ├── regras/                   # JSON de regras + base_conhecimento.json
 ├── respostas/                # mensagens aprovadas (textos fixos)
 ├── servicos/                 # Groq, Gemini (TTS/embeddings), mapas, logs, métricas
-├── api/rotas.ts              # POST /api/chat, GET /api/metricas
+├── api/rotas.ts              # POST /api/chat e /api/unidades (app), GET /api/metricas
 └── scripts/sincronizar_base.ts # envia a base de conhecimento para o Supabase
 dados/unidades_saude.json     # unidades do CNES (Niterói e Rio de Janeiro)
 processar_cnes.mjs            # gera dados/unidades_saude.json a partir do CNES
@@ -172,6 +172,19 @@ curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"sessionId": "teste-1", "mensagem": "estou com febre há 4 dias"}'
 ```
+
+A resposta traz `tipo` (`perguntas` ou `orientacao`), `texto` e, quando faz sentido, `local` com a unidade a oferecer (ex.: `{"tipo": "UPA", "rotulo": "a UPA mais próxima"}`), como o WhatsApp faz.
+
+`POST /api/unidades`, para buscar as unidades mais próximas (mesma busca e mesmo texto do WhatsApp):
+
+```bash
+curl -X POST http://localhost:3000/api/unidades \
+  -H "Content-Type: application/json" \
+  -d '{"tipo": "UPA", "lat": -22.80, "lng": -43.22}'
+# ou, pelo bairro: -d '{"tipo": "UBS", "endereco": "Icaraí, Niterói"}'
+```
+
+O app mobile ([direciona-sus](https://github.com/Aishabrito/direciona-sus)) usa essas duas rotas.
 
 Outros endpoints:
 - `GET /health`: checagem de saúde.

@@ -17,6 +17,7 @@ import type { EstadoConversa } from "../ia/tipos.js";
 import {
   buscarUnidades, formatarUnidades, type TipoUsuario,
 } from "../servicos/geolocalizacao.js";
+import { tipoParaOferecer, artigoUnidade } from "../servicos/oferta_localizacao.js";
 import { buscarCoordenadasPorTexto } from "../servicos/nominatim.js";
 import { textoParaAudio } from "../servicos/texto_para_audio.js";
 import { inc } from "../servicos/metricas.js";
@@ -182,11 +183,6 @@ function matchSimNao(textoLimpo: string): "sim" | "nao" | null {
   return null;
 }
 
-function artigoUnidade(tipo: 'UPA' | 'HOSPITAL' | 'UBS'): { art: string; prox: string; nome: string } {
-  if (tipo === 'HOSPITAL') return { art: 'o', prox: 'próximo', nome: 'hospital' };
-  return { art: 'a', prox: 'próxima', nome: tipo };
-}
-
 type Sock = ReturnType<typeof makeWASocket>;
 
 function iniciarDigitando(sock: Sock, sender: string): () => void {
@@ -229,21 +225,13 @@ async function executarBusca(
   await sock.sendPresenceUpdate("paused", sender);
 }
 
-const LOCAL_POR_RESPOSTA: Record<string, 'UPA' | 'HOSPITAL' | 'UBS'> = {
-  upa_001: 'UPA', dengue_001: 'UPA', desidratacao_001: 'UPA', intoxicacao_001: 'UPA',
-  emergencia_001: 'HOSPITAL', obstetricia_001: 'HOSPITAL', pediatria_emergencia_001: 'HOSPITAL',
-  mental_emergencia_001: 'HOSPITAL', violencia_001: 'HOSPITAL',
-  ubs_001: 'UBS',
-};
-
 // Anexa a oferta de "unidade mais próxima" e marca no estado que estamos aguardando a localização.
 function oferecerLocalizacao(
   estado: EstadoConversa,
   resultado: { tipo: string; decisao?: { resposta_id: string } },
   mensagemBase: string,
 ): string {
-  if (resultado.tipo !== 'orientacao' || !resultado.decisao) return mensagemBase;
-  const tipoLocalizacao = LOCAL_POR_RESPOSTA[resultado.decisao.resposta_id];
+  const tipoLocalizacao = tipoParaOferecer(resultado);
   if (!tipoLocalizacao) return mensagemBase;
 
   const { art, prox, nome } = artigoUnidade(tipoLocalizacao);
