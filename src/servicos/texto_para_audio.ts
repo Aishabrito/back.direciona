@@ -9,6 +9,8 @@ import { GoogleGenAI } from '@google/genai';
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export type VozTts = 'feminina' | 'masculina';
+/** ogg = nota de voz do WhatsApp; mp3 = app (o iPhone não toca OGG/Opus). */
+export type FormatoAudio = 'ogg' | 'mp3';
 
 // Vozes do Gemini 2.5 Flash TTS. Aoede = feminina natural, Charon = masculina.
 const VOZES: Record<VozTts, string> = {
@@ -47,12 +49,13 @@ export function prepararFala(texto: string, max = MAX_CARACTERES_FALA): string {
 }
 
 /**
- * Converte texto em OGG/Opus pronto para o WhatsApp.
+ * Converte texto em áudio: OGG/Opus (nota de voz do WhatsApp) ou MP3 (app).
  * Devolve null se a API falhar, demorar demais ou não estiver configurada.
  */
 export async function textoParaAudio(
   texto: string,
   voz: VozTts = 'feminina',
+  formato: FormatoAudio = 'ogg',
 ): Promise<Buffer | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -98,8 +101,7 @@ export async function textoParaAudio(
 
     const pcm = Buffer.from(inlineData.data, 'base64');
     const wav = pcmParaWav(pcm, sampleRate, 1, 16);
-    const ogg = await wavParaOggOpus(wav);
-    return ogg;
+    return formato === 'mp3' ? await wavParaMp3(wav) : await wavParaOggOpus(wav);
   } catch (err: any) {
     console.error('❌ Gemini TTS falhou:', err?.message || err);
     return null;
@@ -165,6 +167,29 @@ function wavParaOggOpus(wav: Buffer): Promise<Buffer> {
       ])
       .on('error', (err) => {
         console.error('❌ ffmpeg falhou:', err.message);
+        reject(err);
+      })
+      .pipe(saida, { end: true });
+  });
+}
+
+// WAV → MP3 (para o app: toca em Android, iPhone e navegador)
+function wavParaMp3(wav: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const saida = new PassThrough();
+    const chunks: Buffer[] = [];
+    saida.on('data', (c) => chunks.push(c));
+    saida.on('end', () => resolve(Buffer.concat(chunks)));
+    saida.on('error', reject);
+
+    ffmpeg(Readable.from(wav))
+      .inputFormat('wav')
+      .audioCodec('libmp3lame')
+      .audioBitrate('48k')
+      .audioChannels(1)
+      .format('mp3')
+      .on('error', (err) => {
+        console.error('❌ ffmpeg (mp3) falhou:', err.message);
         reject(err);
       })
       .pipe(saida, { end: true });
