@@ -27,7 +27,10 @@ export async function transcreverAudio(
   }
 
   // Detecta extensão pelo MIME pra o Whisper aceitar sem reclamar
-  const ext = mimeType.includes('mp4')
+  // (webm = áudio gravado no app pelo navegador; mp4/m4a = app no celular)
+  const ext = mimeType.includes('webm')
+    ? 'webm'
+    : mimeType.includes('mp4') || mimeType.includes('m4a') || mimeType.includes('aac')
     ? 'mp4'
     : mimeType.includes('mpeg')
     ? 'mp3'
