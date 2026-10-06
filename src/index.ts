@@ -22,6 +22,8 @@ process.on('uncaughtException', (err: any) => {
 
 const app = express();
 app.use(cors());
+// Áudio do app chega em base64 (até ~1 min de fala); o resto continua limitado a 100 KB.
+app.use('/api/audio', express.json({ limit: '8mb' }));
 app.use(express.json({ limit: '100kb' }));
 
 app.get('/qr', async (_req, res) => {
