@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import { rotasApi } from './api/rotas.js';
 import { startWhatsAppBot } from './whatsapp/bot.js';
 import { getQrCode } from './servicos/qr.js';
+import { getStatusWhatsApp } from './servicos/status_whatsapp.js';
 
 // Não deixa o processo morrer por promise rejeitada ou exceção não capturada.
 // Erros de sessão do Baileys (Bad MAC etc.) são ruído conhecido e não são logados.
@@ -54,6 +55,12 @@ app.get('/qr', async (_req, res) => {
 
 app.get('/health', (_req, res) => {
   res.status(200).send('OK');
+});
+
+// Estado da conexão com o WhatsApp (o /health continua 200 enquanto o processo estiver de pé).
+app.get('/status', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ whatsapp: getStatusWhatsApp(), qrDisponivel: Boolean(getQrCode()) });
 });
 
 app.use('/api', rotasApi);

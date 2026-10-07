@@ -116,15 +116,43 @@ export function iniciarSyncPeriodico(sql: Sql | null): NodeJS.Timeout | null {
   }, 30_000);
 }
 
-export function registrarSyncNoShutdown(sql: Sql | null): void {
+/**
+ * Apaga a sessão do WhatsApp (disco + banco). Usado quando o WhatsApp desconecta o aparelho:
+ * sem isso, todo restart restaura a mesma sessão inválida e o bot nunca volta a gerar QR Code.
+ */
+export async function apagarSessao(sql: Sql | null): Promise<void> {
+  fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+  jaEnviado.clear();
   if (!sql) return;
+  try {
+    await sql`DELETE FROM bot_sessions WHERE session_id = ${SESSION_ID}`;
+  } catch (err) {
+    console.error('❌ Erro ao apagar sessão do banco:', err);
+  }
+}
+
+/**
+ * No SIGTERM/SIGINT: salva a sessão, fecha a conexão e SAI do processo.
+ * Ter um listener de SIGTERM desliga a saída padrão do Node; sem o process.exit,
+ * a instância antiga continuava conectada durante o deploy e brigava com a nova
+ * pela mesma sessão do WhatsApp (uma derruba a outra, e o bot "sai do ar").
+ */
+export function registrarSyncNoShutdown(sql: Sql | null, fecharConexao: () => void): void {
+  let saindo = false;
   const handler = async (signal: string) => {
+    if (saindo) return;
+    saindo = true;
     console.log(`\n🛑 Recebido ${signal}, salvando sessão antes de sair...`);
+    const limite = setTimeout(() => process.exit(0), 8000);
+    limite.unref?.();
     try {
+      fecharConexao();
       await subirSessaoParaBanco(sql);
       console.log('✅ Sessão salva no banco.');
     } catch (err) {
       console.error('❌ Erro ao salvar sessão no shutdown:', err);
+    } finally {
+      process.exit(0);
     }
   };
   process.on('SIGTERM', () => handler('SIGTERM'));

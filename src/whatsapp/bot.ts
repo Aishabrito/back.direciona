@@ -15,8 +15,9 @@ import type { EstadoConversa } from "../ia/tipos.js";
 import { textoParaAudio } from "../servicos/texto_para_audio.js";
 import { inc } from "../servicos/metricas.js";
 import { setQrCode } from "../servicos/qr.js";
+import { setEstadoConexao, registrarDesconexao } from "../servicos/status_whatsapp.js";
 import {
-  criarClienteDb, baixarSessaoParaDisco, iniciarSyncPeriodico, registrarSyncNoShutdown, type Sql,
+  criarClienteDb, baixarSessaoParaDisco, iniciarSyncPeriodico, registrarSyncNoShutdown, apagarSessao, type Sql,
 } from "./persistencia_sessao.js";
 import {
   salvarEstado, carregarEstado, apagarEstado,
@@ -57,6 +58,7 @@ let botIniciado = false;
 let socketAtual: ReturnType<typeof makeWASocket> | null = null;
 let sqlCliente: Sql | null = null;
 let syncIniciado = false;
+let encerrando = false;
 
 setInterval(() => {
   if (sessions.size > 1000) {
@@ -142,11 +144,12 @@ let tentativasReconexao = 0;
 const MAX_BACKOFF_MS = 60_000;
 let reconexaoAgendada = false;
 
-function agendarReconexao() {
-  if (reconexaoAgendada) return;
+function agendarReconexao(esperaMinima = 0) {
+  if (reconexaoAgendada || encerrando) return;
   reconexaoAgendada = true;
+  setEstadoConexao('reconectando');
 
-  const espera = Math.min(MAX_BACKOFF_MS, 2000 * Math.pow(2, tentativasReconexao));
+  const espera = Math.max(esperaMinima, Math.min(MAX_BACKOFF_MS, 2000 * Math.pow(2, tentativasReconexao)));
   tentativasReconexao++;
   console.log(`🔄 Reconectando em ${espera / 1000}s (tentativa ${tentativasReconexao})...`);
 
@@ -176,9 +179,13 @@ export async function startWhatsAppBot(): Promise<void> {
     await baixarSessaoParaDisco(sql);
   }
 
-  if (!syncIniciado && sql) {
+  if (!syncIniciado) {
     iniciarSyncPeriodico(sql);
-    registrarSyncNoShutdown(sql);
+    registrarSyncNoShutdown(sql, () => {
+      encerrando = true;
+      try { socketAtual?.end(undefined); } catch {}
+      socketAtual = null;
+    });
     syncIniciado = true;
   }
 
@@ -206,25 +213,46 @@ export async function startWhatsAppBot(): Promise<void> {
 
     if (qr) {
       setQrCode(qr);
+      setEstadoConexao('aguardando_qr');
       console.log("\n📲 *NOVO QR CODE GERADO!*");
       console.log(`👉 Abra no navegador: ${PUBLIC_URL}/qr`);
       console.log("⏳ Escaneie em até 20 segundos!\n");
     }
 
     if (connection === "close") {
-      const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-      const permanente = statusCode === DisconnectReason.loggedOut || statusCode === 401 || statusCode === 403;
+      // Socket antigo (já substituído numa reconexão): não mexe no estado do atual.
+      if (socketAtual !== sock) return;
       socketAtual = null;
+      if (encerrando) return;
 
-      if (!permanente) {
-        agendarReconexao();
+      const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode ?? null;
+      const motivo = lastDisconnect?.error?.message ?? 'desconhecido';
+      registrarDesconexao(statusCode, motivo);
+      console.log(`⚠️ WhatsApp desconectado (código ${statusCode ?? '?'}: ${motivo})`);
+
+      if (statusCode === DisconnectReason.loggedOut) {
+        // O aparelho foi desconectado no celular (ou a sessão ficou inválida).
+        // Apaga a sessão salva e reinicia para gerar um QR Code novo em /qr.
+        console.log(`❌ Sessão encerrada pelo WhatsApp. Apagando a sessão salva; escaneie o novo QR em ${PUBLIC_URL}/qr`);
+        tentativasReconexao = 0;
+        apagarSessao(sqlCliente)
+          .catch((err) => console.error('❌ Erro ao apagar sessão:', err))
+          .finally(() => agendarReconexao());
+      } else if (statusCode === DisconnectReason.forbidden) {
+        console.log("❌ WhatsApp recusou a conta (403). Verifique o número do bot no celular.");
+        setEstadoConexao('parado');
+      } else if (statusCode === DisconnectReason.connectionReplaced) {
+        // Outra instância abriu a mesma sessão (ex.: deploy sobreposto).
+        // Espera mais antes de voltar, para as duas não ficarem se derrubando.
+        agendarReconexao(MAX_BACKOFF_MS);
       } else {
-        console.log("❌ Desconectado permanentemente.");
+        agendarReconexao();
       }
     }
 
     if (connection === "open") {
       setQrCode(null);
+      setEstadoConexao('conectado');
       tentativasReconexao = 0;
       console.log("✅ Bot do WhatsApp conectado com sucesso!");
     }
