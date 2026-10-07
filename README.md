@@ -109,6 +109,12 @@ processar_cnes.mjs            # gera dados/unidades_saude.json a partir do CNES
 
 ---
 
+## ☁️ Colocar no ar
+
+O passo a passo para rodar numa VPS (Hostinger, paga com Pix) com o Coolify está em [DEPLOY.md](DEPLOY.md).
+
+---
+
 ## 🚀 Rodando localmente
 
 **Pré-requisitos:** Node.js 20 ou mais e um banco Postgres com `pgvector` (o Supabase serve).
@@ -188,6 +194,7 @@ O app mobile ([direciona-sus](https://github.com/Aishabrito/direciona-sus)) usa 
 Outros endpoints:
 - `GET /health`: checagem de saúde.
 - `GET /qr`: QR Code para conectar o WhatsApp.
+- `GET /status`: estado da conexão do WhatsApp e motivo da última queda.
 - `GET /api/metricas`: métricas. Exige o cabeçalho `x-metricas-token`.
 
 ---
